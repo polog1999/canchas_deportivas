@@ -117,10 +117,27 @@
                         </li>
                     @endactiveRole
 --}}
-                    @can('tusnes::ver')
+                    
+                    @can('canchas::ver')
                         <div class="px-3 mt-6 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                            Gestionar Tusne
+                            Gestión Municipal
                         </div>
+                        <li>
+                            <a href="{{ route('courts.index') }}"
+                                class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('courts.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-id-card w-5 text-center text-emerald-500"></i> Canchas
+                            </a>
+                        </li>
+                    @endcan
+                    @can('sedes::ver')
+                        <li>
+                            <a href="{{ route('locations.index') }}"
+                                class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('locations.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                                <i class="fa-solid fa-id-card w-5 text-center text-emerald-500"></i> Sedes
+                            </a>
+                        </li>
+                    @endcan
+                    @can('tusnes::ver')
                         <li>
                             <a href="{{ route('tusne.index') }}"
                                 class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('tusne.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
@@ -139,6 +156,7 @@
                             </a>
                         </li>
                     @endcan
+
 
                 </ul>
             </div>

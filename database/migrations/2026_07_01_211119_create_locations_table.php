@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id(); // Llave Primaria (Primary Key)
             $table->string('name'); // Ej: "Sede Norte"
             $table->string('address');
-            $table->string('link_maps');
+            $table->string('link_maps', 500);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

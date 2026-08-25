@@ -27,13 +27,16 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'usuarios::ver']);
         Permission::firstOrCreate(['name' => 'usuarios::eliminar']);
         Permission::firstOrCreate(['name' => 'tusnes::ver']);
+        Permission::firstOrCreate(['name' => 'sedes::ver']);
+        Permission::firstOrCreate(['name' => 'canchas::ver']);
+        
 
         $superAdminRole = Role::firstOrCreate(['name' => UserRole::SUPERADMIN]);
         $adminRole = Role::firstOrCreate(['name' => UserRole::ADMIN]);
         $clienteRole = Role::firstOrCreate(['name' => UserRole::CLIENTE]);
         // 4. Asignar Permisos a los Roles
         // El ADMIN puede hacer de todo con las canchas, pero no ver reportes de dinero
-        $superAdminRole->givePermissionTo(['usuarios::crear', 'usuarios::editar', 'usuarios::ver','usuarios::eliminar', 'tusnes::ver']);
+        $superAdminRole->givePermissionTo(['usuarios::crear', 'usuarios::editar', 'usuarios::ver','usuarios::eliminar', 'tusnes::ver', 'sedes::ver', 'canchas::ver']);
 
         // El CLIENTE solo puede ver las canchas
         // $cliente->givePermissionTo(['ver canchas']);
