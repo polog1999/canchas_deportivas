@@ -6,26 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-   public function up(): void
+    public function up(): void
     {
-        Schema::create('courts', function (Blueprint $table) {
+        Schema::create('canchas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('location_id')->constrained()->onDelete('cascade');
-            $table->string('name'); // Ej: "Cancha de Tenis 1", "Gras Sintético Principal"
-            $table->string('type')->nullable(); // Ej: "Tenis", "Fútbol 11", "Básquet"
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
+            $table->foreignId('sede_id')->constrained('sedes');
+            $table->string('nombre');
+            $table->string('tipo')->nullable();
+            $table->decimal('precio_por_hora', 8, 2)->default(0);
+            $table->boolean('esta_activo')->default(true);
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('courts');
+        Schema::dropIfExists('canchas');
     }
 };

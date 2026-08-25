@@ -6,35 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('transactions', function (Blueprint $table) {
+        Schema::create('transacciones', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('booking_id')->constrained()->onDelete('cascade');
-
-            // Datos de la respuesta de Niubiz
-            $table->string('transaction_id'); // ID único que devuelve Niubiz
-            $table->string('authorization_code')->nullable(); // Código de aprobación del banco
-            $table->string('card_brand')->nullable(); // Visa, Mastercard
-            $table->string('masked_card')->nullable(); // Ej: ****4444
-
-            // Gestión del estado
-            $table->decimal('amount', 8, 2);
-            $table->string('status'); // 'approved', 'declined', 'error'
-            $table->json('raw_response'); // Guarda aquí todo el JSON de Niubiz por si necesitas auditar luego
-
-            $table->timestamps();
+            $table->foreignId('reserva_id')->constrained('reservas');
+            $table->string('transaccion_id');
+            $table->string('codigo_autorizacion')->nullable();
+            $table->string('marca_tarjeta')->nullable();
+            $table->string('tarjeta_enmascarada')->nullable();
+            $table->decimal('monto', 8, 2);
+            $table->string('estado');
+            $table->json('respuesta_bruta');
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('transactions');
+        Schema::dropIfExists('transacciones');
     }
 };

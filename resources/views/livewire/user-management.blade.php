@@ -50,35 +50,36 @@
                         @forelse($users as $user)
                             <tr class="hover:bg-gray-50/70 transition-colors">
                                 <td class="py-4 px-6">
-                                    <div class="font-semibold text-gray-900">{{ $user->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $user->email }}</div>
+                                    <div class="font-semibold text-gray-900">{{ $user->usuario }}</div>
+                                    <div class="text-xs text-gray-500">{{ $user->nombre }}</div>
+                                    <div class="text-xs text-gray-400">{{ $user->correo_electronico }}</div>
                                 </td>
                                 <td class="py-4 px-6">
-                                    @if ($user->profile && $user->profile->document_number)
+                                    @if ($user->perfil && $user->perfil->numero_documento)
                                         <span class="bg-gray-100 text-gray-800 text-xs px-2.5 py-1 rounded font-medium">
-                                            {{ $user->profile->document_type->value ?? 'DOC' }}:
-                                            {{ $user->profile->document_number }}
+                                            {{ $user->perfil->tipo_documento->value ?? 'DOC' }}:
+                                            {{ $user->perfil->numero_documento }}
                                         </span>
                                     @else
                                         <span class="text-gray-400 italic text-xs">Sin documento</span>
                                     @endif
                                 </td>
                                 <td class="py-4 px-6">
-                                    @if ($user->profile && ($user->profile->names || $user->profile->last_name_paternal))
+                                    @if ($user->perfil && ($user->perfil->nombres || $user->perfil->apellido_paterno))
                                         <div class="font-medium text-gray-800">
-                                            {{ $user->profile->names }} {{ $user->profile->last_name_paternal }}
-                                            {{ $user->profile->last_name_maternal }}
+                                            {{ $user->perfil->nombres }} {{ $user->perfil->apellido_paterno }}
+                                            {{ $user->perfil->apellido_materno }}
                                         </div>
                                         <div class="text-xs text-gray-400 truncate max-w-xs">
-                                            {{ $user->profile->address ?? 'Sin dirección' }}</div>
+                                            {{ $user->perfil->direccion ?? 'Sin dirección' }}</div>
                                     @else
                                         <span class="text-gray-400 italic text-xs">Perfil incompleto</span>
                                     @endif
                                 </td>
                                 <td class="py-4 px-6">
-                                    @if ($user && count($user->getRoleNames()) > 0)
+                                    @if ($user->rol)
                                         <span class="bg-gray-100 text-gray-800 text-xs px-2.5 py-1 rounded font-medium">
-                                            {{$user->getRoleNames()?->first()}}
+                                            {{ $user->rol->nombre }}
                                         </span>
                                     @else
                                         <span class="text-gray-400 italic text-xs">Sin Rol</span>
@@ -176,21 +177,32 @@
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Nombre de Usuario
                                             <span class="text-red-500">*</span></label>
-                                        <input type="text" wire:model="name"
-                                            class="w-full px-3 py-2 border @error('name') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                        <input type="text" wire:model="usuario"
+                                            class="w-full px-3 py-2 border @error('usuario') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                             placeholder="Ej: jgomez" />
-                                        @error('name')
+                                        @error('usuario')
+                                            <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Nombre completo
+                                            <span class="text-red-500">*</span></label>
+                                        <input type="text" wire:model="nombre"
+                                            class="w-full px-3 py-2 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                            placeholder="Ej: Juan Pérez" />
+                                        @error('nombre')
                                             <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
 
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Correo
-                                            Electrónico <span class="text-red-500">*</span></label>
-                                        <input type="email" wire:model="email"
-                                            class="w-full px-3 py-2 border @error('email') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                            Electrónico</label>
+                                        <input type="email" wire:model="correo_electronico"
+                                            class="w-full px-3 py-2 border @error('correo_electronico') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                             placeholder="correo@ejemplo.com" />
-                                        @error('email')
+                                        @error('correo_electronico')
                                             <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
@@ -205,27 +217,26 @@
                                                     conservar)</span>
                                             @endif
                                         </label>
-                                        <input type="password" wire:model="password"
-                                            class="w-full px-3 py-2 border @error('password') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                        <input type="password" wire:model="clave"
+                                            class="w-full px-3 py-2 border @error('clave') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                             placeholder="••••••••" />
-                                        @error('password')
+                                        @error('clave')
                                             <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
 
                                     <div>
-                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Rol</label>
-                                        <select wire:model.defer="role"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
-                                            @php
-                                            $roles = App\Enums\UserRole::cases();
-                                            @endphp
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Rol <span class="text-red-500">*</span></label>
+                                        <select wire:model.defer="rol_id"
+                                            class="w-full px-3 py-2 border @error('rol_id') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                             <option value="">Selecciona un rol...</option>
                                             @foreach ($roles as $rol)
-                                                <option value="{{$rol->value}}">{{$rol->label()}}</option>
+                                                <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
                                             @endforeach
-
                                         </select>
+                                        @error('rol_id')
+                                            <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                                        @enderror
                                     </div>
 
                                     <div>
@@ -250,7 +261,7 @@
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Tipo
                                             Documento</label>
-                                        <select wire:model.defer="document_type"
+                                        <select wire:model.defer="tipo_documento"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                             <option value="">Seleccione...</option>
                                             @foreach (App\Enums\DocumentType::cases() as $typeDocument)
@@ -266,17 +277,17 @@
                                     <div class="md:col-span-2">
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Número
                                             Documento</label>
-                                        <input type="text" wire:model.defer="document_number"
-                                            class="w-full px-3 py-2 border @error('document_number') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                        <input type="text" wire:model.defer="numero_documento"
+                                            class="w-full px-3 py-2 border @error('numero_documento') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                             placeholder="N° de Identidad" />
-                                        @error('document_number')
+                                        @error('numero_documento')
                                             <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
 
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Nombres</label>
-                                        <input type="text" wire:model.defer="names"
+                                        <input type="text" wire:model.defer="nombres"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Nombres" />
                                     </div>
@@ -284,7 +295,7 @@
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Apellido
                                             Paterno</label>
-                                        <input type="text" wire:model.defer="last_name_paternal"
+                                        <input type="text" wire:model.defer="apellido_paterno"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Paterno" />
                                     </div>
@@ -292,7 +303,7 @@
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Apellido
                                             Materno</label>
-                                        <input type="text" wire:model.defer="last_name_maternal"
+                                        <input type="text" wire:model.defer="apellido_materno"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Materno" />
                                     </div>
@@ -300,7 +311,7 @@
                                     <div class="md:col-span-3">
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Dirección
                                             Física</label>
-                                        <input type="text" wire:model.defer="address"
+                                        <input type="text" wire:model.defer="direccion"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Av, Calle, N° o Dpto..." />
                                     </div>
@@ -317,21 +328,21 @@
                                     {{-- <div>
                                         <label
                                             class="block text-xs font-semibold text-gray-700 mb-1">Departamento</label>
-                                        <input type="text" wire:model.defer="ubigeo_department"
+                                        <input type="text" wire:model.defer="ubigeo_departamento"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Ej: Lima" />
                                     </div>
 
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Provincia</label>
-                                        <input type="text" wire:model.defer="ubigeo_province"
+                                        <input type="text" wire:model.defer="ubigeo_provincia"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Ej: Lima" />
                                     </div> --}}
 
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Distrito</label>
-                                        <select wire:model.defer="ubigeo_district"
+                                        <select wire:model.defer="ubigeo_distrito"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                             <option value="">Seleccione...</option>
                                             @php

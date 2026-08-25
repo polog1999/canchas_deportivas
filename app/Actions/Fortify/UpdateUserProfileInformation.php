@@ -2,7 +2,7 @@
 
 namespace App\Actions\Fortify;
 
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -12,48 +12,43 @@ use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {
     /**
-     * Validate and update the given user's profile information.
-     *
      * @param  array<string, string>  $input
      *
      * @throws ValidationException
      */
-    public function update(User $user, array $input): void
+    public function update(Usuario $user, array $input): void
     {
         Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
-
-            'email' => [
-                'required',
+            'nombre' => ['required', 'string', 'max:150'],
+            'correo_electronico' => [
+                'nullable',
                 'string',
                 'email',
-                'max:255',
-                Rule::unique('users')->ignore($user->id),
+                'max:150',
+                Rule::unique('usuarios', 'correo_electronico')->ignore($user->id),
             ],
         ])->validateWithBag('updateProfileInformation');
 
-        if ($input['email'] !== $user->email &&
+        if (($input['correo_electronico'] ?? null) !== $user->correo_electronico &&
             $user instanceof MustVerifyEmail) {
             $this->updateVerifiedUser($user, $input);
         } else {
             $user->forceFill([
-                'name' => $input['name'],
-                'email' => $input['email'],
+                'nombre' => $input['nombre'],
+                'correo_electronico' => $input['correo_electronico'] ?? null,
             ])->save();
         }
     }
 
     /**
-     * Update the given verified user's profile information.
-     *
      * @param  array<string, string>  $input
      */
-    protected function updateVerifiedUser(User $user, array $input): void
+    protected function updateVerifiedUser(Usuario $user, array $input): void
     {
         $user->forceFill([
-            'name' => $input['name'],
-            'email' => $input['email'],
-            'email_verified_at' => null,
+            'nombre' => $input['nombre'],
+            'correo_electronico' => $input['correo_electronico'] ?? null,
+            'correo_verificado_en' => null,
         ])->save();
 
         $user->sendEmailVerificationNotification();

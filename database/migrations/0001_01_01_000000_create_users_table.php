@@ -6,45 +6,63 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('nombre', 50)->unique();
+            $table->string('descripcion')->nullable();
             $table->boolean('activo')->default(true);
-            $table->rememberToken();
-            $table->timestamps();
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
+        Schema::create('menus', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('id_padre')->nullable()->constrained('menus')->nullOnDelete();
+            $table->string('nombre', 100);
+            $table->string('ruta', 200);
+            $table->string('icono', 50)->nullable();
+            $table->integer('orden')->default(0);
+            $table->boolean('activo')->default(true);
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
         });
 
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
+        Schema::create('usuarios', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('rol_id')->constrained('roles');
+            $table->string('usuario', 50)->unique();
+            $table->string('clave');
+            $table->string('nombre', 150);
+            $table->string('correo_electronico', 150)->nullable();
+            $table->timestamp('correo_verificado_en')->nullable();
+            $table->boolean('activo')->default(true);
+            $table->string('token_recordar', 100)->nullable();
+            $table->text('secreto_dos_factores')->nullable();
+            $table->text('codigos_recuperacion_dos_factores')->nullable();
+            $table->timestamp('dos_factores_confirmado_en')->nullable();
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
+
+            $table->index('rol_id', 'idx_usuarios_rol');
+        });
+
+        Schema::create('menus_roles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('rol_id')->constrained('roles')->cascadeOnDelete();
+            $table->foreignId('menu_id')->constrained('menus')->cascadeOnDelete();
+            $table->unique(['rol_id', 'menu_id']);
+            $table->index('menu_id', 'idx_menus_roles_menu');
+            $table->index('rol_id', 'idx_menus_roles_rol');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('menus_roles');
+        Schema::dropIfExists('usuarios');
+        Schema::dropIfExists('menus');
+        Schema::dropIfExists('roles');
     }
 };

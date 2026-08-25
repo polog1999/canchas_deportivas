@@ -28,45 +28,65 @@
             <form method="POST" action="{{ route('register') }}" class="mt-8 space-y-4">
                 @csrf
                 
+                <!-- Usuario -->
+                <div>
+                    <label for="usuario" class="block text-sm font-medium text-gray-700">
+                        Usuario
+                    </label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <input 
+                            id="usuario" 
+                            name="usuario" 
+                            type="text" 
+                            value="{{ old('usuario') }}"
+                            required 
+                            autofocus
+                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('usuario') border-red-300 @enderror" 
+                            placeholder="tu_usuario"
+                        >
+                    </div>
+                    @error('usuario') 
+                        <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
+                    @enderror
+                </div>
+
                 <!-- Nombre Completo -->
                 <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700">
+                    <label for="nombre" class="block text-sm font-medium text-gray-700">
                         Nombres y Apellidos
                     </label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <input 
-                            id="name" 
-                            name="name" 
+                            id="nombre" 
+                            name="nombre" 
                             type="text" 
-                            value="{{ old('name') }}"
+                            value="{{ old('nombre') }}"
                             required 
-                            autofocus
-                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('name') border-red-300 @enderror" 
+                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('nombre') border-red-300 @enderror" 
                             placeholder="Juan Pérez"
                         >
                     </div>
-                    @error('name') 
+                    @error('nombre') 
                         <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
                     @enderror
                 </div>
 
                 <!-- Correo Electrónico -->
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">
+                    <label for="correo_electronico" class="block text-sm font-medium text-gray-700">
                         Correo Electrónico
                     </label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <input 
-                            id="email" 
-                            name="email" 
+                            id="correo_electronico" 
+                            name="correo_electronico" 
                             type="email" 
-                            value="{{ old('email') }}"
-                            required 
-                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('email') border-red-300 @enderror" 
+                            value="{{ old('correo_electronico') }}"
+                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('correo_electronico') border-red-300 @enderror" 
                             placeholder="ejemplo@correo.com"
                         >
                     </div>
-                    @error('email') 
+                    @error('correo_electronico') 
                         <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
                     @enderror
                 </div>

@@ -6,27 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('curt_tusnes', function (Blueprint $table) {
+        Schema::create('canchas_tusne', function (Blueprint $table) {
             $table->id();
-
-            // Vincula qué códigos TUSNE aplican a qué canchas físicas
-            $table->foreignId('court_id')->constrained()->onDelete('cascade');
-            $table->foreignId('tusne_catalog_id')->constrained()->onDelete('cascade');
-
-            $table->timestamps();
+            $table->foreignId('cancha_id')->constrained('canchas');
+            $table->foreignId('catalogo_tusne_id')->constrained('catalogos_tusne');
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('curt_tusnes');
+        Schema::dropIfExists('canchas_tusne');
     }
 };

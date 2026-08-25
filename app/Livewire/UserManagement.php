@@ -2,88 +2,88 @@
 
 namespace App\Livewire;
 
-use App\Enums\UserRole;
-use App\Models\User;
-use App\Models\Profile;
-use Livewire\Component;
-use Livewire\WithPagination;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Rol;
+use App\Models\Usuario;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class UserManagement extends Component
 {
     use WithPagination;
 
-    // Filtros de búsqueda
     public $search = '';
 
-    // Estado del Modal
     public $isOpen = false;
     public $isEditMode = false;
 
-    // Propiedades del Modelo User
     public $userId;
-    public $name;
-    public $email;
-    public $password;
+    public $usuario;
+    public $nombre;
+    public $correo_electronico;
+    public $clave;
     public $activo = true;
+    public $rol_id;
 
-    // Propiedades del Modelo Profile
     public $profileId;
-    public $document_type;
-    public $document_number;
-    public $names;
-    public $last_name_paternal;
-    public $last_name_maternal;
-    public $address;
-    public $ubigeo_department;
-    public $ubigeo_province;
-    public $ubigeo_district;
-    public $role;
+    public $tipo_documento;
+    public $numero_documento;
+    public $nombres;
+    public $apellido_paterno;
+    public $apellido_materno;
+    public $direccion;
+    public $ubigeo_departamento;
+    public $ubigeo_provincia;
+    public $ubigeo_distrito;
 
-    // Resetear paginación al realizar búsquedas
     public function updatingSearch()
     {
         $this->resetPage();
     }
 
-    // Reglas de validación dinámicas
     protected function rules()
     {
         return [
-            'name' => 'required|string|max:255',
-            'email' => [
+            'usuario' => [
                 'required',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($this->userId),
+                'string',
+                'max:50',
+                Rule::unique('usuarios', 'usuario')->ignore($this->userId),
             ],
-            'password' => $this->isEditMode ? 'nullable|min:6' : 'required|min:6',
+            'nombre' => 'required|string|max:150',
+            'correo_electronico' => [
+                'nullable',
+                'email',
+                'max:150',
+            ],
+            'clave' => $this->isEditMode ? 'nullable|min:6' : 'required|min:6',
             'activo' => 'required|boolean',
-            'document_type' => 'nullable|string|max:3',
-            'document_number' => [
+            'rol_id' => ['required', 'exists:roles,id'],
+            'tipo_documento' => 'nullable|string|max:3',
+            'numero_documento' => [
                 'nullable',
                 'string',
                 'max:15',
-                Rule::unique('profiles', 'document_number')->ignore($this->profileId),
+                Rule::unique('perfiles', 'numero_documento')->ignore($this->profileId),
             ],
-            'names' => 'nullable|string|max:255',
-            'last_name_paternal' => 'nullable|string|max:255',
-            'last_name_maternal' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'ubigeo_department' => 'nullable|string|max:255',
-            'ubigeo_province' => 'nullable|string|max:255',
-            'ubigeo_district' => 'nullable|string|max:255',
-            'role' => ['nullable',Rule::enum(UserRole::class)],
+            'nombres' => 'nullable|string|max:255',
+            'apellido_paterno' => 'nullable|string|max:255',
+            'apellido_materno' => 'nullable|string|max:255',
+            'direccion' => 'nullable|string|max:255',
+            'ubigeo_departamento' => 'nullable|string|max:255',
+            'ubigeo_provincia' => 'nullable|string|max:255',
+            'ubigeo_distrito' => 'nullable|string|max:255',
         ];
     }
 
     protected $validationAttributes = [
-        'name' => 'usuario',
-        'email' => 'correo electrónico',
-        'password' => 'contraseña',
-        'document_number' => 'número de documento',
+        'usuario' => 'usuario',
+        'nombre' => 'nombre',
+        'correo_electronico' => 'correo electrónico',
+        'clave' => 'contraseña',
+        'rol_id' => 'rol',
+        'numero_documento' => 'número de documento',
     ];
 
     public function openModal()
@@ -103,22 +103,23 @@ class UserManagement extends Component
     {
         $this->userId = null;
         $this->profileId = null;
-        $this->name = '';
-        $this->email = '';
-        $this->password = '';
+        $this->usuario = '';
+        $this->nombre = '';
+        $this->correo_electronico = '';
+        $this->clave = '';
         $this->activo = true;
-        
-        $this->document_type = '';
-        $this->document_number = '';
-        $this->names = '';
-        $this->last_name_paternal = '';
-        $this->last_name_maternal = '';
-        $this->address = '';
-        $this->ubigeo_department = '';
-        $this->ubigeo_province = '';
-        $this->ubigeo_district = '';
-        $this->role = '';
-        
+        $this->rol_id = '';
+
+        $this->tipo_documento = '';
+        $this->numero_documento = '';
+        $this->nombres = '';
+        $this->apellido_paterno = '';
+        $this->apellido_materno = '';
+        $this->direccion = '';
+        $this->ubigeo_departamento = '';
+        $this->ubigeo_provincia = '';
+        $this->ubigeo_distrito = '';
+
         $this->isEditMode = false;
     }
 
@@ -126,64 +127,53 @@ class UserManagement extends Component
     {
         $this->validate();
 
+        $profileData = [
+            'tipo_documento' => $this->tipo_documento ?: null,
+            'numero_documento' => $this->numero_documento ?: null,
+            'nombres' => $this->nombres,
+            'apellido_paterno' => $this->apellido_paterno,
+            'apellido_materno' => $this->apellido_materno,
+            'direccion' => $this->direccion,
+            'ubigeo_departamento' => $this->ubigeo_departamento,
+            'ubigeo_provincia' => $this->ubigeo_provincia,
+            'ubigeo_distrito' => $this->ubigeo_distrito,
+        ];
+
         if ($this->isEditMode) {
-            // Actualizar Usuario existente
-            $user = User::findOrFail($this->userId);
+            $user = Usuario::findOrFail($this->userId);
             $user->update([
-                'name' => $this->name,
-                'email' => $this->email,
+                'usuario' => $this->usuario,
+                'nombre' => $this->nombre,
+                'correo_electronico' => $this->correo_electronico,
                 'activo' => $this->activo,
+                'rol_id' => $this->rol_id,
             ]);
 
-            if ($this->password) {
-                $user->update(['password' => Hash::make($this->password)]);
+            if ($this->clave) {
+                $user->update(['clave' => $this->clave]);
             }
 
-            // Actualizar o crear Perfil relacionado
-            $user->profile()->updateOrCreate(
+            $user->perfil()->updateOrCreate(
                 ['id' => $this->profileId],
-                [
-                    'document_type' => $this->document_type,
-                    'document_number' => $this->document_number,
-                    'names' => $this->names,
-                    'last_name_paternal' => $this->last_name_paternal,
-                    'last_name_maternal' => $this->last_name_maternal,
-                    'address' => $this->address,
-                    'ubigeo_department' => $this->ubigeo_department,
-                    'ubigeo_province' => $this->ubigeo_province,
-                    'ubigeo_district' => $this->ubigeo_district,
-                ]
+                $profileData
             );
-            $user->syncRoles($this->role); // El usuario ahora es administrador
 
             $this->dispatch('swal', [
                 'icon' => 'success',
                 'title' => '¡Actualizado!',
                 'text' => 'El usuario y su perfil se han actualizado con éxito.',
             ]);
-
         } else {
-            // Crear nuevo Usuario
-            $user = User::create([
-                'name' => $this->name,
-                'email' => $this->email,
-                'password' => Hash::make($this->password),
+            $user = Usuario::create([
+                'usuario' => $this->usuario,
+                'nombre' => $this->nombre,
+                'correo_electronico' => $this->correo_electronico,
+                'clave' => $this->clave,
                 'activo' => $this->activo,
+                'rol_id' => $this->rol_id,
             ]);
 
-            // Crear Perfil asociado
-            $user->profile()->create([
-                'document_type' => $this->document_type,
-                'document_number' => $this->document_number,
-                'names' => $this->names,
-                'last_name_paternal' => $this->last_name_paternal,
-                'last_name_maternal' => $this->last_name_maternal,
-                'address' => $this->address,
-                'ubigeo_department' => $this->ubigeo_department,
-                'ubigeo_province' => $this->ubigeo_province,
-                'ubigeo_district' => $this->ubigeo_district,
-            ]);
-            $user-syncRoles($this->role); // El usuario ahora es administrador
+            $user->perfil()->create($profileData);
 
             $this->dispatch('swal', [
                 'icon' => 'success',
@@ -199,25 +189,27 @@ class UserManagement extends Component
     {
         $this->resetErrorBag();
         $this->isEditMode = true;
-        
-        $user = User::with('profile')->findOrFail($id);
+
+        $user = Usuario::with(['perfil', 'rol'])->findOrFail($id);
         $this->userId = $user->id;
-        $this->name = $user->name;
-        $this->email = $user->email;
+        $this->usuario = $user->usuario;
+        $this->nombre = $user->nombre;
+        $this->correo_electronico = $user->correo_electronico;
         $this->activo = $user->activo;
-        $this->password = ''; // Vacío por seguridad
-        $this->role = $user->getRoleNames()->first() ?? 'Sin Rol';
-        if ($user->profile) {
-            $this->profileId = $user->profile->id;
-            $this->document_type = $user->profile->document_type?->value;
-            $this->document_number = $user->profile->document_number;
-            $this->names = $user->profile->names;
-            $this->last_name_paternal = $user->profile->last_name_paternal;
-            $this->last_name_maternal = $user->profile->last_name_maternal;
-            $this->address = $user->profile->address;
-            $this->ubigeo_department = $user->profile->ubigeo_department;
-            $this->ubigeo_province = $user->profile->ubigeo_province;
-            $this->ubigeo_district = $user->profile->ubigeo_district;
+        $this->clave = '';
+        $this->rol_id = $user->rol_id;
+
+        if ($user->perfil) {
+            $this->profileId = $user->perfil->id;
+            $this->tipo_documento = $user->perfil->tipo_documento?->value;
+            $this->numero_documento = $user->perfil->numero_documento;
+            $this->nombres = $user->perfil->nombres;
+            $this->apellido_paterno = $user->perfil->apellido_paterno;
+            $this->apellido_materno = $user->perfil->apellido_materno;
+            $this->direccion = $user->perfil->direccion;
+            $this->ubigeo_departamento = $user->perfil->ubigeo_departamento;
+            $this->ubigeo_provincia = $user->perfil->ubigeo_provincia;
+            $this->ubigeo_distrito = $user->perfil->ubigeo_distrito;
         }
 
         $this->isOpen = true;
@@ -225,8 +217,8 @@ class UserManagement extends Component
 
     public function toggleStatus($id)
     {
-        $user = User::findOrFail($id);
-        $user->activo = !$user->activo;
+        $user = Usuario::findOrFail($id);
+        $user->activo = ! $user->activo;
         $user->save();
 
         $this->dispatch('swal', [
@@ -235,22 +227,26 @@ class UserManagement extends Component
             'text' => 'El estado del usuario se ha actualizado de forma exitosa.',
         ]);
     }
-#[Layout('components.app-layout')]
+
+    #[Layout('components.app-layout')]
     public function render()
     {
-        $users = User::with('profile')
+        $users = Usuario::with(['perfil', 'rol'])
             ->where(function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('email', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('profile', function ($q) {
-                        $q->where('document_number', 'like', '%' . $this->search . '%')
-                          ->orWhere('names', 'like', '%' . $this->search . '%')
-                          ->orWhere('last_name_paternal', 'like', '%' . $this->search . '%');
+                $query->where('usuario', 'ilike', '%' . $this->search . '%')
+                    ->orWhere('nombre', 'ilike', '%' . $this->search . '%')
+                    ->orWhere('correo_electronico', 'ilike', '%' . $this->search . '%')
+                    ->orWhereHas('perfil', function ($q) {
+                        $q->where('numero_documento', 'ilike', '%' . $this->search . '%')
+                            ->orWhere('nombres', 'ilike', '%' . $this->search . '%')
+                            ->orWhere('apellido_paterno', 'ilike', '%' . $this->search . '%');
                     });
             })
             ->orderBy('id', 'desc')
             ->paginate(10);
 
-        return view('livewire.user-management', compact('users'));
+        $roles = Rol::where('activo', true)->orderBy('nombre')->get();
+
+        return view('livewire.user-management', compact('users', 'roles'));
     }
 }

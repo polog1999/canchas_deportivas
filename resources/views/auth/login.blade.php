@@ -31,10 +31,10 @@
             <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-6">
                 @csrf
                 
-                <!-- Correo Electrónico -->
+                <!-- Usuario -->
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">
-                        Correo Electrónico
+                    <label for="usuario" class="block text-sm font-medium text-gray-700">
+                        Usuario
                     </label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -43,17 +43,17 @@
                             </svg>
                         </div>
                         <input 
-                            id="email" 
-                            name="email" 
+                            id="usuario" 
+                            name="usuario" 
                             type="text" 
-                            value="{{ old('email') }}"
+                            value="{{ old('usuario') }}"
                             required 
                             autofocus
-                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('email') border-red-300 focus:ring-red-500 focus:border-red-500 @enderror" 
-                            placeholder="ejemplo@correo.com"
+                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('usuario') border-red-300 focus:ring-red-500 focus:border-red-500 @enderror" 
+                            placeholder="tu_usuario"
                         >
                     </div>
-                    @error('email') 
+                    @error('usuario') 
                         <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
                     @enderror
                 </div>

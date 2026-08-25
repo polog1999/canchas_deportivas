@@ -6,26 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('schedules', function (Blueprint $table) {
+        Schema::create('horarios', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('court_id')->constrained()->onDelete('cascade');
-            $table->unsignedTinyInteger('day_of_week'); // 1 (Lunes) al 7 (Domingo)
-            $table->time('open_time');
-            $table->time('close_time');
-            $table->timestamps();
+            $table->foreignId('cancha_id')->constrained('canchas')->cascadeOnDelete();
+            $table->smallInteger('dia_semana');
+            $table->time('hora_apertura');
+            $table->time('hora_cierre');
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('schedules');
+        Schema::dropIfExists('horarios');
     }
 };

@@ -6,35 +6,24 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('bookings', function (Blueprint $table) {
+        Schema::create('reservas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained(); // Relación con tu tabla de usuarios/vecinos
-            $table->foreignId('court_id')->constrained();
-
-            $table->dateTime('start_time');
-            $table->dateTime('end_time');
-
-            $table->decimal('total_price', 8, 2);
-            $table->string('payment_reference')->nullable(); // Para el ID de transacción de Niubiz
-            $table->string('status')->default('pending');
-
-            $table->timestamps();
-
-            // Índice para optimizar la búsqueda de disponibilidad
-            $table->index(['facility_id', 'start_time', 'end_time']);
+            $table->foreignId('usuario_id')->constrained('usuarios');
+            $table->foreignId('cancha_id')->constrained('canchas');
+            $table->timestamp('hora_inicio');
+            $table->timestamp('hora_fin');
+            $table->decimal('precio_total', 8, 2);
+            $table->string('referencia_pago')->nullable();
+            $table->string('estado')->default('pendiente');
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('bookings');
+        Schema::dropIfExists('reservas');
     }
 };

@@ -8,7 +8,7 @@
 
     <title>
         Portal
-        {{ auth()->user()->getRoleNames()->first() === 'SUPERADMIN' ? 'Super Admin' : (auth()->user()->getRoleNames()->first() === 'ADMIN' ? 'Administrador' : 'Cliente') }}
+        {{ auth()->user()->rol?->nombre === 'admin' ? 'Administrador' : (auth()->user()->rol?->nombre ?? 'Usuario') }}
         | {{ $title ?? 'Alquiler de Canchas' }}
     </title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -118,44 +118,47 @@
                     @endactiveRole
 --}}
                     
-                    @can('canchas::ver')
-                        <div class="px-3 mt-6 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    {{-- Menús asignados al rol del usuario --}}
+                    @php
+                        $menusUsuario = auth()->user()->menusArbol();
+                    @endphp
+
+                    @if ($menusUsuario->isNotEmpty())
+                        <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                             Gestión Municipal
                         </div>
-                        <li>
-                            <a href="{{ route('courts.index') }}"
-                                class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('courts.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-id-card w-5 text-center text-emerald-500"></i> Canchas
-                            </a>
-                        </li>
-                    @endcan
-                    @can('sedes::ver')
-                        <li>
-                            <a href="{{ route('locations.index') }}"
-                                class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('locations.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-id-card w-5 text-center text-emerald-500"></i> Sedes
-                            </a>
-                        </li>
-                    @endcan
-                    @can('tusnes::ver')
-                        <li>
-                            <a href="{{ route('tusne.index') }}"
-                                class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('tusne.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-id-card w-5 text-center text-emerald-500"></i> Tusne
-                            </a>
-                        </li>
-                    @endcan
-                    @can('usuarios::ver')
-                        <div class="px-3 mt-6 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                            Ajustes de Usuario
-                        </div>
-                        <li>
-                            <a href="{{ route('users') }}"
-                                class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('users') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-id-card w-5 text-center text-emerald-500"></i> Usuarios
-                            </a>
-                        </li>
-                    @endcan
+                        @foreach ($menusUsuario as $menu)
+                            @if ($menu->hijos->isNotEmpty())
+                                <div class="px-4 py-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                    <i class="fa-solid {{ $menu->icono ?: 'fa-folder' }} mr-1 text-emerald-600"></i>
+                                    {{ $menu->nombre }}
+                                </div>
+                                @foreach ($menu->hijos as $hijo)
+                                    @if ($hijo->esEnlace())
+                                        <li>
+                                            <a href="{{ $hijo->url() }}"
+                                                class="flex items-center gap-3 px-4 py-2.5 pl-6 text-sm font-medium rounded-lg transition-colors {{ $hijo->estaActivo() ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                                                <i class="fa-solid {{ $hijo->icono ?: 'fa-circle' }} w-5 text-center text-emerald-500"></i>
+                                                {{ $hijo->nombre }}
+                                            </a>
+                                        </li>
+                                    @endif
+                                @endforeach
+                            @elseif ($menu->esEnlace())
+                                <li>
+                                    <a href="{{ $menu->url() }}"
+                                        class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ $menu->estaActivo() ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+                                        <i class="fa-solid {{ $menu->icono ?: 'fa-circle' }} w-5 text-center text-emerald-500"></i>
+                                        {{ $menu->nombre }}
+                                    </a>
+                                </li>
+                            @else
+                                <div class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                    {{ $menu->nombre }}
+                                </div>
+                            @endif
+                        @endforeach
+                    @endif
 
 
                 </ul>
@@ -318,6 +321,7 @@
     </script>
 
     @livewireScripts
+    @stack('scripts')
 </body>
 
 </html>

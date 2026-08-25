@@ -52,19 +52,19 @@
                                             <i class="fa-solid fa-location-dot"></i>
                                         </div>
                                         <div class="font-bold text-gray-900">
-                                            {{ $location->name }}
+                                            {{ $location->nombre }}
                                         </div>
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="text-gray-600 flex items-center gap-1.5">
                                         <i class="fa-solid fa-map-pin text-gray-400 text-xs"></i>
-                                        <span>{{ $location->address }}</span>
+                                        <span>{{ $location->direccion }}</span>
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
-                                    @if($location->link_maps)
-                                        <a href="{{ $location->link_maps }}" target="_blank" rel="noopener noreferrer"
+                                    @if($location->enlace_mapas)
+                                        <a href="{{ $location->enlace_mapas }}" target="_blank" rel="noopener noreferrer"
                                             class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1 rounded-md border border-emerald-100 transition-colors">
                                             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                                             Ver Mapa
@@ -75,9 +75,9 @@
                                 </td>
                                 <td class="py-4 px-6">
                                     <button wire:click="toggleStatus({{ $location->id }})"
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $location->is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                                        <span class="w-2 h-2 rounded-full mr-1.5 {{ $location->is_active ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
-                                        {{ $location->is_active ? 'Activo' : 'Inactivo' }}
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $location->esta_activo ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
+                                        <span class="w-2 h-2 rounded-full mr-1.5 {{ $location->esta_activo ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
+                                        {{ $location->esta_activo ? 'Activo' : 'Inactivo' }}
                                     </button>
                                 </td>
                                 <td class="py-4 px-6 text-center">
@@ -88,9 +88,9 @@
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         <button wire:click="toggleStatus({{ $location->id }})"
-                                            class="w-8 h-8 rounded-lg {{ $location->is_active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }} flex items-center justify-center transition-colors"
-                                            title="{{ $location->is_active ? 'Desactivar' : 'Activar' }}">
-                                            <i class="fa-solid {{ $location->is_active ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                            class="w-8 h-8 rounded-lg {{ $location->esta_activo ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }} flex items-center justify-center transition-colors"
+                                            title="{{ $location->esta_activo ? 'Desactivar' : 'Activar' }}">
+                                            <i class="fa-solid {{ $location->esta_activo ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -157,10 +157,10 @@
                             <!-- Nombre de la Sede -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Nombre de la Sede / Complejo <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="name"
-                                    class="w-full px-3 py-2 border @error('name') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                <input type="text" wire:model="nombre"
+                                    class="w-full px-3 py-2 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                     placeholder="Ej: Sede Norte - Los Jalapeños" />
-                                @error('name')
+                                @error('nombre')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -168,10 +168,10 @@
                             <!-- Dirección Física -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Dirección Exacta <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="address"
-                                    class="w-full px-3 py-2 border @error('address') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                <input type="text" wire:model="direccion"
+                                    class="w-full px-3 py-2 border @error('direccion') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                     placeholder="Ej: Av. La Molina 1230, La Molina" />
-                                @error('address')
+                                @error('direccion')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -179,11 +179,11 @@
                             <!-- Enlace Google Maps -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Enlace de Ubicación (Google Maps) <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="link_maps"
-                                    class="w-full px-3 py-2 border @error('link_maps') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                <input type="text" wire:model="enlace_mapas"
+                                    class="w-full px-3 py-2 border @error('enlace_mapas') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                     placeholder="Ej: https://maps.google.com/..." />
                                 <span class="text-[11px] text-gray-400 mt-0.5 block">Pegue el enlace compartido directamente desde Google Maps.</span>
-                                @error('link_maps')
+                                @error('enlace_mapas')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -191,7 +191,7 @@
                             <!-- Estado Activo -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Estado de Disponibilidad</label>
-                                <select wire:model="is_active"
+                                <select wire:model="esta_activo"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                     <option value="1">Habilitado (Disponible para reservas)</option>
                                     <option value="0">Inhabilitado (Ocultar)</option>

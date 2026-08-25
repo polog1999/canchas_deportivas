@@ -6,40 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('tusne_catalogs', function (Blueprint $table) {
+        Schema::create('catalogos_tusne', function (Blueprint $table) {
             $table->id();
-            $table->string('tusne_group'); // Código de grupo en Oracle (Ej: '04')
-            $table->string('tusne_code');  // Código del servicio en Oracle (Ej: '0125')
-            $table->string('local_description'); // Nombre limpio para la Web / Panel
-            
-            // Banderas lógicas del paquete cerrado que cobra este TUSNE:
-            $table->boolean('includes_dressing_rooms')->default(false); // ¿Incluye camerinos?
-            $table->boolean('includes_stands')->default(false);         // ¿Incluye tribuna?
-            $table->boolean('includes_goals_f11')->default(false);      // ¿Incluye arcos/división fútbol 11?
-            $table->boolean('has_gate_revenue')->default(false);        // ¿Es con taquilla?
-            
-            // Filtros de ayuda para tu buscador backend
-            $table->string('time_modifier')->default('none'); // 'day', 'night', 'none'
-            $table->string('client_type')->default('general'); // 'vecino', 'no_vecino', 'general'
-            
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-            
-            // Índice único para evitar duplicar la misma combinación de Oracle
-            $table->unique(['tusne_group', 'tusne_code']);
+            $table->string('grupo_tusne');
+            $table->string('codigo_tusne');
+            $table->string('descripcion_local');
+            $table->boolean('incluye_camerinos')->default(false);
+            $table->boolean('incluye_tribunas')->default(false);
+            $table->boolean('incluye_arcos_f11')->default(false);
+            $table->boolean('tiene_recaudacion_taquilla')->default(false);
+            $table->string('modificador_tiempo')->default('ninguno');
+            $table->string('tipo_cliente')->default('general');
+            $table->boolean('esta_activo')->default(true);
+            $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('actualizado_en')->useCurrent();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('tusne_catalogs');
+        Schema::dropIfExists('catalogos_tusne');
     }
 };

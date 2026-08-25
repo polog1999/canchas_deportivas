@@ -2,26 +2,24 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Sede;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Location;
-use Livewire\Attributes\Layout;
 
 class LocationManager extends Component
 {
     use WithPagination;
 
-    // Propiedades de Filtro y Navegación
     public $search = '';
     public $isOpen = false;
     public $isEditMode = false;
     public $locationId;
 
-    // Propiedades del Formulario
-    public $name = '';
-    public $address = '';
-    public $link_maps = '';
-    public $is_active = true;
+    public $nombre = '';
+    public $direccion = '';
+    public $enlace_mapas = '';
+    public $esta_activo = true;
 
     public function updatingSearch()
     {
@@ -31,31 +29,32 @@ class LocationManager extends Component
     protected function rules()
     {
         return [
-            'name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'link_maps' => 'required|string|max:500',
-            'is_active' => 'required|boolean',
+            'nombre' => 'required|string|max:255',
+            'direccion' => 'required|string|max:255',
+            'enlace_mapas' => 'required|string|max:500',
+            'esta_activo' => 'required|boolean',
         ];
     }
 
     protected $messages = [
-        'name.required' => 'El nombre de la sede es obligatorio.',
-        'address.required' => 'La dirección física es obligatoria.',
-        'link_maps.required' => 'El enlace de Google Maps es obligatorio.',
+        'nombre.required' => 'El nombre de la sede es obligatorio.',
+        'direccion.required' => 'La dirección física es obligatoria.',
+        'enlace_mapas.required' => 'El enlace de Google Maps es obligatorio.',
     ];
+
     #[Layout('components.app-layout')]
     public function render()
     {
-        $locations = Location::query()
+        $locations = Sede::query()
             ->where(function ($query) {
-                $query->where('name', 'ilike', '%' . $this->search . '%')
-                    ->orWhere('address', 'ilike', '%' . $this->search . '%');
+                $query->where('nombre', 'ilike', '%' . $this->search . '%')
+                    ->orWhere('direccion', 'ilike', '%' . $this->search . '%');
             })
-            ->orderBy('name', 'asc')
+            ->orderBy('nombre', 'asc')
             ->paginate(10);
 
         return view('livewire.admin.location-manager', [
-            'locations' => $locations
+            'locations' => $locations,
         ]);
     }
 
@@ -75,10 +74,10 @@ class LocationManager extends Component
     {
         $this->locationId = null;
         $this->isEditMode = false;
-        $this->name = '';
-        $this->address = '';
-        $this->link_maps = '';
-        $this->is_active = true;
+        $this->nombre = '';
+        $this->direccion = '';
+        $this->enlace_mapas = '';
+        $this->esta_activo = true;
         $this->resetValidation();
     }
 
@@ -86,7 +85,7 @@ class LocationManager extends Component
     {
         $validatedData = $this->validate();
 
-        Location::updateOrCreate(
+        Sede::updateOrCreate(
             ['id' => $this->locationId],
             $validatedData
         );
@@ -94,7 +93,7 @@ class LocationManager extends Component
         $this->dispatch('swal', [
             'icon' => 'success',
             'title' => $this->isEditMode ? 'Sede Actualizada' : 'Sede Registrada',
-            'text' => 'La información de la sede se ha guardado correctamente.'
+            'text' => 'La información de la sede se ha guardado correctamente.',
         ]);
 
         $this->closeModal();
@@ -106,26 +105,26 @@ class LocationManager extends Component
         $this->isEditMode = true;
         $this->locationId = $id;
 
-        $location = Location::findOrFail($id);
+        $location = Sede::findOrFail($id);
 
-        $this->name = $location->name;
-        $this->address = $location->address;
-        $this->link_maps = $location->link_maps;
-        $this->is_active = (bool)$location->is_active;
+        $this->nombre = $location->nombre;
+        $this->direccion = $location->direccion;
+        $this->enlace_mapas = $location->enlace_mapas;
+        $this->esta_activo = (bool) $location->esta_activo;
 
         $this->isOpen = true;
     }
 
     public function toggleStatus($id)
     {
-        $location = Location::findOrFail($id);
-        $location->is_active = !$location->is_active;
+        $location = Sede::findOrFail($id);
+        $location->esta_activo = ! $location->esta_activo;
         $location->save();
 
         $this->dispatch('swal', [
             'icon' => 'success',
             'title' => 'Estado Modificado',
-            'text' => 'El estado de la sede ha sido actualizado con éxito.'
+            'text' => 'El estado de la sede ha sido actualizado con éxito.',
         ]);
     }
 }

@@ -1,59 +1,88 @@
 <?php
 
-namespace Database\Seeders; // <--- ¡Asegúrate de que esta línea exista!
+namespace Database\Seeders;
 
-use App\Enums\UserRole;
-use App\Models\User;
+use App\Models\Menu;
+use App\Models\Rol;
+use App\Models\Usuario;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Limpiar caché de Spatie (Muy importante para evitar conflictos)
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-
-        // 2. Crear los Permisos (Acciones específicas de tu app de Canchas)
-        // Permission::create(['name' => 'ver canchas']);
-        // Permission::create(['name' => 'crear canchas']);
-        // Permission::create(['name' => 'editar canchas']);
-        // Permission::create(['name' => 'eliminar canchas']);
-        // Permission::create(['name' => 'ver reportes pagos']);
-        Permission::firstOrCreate(['name' => 'usuarios::crear']);
-        Permission::firstOrCreate(['name' => 'usuarios::editar']);
-        Permission::firstOrCreate(['name' => 'usuarios::ver']);
-        Permission::firstOrCreate(['name' => 'usuarios::eliminar']);
-        Permission::firstOrCreate(['name' => 'tusnes::ver']);
-        Permission::firstOrCreate(['name' => 'sedes::ver']);
-        Permission::firstOrCreate(['name' => 'canchas::ver']);
-        
-
-        $superAdminRole = Role::firstOrCreate(['name' => UserRole::SUPERADMIN]);
-        $adminRole = Role::firstOrCreate(['name' => UserRole::ADMIN]);
-        $clienteRole = Role::firstOrCreate(['name' => UserRole::CLIENTE]);
-        // 4. Asignar Permisos a los Roles
-        // El ADMIN puede hacer de todo con las canchas, pero no ver reportes de dinero
-        $superAdminRole->givePermissionTo(['usuarios::crear', 'usuarios::editar', 'usuarios::ver','usuarios::eliminar', 'tusnes::ver', 'sedes::ver', 'canchas::ver']);
-
-        // El CLIENTE solo puede ver las canchas
-        // $cliente->givePermissionTo(['ver canchas']);
-
-        // El SUPERADMIN obtiene absolutamente todos los permisos automáticamente
-        // (Spatie permite darle todo usando la sincronización)
-        // $superAdmin->givePermissionTo(Permission::all());
-
-
-
-        $admin = User::updateOrCreate(
-            ['email' => 'test@example.com'],
+        $rolAdmin = Rol::firstOrCreate(
+            ['nombre' => 'admin'],
             [
-            'name' => 'Test User',
-            
-            'password' => Hash::make('password'),
-        ]);
-        $admin->assignRole($superAdminRole); // El usuario ahora es administrador
+                'descripcion' => 'Administrador del sistema',
+                'activo' => true,
+            ]
+        );
+
+        $menus = [
+            [
+                'nombre' => 'Canchas',
+                'ruta' => '/portal/courts',
+                'icono' => 'fa-futbol',
+                'orden' => 1,
+            ],
+            [
+                'nombre' => 'Sedes',
+                'ruta' => '/portal/locations',
+                'icono' => 'fa-location-dot',
+                'orden' => 2,
+            ],
+            [
+                'nombre' => 'Tusne',
+                'ruta' => '/portal/tusne-catalog',
+                'icono' => 'fa-list',
+                'orden' => 3,
+            ],
+            [
+                'nombre' => 'Usuarios',
+                'ruta' => '/portal/users',
+                'icono' => 'fa-users',
+                'orden' => 4,
+            ],
+            [
+                'nombre' => 'Roles y Menús',
+                'ruta' => '/portal/roles-menus',
+                'icono' => 'fa-shield',
+                'orden' => 5,
+            ],
+            [
+                'nombre' => 'Estructura de Menús',
+                'ruta' => '/portal/menus',
+                'icono' => 'fa-sitemap',
+                'orden' => 6,
+            ],
+        ];
+
+        $menuIds = [];
+        foreach ($menus as $menuData) {
+            $menu = Menu::updateOrCreate(
+                ['nombre' => $menuData['nombre']],
+                [
+                    'ruta' => $menuData['ruta'],
+                    'icono' => $menuData['icono'],
+                    'orden' => $menuData['orden'],
+                    'activo' => true,
+                ]
+            );
+            $menuIds[] = $menu->id;
+        }
+
+        $rolAdmin->menus()->sync($menuIds);
+
+        Usuario::updateOrCreate(
+            ['usuario' => 'admin'],
+            [
+                'rol_id' => $rolAdmin->id,
+                'nombre' => 'Administrador',
+                'correo_electronico' => 'admin@gmail.com',
+                'clave' => 'password',
+                'activo' => true,
+            ]
+        );
     }
 }
