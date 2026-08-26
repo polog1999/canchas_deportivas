@@ -36,7 +36,7 @@
                     class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">
                     <option value="">Todas las Sedes</option>
                     @foreach($locations as $loc)
-                        <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                        <option value="{{ $loc->id }}">{{ $loc->nombre }}</option>
                     @endforeach
                 </select>
 
@@ -77,7 +77,7 @@
                                             <i class="fa-solid {{ $court->type ? $court->type->icon() : 'fa-trophy' }}"></i>
                                         </div>
                                         <div>
-                                            <div class="font-bold text-gray-900">{{ $court->name }}</div>
+                                            <div class="font-bold text-gray-900">{{ $court->nombre }}</div>
                                             <span class="text-[11px] text-gray-400">ID: #{{ $court->id }}</span>
                                         </div>
                                     </div>
@@ -85,10 +85,10 @@
                                 <td class="py-4 px-6">
                                     <div class="flex items-center gap-1.5 font-medium text-gray-800">
                                         <i class="fa-solid fa-location-dot text-emerald-600 text-xs"></i>
-                                        <span>{{ $court->location->name ?? 'Sin Sede' }}</span>
+                                        <span>{{ $court->sede->nombre ?? 'Sin Sede' }}</span>
                                     </div>
                                     <span class="text-xs text-gray-400 block mt-0.5 truncate max-w-xs">
-                                        {{ $court->location->address ?? '' }}
+                                        {{ $court->sede->direccion ?? '' }}
                                     </span>
                                 </td>
                                 <td class="py-4 px-6">
@@ -99,9 +99,9 @@
                                 </td>
                                 <td class="py-4 px-6">
                                     <button wire:click="toggleStatus({{ $court->id }})"
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $court->is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                                        <span class="w-2 h-2 rounded-full mr-1.5 {{ $court->is_active ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
-                                        {{ $court->is_active ? 'Activo' : 'Inactivo' }}
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $court->esta_activo ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
+                                        <span class="w-2 h-2 rounded-full mr-1.5 {{ $court->esta_activo ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
+                                        {{ $court->esta_activo ? 'Activo' : 'Inactivo' }}
                                     </button>
                                 </td>
                                 <td class="py-4 px-6 text-center">
@@ -112,9 +112,9 @@
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         <button wire:click="toggleStatus({{ $court->id }})"
-                                            class="w-8 h-8 rounded-lg {{ $court->is_active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }} flex items-center justify-center transition-colors"
-                                            title="{{ $court->is_active ? 'Desactivar' : 'Activar' }}">
-                                            <i class="fa-solid {{ $court->is_active ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                            class="w-8 h-8 rounded-lg {{ $court->esta_activo ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }} flex items-center justify-center transition-colors"
+                                            title="{{ $court->esta_activo ? 'Desactivar' : 'Activar' }}">
+                                            <i class="fa-solid {{ $court->esta_activo ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -177,14 +177,14 @@
                             <!-- Sede a la que pertenece -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Sede / Complejo Deportivo <span class="text-red-500">*</span></label>
-                                <select wire:model="location_id"
-                                    class="w-full px-3 py-2 border @error('location_id') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                                <select wire:model="sede_id"
+                                    class="w-full px-3 py-2 border @error('sede_id') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                     <option value="">-- Seleccione la Sede --</option>
                                     @foreach($locations as $loc)
-                                        <option value="{{ $loc->id }}">{{ $loc->name }} - {{ $loc->address }}</option>
+                                        <option value="{{ $loc->id }}">{{ $loc->nombre }} - {{ $loc->direccion }}</option>
                                     @endforeach
                                 </select>
-                                @error('location_id')
+                                @error('sede_id')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -192,10 +192,10 @@
                             <!-- Nombre de la Cancha -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Nombre del Espacio / Campo <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="name"
-                                    class="w-full px-3 py-2 border @error('name') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                <input type="text" wire:model="nombre"
+                                    class="w-full px-3 py-2 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                     placeholder="Ej: Cancha Principal de Gras Sintético N° 1" />
-                                @error('name')
+                                @error('nombre')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -203,14 +203,14 @@
                             <!-- Tipo de Deporte / Disciplina -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Disciplina / Deporte <span class="text-red-500">*</span></label>
-                                <select wire:model="type"
-                                    class="w-full px-3 py-2 border @error('type') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                                <select wire:model="tipo"
+                                    class="w-full px-3 py-2 border @error('tipo') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                     <option value="">-- Seleccione la Disciplina --</option>
                                     @foreach($courtTypes as $courtType)
                                         <option value="{{ $courtType->value }}">{{ $courtType->value }}</option>
                                     @endforeach
                                 </select>
-                                @error('type')
+                                @error('tipo')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -218,14 +218,14 @@
                              <!-- Sede a la que pertenece -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Tusne <span class="text-red-500">*</span></label>
-                                <select wire:model="tusne_catalog_id"
-                                    class="w-full px-3 py-2 border @error('location_id') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                                <select wire:model="catalogo_tusne_id"
+                                    class="w-full px-3 py-2 border @error('sede_id') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                     <option value="">-- Seleccione la Tusne --</option>
                                     @foreach($tusnes as $t)
-                                        <option value="{{ $t->id }}">{{ $t->local_description }}</option>
+                                        <option value="{{ $t->id }}">{{ $t->descripcion_local }}</option>
                                     @endforeach
                                 </select>
-                                @error('location_id')
+                                @error('sede_id')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -233,7 +233,7 @@
                             <!-- Estado -->
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Estado de Disponibilidad</label>
-                                <select wire:model="is_active"
+                                <select wire:model="esta_activo"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                     <option value="1">Habilitado (Disponible para reservas)</option>
                                     <option value="0">Inhabilitado (Ocultar)</option>

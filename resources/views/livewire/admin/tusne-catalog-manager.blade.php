@@ -54,45 +54,45 @@
                                     <div class="flex items-center gap-2">
                                         <span
                                             class="bg-emerald-50 text-emerald-800 text-xs px-2.5 py-1 rounded-md font-bold border border-emerald-100">
-                                            G: {{ $catalog->tusne_group }}
+                                            G: {{ $catalog->grupo_tusne }}
                                         </span>
                                         <span
                                             class="bg-slate-100 text-slate-800 text-xs px-2.5 py-1 rounded-md font-bold border border-slate-200">
-                                            Cod: {{ $catalog->tusne_code }}
+                                            Cod: {{ $catalog->codigo_tusne }}
                                         </span>
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="font-semibold text-gray-900 max-w-xs md:max-w-md truncate"
-                                        title="{{ $catalog->local_description }}">
-                                        {{ $catalog->local_description }}
+                                        title="{{ $catalog->descripcion_local }}">
+                                        {{ $catalog->descripcion_local }}
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="flex flex-wrap gap-1">
-                                        @if ($catalog->includes_dressing_rooms)
+                                        @if ($catalog->incluye_camerinos)
                                             <span
                                                 class="bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-medium border border-blue-100">Camerino</span>
                                         @endif
-                                        @if ($catalog->includes_stands)
+                                        @if ($catalog->incluye_tribunas)
                                             <span
                                                 class="bg-indigo-50 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-medium border border-indigo-100">Tribuna</span>
                                         @endif
-                                        @if ($catalog->includes_goals_f11)
+                                        @if ($catalog->incluye_arcos_f11)
                                             <span
                                                 class="bg-purple-50 text-purple-700 text-[10px] px-2 py-0.5 rounded-full font-medium border border-purple-100">Fútbol
                                                 11</span>
                                         @endif
-                                        @if ($catalog->has_gate_revenue)
+                                        @if ($catalog->tiene_recaudacion_taquilla)
                                             <span
                                                 class="bg-amber-50 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-medium border border-amber-100">Taquilla
                                                 / Boleto</span>
                                         @endif
                                         @if (
-                                            !$catalog->includes_dressing_rooms &&
-                                                !$catalog->includes_stands &&
-                                                !$catalog->includes_goals_f11 &&
-                                                !$catalog->has_gate_revenue)
+                                            !$catalog->incluye_camerinos &&
+                                                !$catalog->incluye_tribunas &&
+                                                !$catalog->incluye_arcos_f11 &&
+                                                !$catalog->tiene_recaudacion_taquilla)
                                             <span class="text-gray-400 italic text-xs">Sin agregados</span>
                                         @endif
                                     </div>
@@ -100,19 +100,19 @@
                                 <td class="py-4 px-6">
                                     <div class="text-xs space-y-1">
                                         <div><span class="font-semibold text-gray-500">Horario:</span>
-                                            {{ $catalog->time_modifier === 'day' ? 'Diurno' : ($catalog->time_modifier === 'night' ? 'Nocturno' : 'Normal') }}
+                                            {{ $catalog->modificador_tiempo === 'dia' ? 'Diurno' : ($catalog->modificador_tiempo === 'noche' ? 'Nocturno' : 'Normal') }}
                                         </div>
                                         <div><span class="font-semibold text-gray-500">Público:</span>
-                                            {{ $catalog->client_type === 'vecino' ? 'Vecino de La Molina' : ($catalog->client_type === 'no_vecino' ? 'No Vecino' : 'General') }}
+                                            {{ $catalog->tipo_cliente === 'vecino' ? 'Vecino de La Molina' : ($catalog->tipo_cliente === 'no_vecino' ? 'No Vecino' : 'General') }}
                                         </div>
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
                                     <button wire:click="toggleStatus({{ $catalog->id }})"
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $catalog->is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $catalog->esta_activo ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
                                         <span
-                                            class="w-2 h-2 rounded-full mr-1.5 {{ $catalog->is_active ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
-                                        {{ $catalog->is_active ? 'Activo' : 'Inactivo' }}
+                                            class="w-2 h-2 rounded-full mr-1.5 {{ $catalog->esta_activo ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
+                                        {{ $catalog->esta_activo ? 'Activo' : 'Inactivo' }}
                                     </button>
                                 </td>
                                 <td class="py-4 px-6 text-center">
@@ -123,10 +123,10 @@
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         <button wire:click="toggleStatus({{ $catalog->id }})"
-                                            class="w-8 h-8 rounded-lg {{ $catalog->is_active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }} flex items-center justify-center transition-colors"
-                                            title="{{ $catalog->is_active ? 'Desactivar' : 'Activar' }}">
+                                            class="w-8 h-8 rounded-lg {{ $catalog->esta_activo ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }} flex items-center justify-center transition-colors"
+                                            title="{{ $catalog->esta_activo ? 'Desactivar' : 'Activar' }}">
                                             <i
-                                                class="fa-solid {{ $catalog->is_active ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                                class="fa-solid {{ $catalog->esta_activo ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -201,10 +201,10 @@
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Código de Grupo
                                             <span class="text-red-500">*</span></label>
-                                        <input type="text" wire:model="tusne_group"
-                                            class="w-full px-3 py-2 border @error('tusne_group') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                        <input type="text" wire:model="grupo_tusne"
+                                            class="w-full px-3 py-2 border @error('grupo_tusne') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                             placeholder="Ej: 23" disabled/>
-                                        @error('tusne_group')
+                                        @error('grupo_tusne')
                                             <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
@@ -213,8 +213,8 @@
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Código de
                                             Servicio <span class="text-red-500">*</span></label>
                                         <div class="flex gap-2">
-                                            <input type="text" wire:model="tusne_code"
-                                                class="flex-grow px-3 py-2 border @error('tusne_code') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                            <input type="text" wire:model="codigo_tusne"
+                                                class="flex-grow px-3 py-2 border @error('codigo_tusne') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                                 placeholder="Ej: 0125" />
 
                                             <!-- Botón Lupa de Consulta en Oracle -->
@@ -229,17 +229,17 @@
                                                     class="fa-solid fa-spinner animate-spin"></i>
                                             </button>
                                         </div>
-                                        @error('tusne_code')
+                                        @error('codigo_tusne')
                                             <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
 
                                     <div class="md:col-span-2">
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Descripción Local <span class="text-red-500">*</span></label>
-                                        <input type="text" wire:model="local_description"
-                                            class="w-full px-3 py-2 border @error('local_description') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                                        <input type="text" wire:model="descripcion_local"
+                                            class="w-full px-3 py-2 border @error('descripcion_local') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                             placeholder="Ej: Cancha Sintética Fútbol 11 - Turno Noche con Camerino" disabled />
-                                        @error('local_description')
+                                        @error('descripcion_local')
                                             <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
@@ -256,18 +256,18 @@
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Modificador
                                             Horario</label>
-                                        <select wire:model="time_modifier"
+                                        <select wire:model="modificador_tiempo"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
-                                            <option value="none">Normal / Sin Modificador</option>
-                                            <option value="day">Diurno (Luz Natural)</option>
-                                            <option value="night">Nocturno (Luz Artificial)</option>
+                                            <option value="ninguno">Normal / Sin Modificador</option>
+                                            <option value="dia">Diurno (Luz Natural)</option>
+                                            <option value="noche">Nocturno (Luz Artificial)</option>
                                         </select>
                                     </div>
 
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Tipo de
                                             Cliente</label>
-                                        <select wire:model="client_type"
+                                        <select wire:model="tipo_cliente"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                             <option value="general">Público General</option>
                                             <option value="vecino">Vecino Exclusivo (La Molina)</option>
@@ -278,7 +278,7 @@
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Habilitar
                                             Concepto</label>
-                                        <select wire:model="is_active"
+                                        <select wire:model="esta_activo"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
                                             <option value="1">Activo (Visible para Reservas)</option>
                                             <option value="0">Inactivo (Ocultar)</option>
@@ -299,7 +299,7 @@
                                     <label
                                         class="relative flex items-start p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition">
                                         <div class="flex items-center h-5">
-                                            <input type="checkbox" wire:model="includes_dressing_rooms"
+                                            <input type="checkbox" wire:model="incluye_camerinos"
                                                 class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
                                         </div>
                                         <div class="ml-3 text-xs">
@@ -312,7 +312,7 @@
                                     <label
                                         class="relative flex items-start p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition">
                                         <div class="flex items-center h-5">
-                                            <input type="checkbox" wire:model="includes_stands"
+                                            <input type="checkbox" wire:model="incluye_tribunas"
                                                 class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
                                         </div>
                                         <div class="ml-3 text-xs">
@@ -325,7 +325,7 @@
                                     <label
                                         class="relative flex items-start p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition">
                                         <div class="flex items-center h-5">
-                                            <input type="checkbox" wire:model="includes_goals_f11"
+                                            <input type="checkbox" wire:model="incluye_arcos_f11"
                                                 class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
                                         </div>
                                         <div class="ml-3 text-xs">
@@ -338,7 +338,7 @@
                                     <label
                                         class="relative flex items-start p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition">
                                         <div class="flex items-center h-5">
-                                            <input type="checkbox" wire:model="has_gate_revenue"
+                                            <input type="checkbox" wire:model="tiene_recaudacion_taquilla"
                                                 class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
                                         </div>
                                         <div class="ml-3 text-xs">
