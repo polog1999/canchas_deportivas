@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\CourtManager;
+use App\Livewire\Admin\DeporteManager;
 use App\Livewire\Admin\LocationManager;
 use App\Livewire\Admin\MenuStructureManager;
 use App\Livewire\Admin\RoleMenuManager;
@@ -72,6 +73,7 @@ Route::get('/reservar/deporte', function (\Illuminate\Http\Request $request) {
             return [
                 'id' => $deporte->id,
                 'nombre' => $deporte->nombre,
+                'imagen_url' => $deporte->urlImagen(),
                 'canchas' => $rows->count(),
                 'precioDesde' => $precios->isNotEmpty() ? (float) $precios->min() : 0,
             ];
@@ -145,8 +147,7 @@ Route::get('/reservar/turno', function (\Illuminate\Http\Request $request) {
         'canchas' => $sede->canchas->map(fn ($c) => [
             'id' => $c->id,
             'nombre' => $c->nombre,
-            'detalle' => $c->deportes->pluck('nombre')->implode(' · ')
-                ?: (string) ($c->getAttributes()['tipo'] ?? 'Cancha'),
+            'detalle' => $c->deportes->pluck('nombre')->implode(' · ') ?: 'Cancha',
             'deporte_ids' => $c->deportes->pluck('id')->values(),
             'precio' => (float) $c->precio_por_hora,
             'ocupados' => $ocupadosPorCancha[$c->id] ?? [],
@@ -240,7 +241,11 @@ if (! function_exists('ocupacionReservasPorCancha')) {
 }
 
 Route::get('/reservar/confirmar', function () {
-    return view('reservar-confirmar');
+    $distritos = \App\Models\Distrito::query()
+        ->orderBy('nombre')
+        ->get(['id', 'nombre']);
+
+    return view('reservar-confirmar', compact('distritos'));
 })->name('reservar.confirmar');
 
 Route::get('/reservar/buscar-documento', function (\Illuminate\Http\Request $request) {
@@ -345,6 +350,10 @@ Route::middleware(['auth'])->prefix('portal')->group(function () {
     Route::get('/courts', CourtManager::class)
         ->middleware('permission:/portal/courts')
         ->name('courts.index');
+
+    Route::get('/deportes', DeporteManager::class)
+        ->middleware('permission:/portal/deportes')
+        ->name('deportes.index');
 
     Route::get('/roles-menus', RoleMenuManager::class)
         ->middleware('permission:/portal/roles-menus')

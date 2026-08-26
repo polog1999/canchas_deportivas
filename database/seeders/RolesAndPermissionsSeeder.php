@@ -33,28 +33,34 @@ class RolesAndPermissionsSeeder extends Seeder
                 'orden' => 2,
             ],
             [
+                'nombre' => 'Deportes',
+                'ruta' => '/portal/deportes',
+                'icono' => 'fa-medal',
+                'orden' => 3,
+            ],
+            [
                 'nombre' => 'Tusne',
                 'ruta' => '/portal/tusne-catalog',
                 'icono' => 'fa-list',
-                'orden' => 3,
+                'orden' => 4,
             ],
             [
                 'nombre' => 'Usuarios',
                 'ruta' => '/portal/users',
                 'icono' => 'fa-users',
-                'orden' => 4,
+                'orden' => 5,
             ],
             [
                 'nombre' => 'Roles y Menús',
                 'ruta' => '/portal/roles-menus',
                 'icono' => 'fa-shield',
-                'orden' => 5,
+                'orden' => 6,
             ],
             [
                 'nombre' => 'Estructura de Menús',
                 'ruta' => '/portal/menus',
                 'icono' => 'fa-sitemap',
-                'orden' => 6,
+                'orden' => 7,
             ],
         ];
 

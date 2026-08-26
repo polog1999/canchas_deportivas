@@ -48,9 +48,14 @@
                             <tr class="hover:bg-gray-50/70 transition-colors">
                                 <td class="py-4 px-6">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-base">
-                                            <i class="fa-solid fa-location-dot"></i>
-                                        </div>
+                                        @if ($location->imagen)
+                                            <img src="{{ $location->urlImagen() }}" alt="{{ $location->nombre }}"
+                                                class="w-12 h-12 rounded-lg object-cover border border-gray-100">
+                                        @else
+                                            <div class="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-base">
+                                                <i class="fa-solid fa-location-dot"></i>
+                                            </div>
+                                        @endif
                                         <div class="font-bold text-gray-900">
                                             {{ $location->nombre }}
                                         </div>
@@ -186,6 +191,62 @@
                                 @error('enlace_mapas')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
+                            </div>
+
+                            <!-- Imagen de la sede -->
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Imagen de la sede</label>
+                                <div class="flex flex-col sm:flex-row gap-4 items-start">
+                                    <div class="w-28 h-20 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center">
+                                        @if ($imagenNueva)
+                                            <img src="{{ $imagenNueva->temporaryUrl() }}" alt="Vista previa"
+                                                class="w-full h-full object-cover">
+                                        @elseif ($imagenActual)
+                                            <img src="{{ asset('imagenes/sedes/' . $imagenActual) }}" alt="Imagen actual"
+                                                class="w-full h-full object-cover"
+                                                onerror="this.onerror=null;this.src='{{ asset('sedes/' . $imagenActual) }}'">
+                                        @else
+                                            <i class="fa-regular fa-image text-gray-300 text-xl"></i>
+                                        @endif
+                                    </div>
+                                    <div class="flex-1 w-full space-y-2">
+                                        <input type="file" wire:model="imagenNueva" accept="image/*"
+                                            class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                                        <p class="text-[11px] text-gray-400">JPG, PNG o WEBP · máx. 4 MB · se guarda en <code>public/imagenes/sedes/</code></p>
+                                        <div wire:loading wire:target="imagenNueva" class="text-xs text-emerald-600">
+                                            <i class="fa-solid fa-spinner animate-spin mr-1"></i> Subiendo vista previa...
+                                        </div>
+                                        @if ($imagenNueva)
+                                            <button type="button" wire:click="removeImagenNueva"
+                                                class="text-xs font-semibold text-red-600 hover:underline">
+                                                Quitar imagen seleccionada
+                                            </button>
+                                        @endif
+                                        @error('imagenNueva')
+                                            <span class="text-xs text-red-500 block">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Horario de atención -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Hora inicio <span class="text-red-500">*</span></label>
+                                    <input type="time" wire:model="hora_inicio"
+                                        class="w-full px-3 py-2 border @error('hora_inicio') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500" />
+                                    @error('hora_inicio')
+                                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Hora fin <span class="text-red-500">*</span></label>
+                                    <input type="time" wire:model="hora_fin"
+                                        class="w-full px-3 py-2 border @error('hora_fin') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500" />
+                                    @error('hora_fin')
+                                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                                    @enderror
+                                </div>
                             </div>
 
                             <!-- Estado Activo -->

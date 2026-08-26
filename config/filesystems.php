@@ -47,6 +47,24 @@ return [
             'report' => false,
         ],
 
+        'sedes' => [
+            'driver' => 'local',
+            'root' => public_path('imagenes/sedes'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/imagenes/sedes',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'deportes' => [
+            'driver' => 'local',
+            'root' => public_path('imagenes/deportes'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/imagenes/deportes',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

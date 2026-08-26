@@ -2,12 +2,11 @@
 
 namespace App\Livewire\Admin;
 
-use App\Enums\CourtType;
 use App\Models\Cancha;
 use App\Models\CanchaTusne;
 use App\Models\CatalogoTusne;
+use App\Models\Deporte;
 use App\Models\Sede;
-use Illuminate\Validation\Rules\Enum;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -18,7 +17,7 @@ class CourtManager extends Component
 
     public $search = '';
     public $selectedLocationFilter = '';
-    public $selectedTypeFilter = '';
+    public $selectedDeporteFilter = '';
 
     public $isOpen = false;
     public $isEditMode = false;
@@ -27,7 +26,8 @@ class CourtManager extends Component
     public $catalogo_tusne_id;
     public $sede_id = '';
     public $nombre = '';
-    public $tipo = '';
+    /** @var array<int|string> */
+    public $deporte_ids = [];
     public $precio_por_hora = 0;
     public $esta_activo = true;
 
@@ -41,7 +41,7 @@ class CourtManager extends Component
         $this->resetPage();
     }
 
-    public function updatingSelectedTypeFilter()
+    public function updatingSelectedDeporteFilter()
     {
         $this->resetPage();
     }
@@ -52,7 +52,8 @@ class CourtManager extends Component
             'catalogo_tusne_id' => 'required|exists:catalogos_tusne,id',
             'sede_id' => 'required|exists:sedes,id',
             'nombre' => 'required|string|max:255',
-            'tipo' => ['required', new Enum(CourtType::class)],
+            'deporte_ids' => 'required|array|min:1',
+            'deporte_ids.*' => 'integer|exists:deportes,id',
             'precio_por_hora' => 'nullable|numeric|min:0',
             'esta_activo' => 'required|boolean',
         ];
@@ -62,7 +63,8 @@ class CourtManager extends Component
         'sede_id.required' => 'Debe seleccionar la sede a la que pertenece la cancha.',
         'sede_id.exists' => 'La sede seleccionada no es válida.',
         'nombre.required' => 'El nombre de la cancha es obligatorio.',
-        'tipo.required' => 'Debe seleccionar el tipo de deporte/disciplina.',
+        'deporte_ids.required' => 'Debe seleccionar al menos un deporte.',
+        'deporte_ids.min' => 'Debe seleccionar al menos un deporte.',
         'catalogo_tusne_id.required' => 'Debe seleccionar un código TUSNE.',
     ];
 
@@ -71,8 +73,9 @@ class CourtManager extends Component
     {
         $tusnes = CatalogoTusne::where('esta_activo', true)->get();
         $locations = Sede::where('esta_activo', true)->orderBy('nombre', 'asc')->get();
+        $deportes = Deporte::query()->orderBy('nombre')->get(['id', 'nombre']);
 
-        $courts = Cancha::with(['sede', 'canchasTusne'])
+        $courts = Cancha::with(['sede', 'canchasTusne', 'deportes'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nombre', 'ilike', '%' . $this->search . '%')
@@ -84,8 +87,8 @@ class CourtManager extends Component
             ->when($this->selectedLocationFilter, function ($query) {
                 $query->where('sede_id', $this->selectedLocationFilter);
             })
-            ->when($this->selectedTypeFilter, function ($query) {
-                $query->where('tipo', $this->selectedTypeFilter);
+            ->when($this->selectedDeporteFilter, function ($query) {
+                $query->whereHas('deportes', fn ($d) => $d->where('deportes.id', $this->selectedDeporteFilter));
             })
             ->orderBy('sede_id', 'asc')
             ->orderBy('nombre', 'asc')
@@ -94,7 +97,7 @@ class CourtManager extends Component
         return view('livewire.admin.court-manager', [
             'courts' => $courts,
             'locations' => $locations,
-            'courtTypes' => CourtType::cases(),
+            'deportes' => $deportes,
             'tusnes' => $tusnes,
         ]);
     }
@@ -118,7 +121,7 @@ class CourtManager extends Component
         $this->isEditMode = false;
         $this->sede_id = '';
         $this->nombre = '';
-        $this->tipo = '';
+        $this->deporte_ids = [];
         $this->precio_por_hora = 0;
         $this->esta_activo = true;
         $this->resetValidation();
@@ -128,12 +131,15 @@ class CourtManager extends Component
     {
         $validatedData = $this->validate();
         $catalogoId = $validatedData['catalogo_tusne_id'];
-        unset($validatedData['catalogo_tusne_id']);
+        $deporteIds = array_map('intval', $validatedData['deporte_ids']);
+        unset($validatedData['catalogo_tusne_id'], $validatedData['deporte_ids']);
 
         $court = Cancha::updateOrCreate(
             ['id' => $this->courtId],
             $validatedData
         );
+
+        $court->deportes()->sync($deporteIds);
 
         CanchaTusne::updateOrCreate(
             ['cancha_id' => $court->id],
@@ -155,11 +161,11 @@ class CourtManager extends Component
         $this->isEditMode = true;
         $this->courtId = $id;
 
-        $court = Cancha::with('canchasTusne')->findOrFail($id);
+        $court = Cancha::with(['canchasTusne', 'deportes'])->findOrFail($id);
 
         $this->sede_id = $court->sede_id;
         $this->nombre = $court->nombre;
-        $this->tipo = $court->tipo->value ?? $court->tipo;
+        $this->deporte_ids = $court->deportes->pluck('id')->map(fn ($id) => (string) $id)->values()->all();
         $this->precio_por_hora = $court->precio_por_hora;
         $this->esta_activo = (bool) $court->esta_activo;
         $this->catalogo_tusne_id = $court->canchasTusne->first()?->catalogo_tusne_id;

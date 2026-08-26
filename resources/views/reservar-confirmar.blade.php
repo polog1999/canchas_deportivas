@@ -117,6 +117,22 @@
                             </div>
                         </div>
 
+                        {{-- Distrito solo si el DNI NO existe --}}
+                        <div class="sm:col-span-2" x-show="estado === 'nuevo'" x-cloak>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Distrito donde vives</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-map-location-dot absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <select x-model="form.distrito_id"
+                                    class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
+                                    <option value="">Selecciona tu distrito</option>
+                                    <template x-for="d in distritos" :key="d.id">
+                                        <option :value="String(d.id)" x-text="d.nombre"></option>
+                                    </template>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            </div>
+                        </div>
+
                         {{-- Contraseña solo si el DNI SÍ existe --}}
                         <div class="sm:col-span-2" x-show="estado === 'existe'" x-cloak>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Contraseña</label>
@@ -245,7 +261,7 @@
             let debounceTimer = null;
 
             return {
-                form: { documento: '', nombre: '', telefono: '', email: '', clave: '' },
+                form: { documento: '', nombre: '', telefono: '', email: '', clave: '', distrito_id: '' },
                 estado: 'pendiente', // pendiente | existe | nuevo
                 buscando: false,
                 confirmando: false,
@@ -253,6 +269,7 @@
                 mensajeTipo: 'info',
                 errorConfirmacion: '',
                 urlVolverHorarios,
+                distritos: @json($distritos),
                 reserva: {
                     club,
                     cancha,
@@ -282,7 +299,8 @@
                     return this.form.documento.replace(/\D/g, '').length >= 8
                         && this.form.nombre.trim().length > 2
                         && this.form.telefono.trim().length > 6
-                        && this.form.email.includes('@');
+                        && this.form.email.includes('@')
+                        && String(this.form.distrito_id).length > 0;
                 },
 
                 onDocumentoInput() {
@@ -292,6 +310,7 @@
                     this.form.telefono = '';
                     this.form.email = '';
                     this.form.clave = '';
+                    this.form.distrito_id = '';
                     this.errorConfirmacion = '';
 
                     clearTimeout(debounceTimer);
@@ -328,6 +347,7 @@
                         this.form.telefono = '';
                         this.form.email = '';
                         this.form.clave = '';
+                        this.form.distrito_id = '';
 
                         if (data.existe) {
                             this.estado = 'existe';

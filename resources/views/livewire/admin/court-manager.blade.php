@@ -41,11 +41,11 @@
                 </select>
 
                 <!-- Filtro por Deporte -->
-                <select wire:model.live="selectedTypeFilter"
+                <select wire:model.live="selectedDeporteFilter"
                     class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">
                     <option value="">Todos los Deportes</option>
-                    @foreach($courtTypes as $type)
-                        <option value="{{ $type->value }}">{{ $type->value }}</option>
+                    @foreach($deportes as $deporte)
+                        <option value="{{ $deporte->id }}">{{ $deporte->nombre }}</option>
                     @endforeach
                 </select>
             </div>
@@ -63,7 +63,7 @@
                         <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold tracking-wider border-b border-gray-100">
                             <th class="py-4 px-6">Cancha / Campo</th>
                             <th class="py-4 px-6">Sede Asignada</th>
-                            <th class="py-4 px-6">Disciplina / Tipo</th>
+                            <th class="py-4 px-6">Deportes</th>
                             <th class="py-4 px-6">Estado</th>
                             <th class="py-4 px-6 text-center">Acciones</th>
                         </tr>
@@ -74,7 +74,7 @@
                                 <td class="py-4 px-6">
                                     <div class="flex items-center gap-3">
                                         <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-base">
-                                            <i class="fa-solid {{ $court->type ? $court->type->icon() : 'fa-trophy' }}"></i>
+                                            <i class="fa-solid fa-futbol"></i>
                                         </div>
                                         <div>
                                             <div class="font-bold text-gray-900">{{ $court->nombre }}</div>
@@ -92,10 +92,17 @@
                                     </span>
                                 </td>
                                 <td class="py-4 px-6">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-100">
-                                        <i class="fa-solid {{ $court->type ? $court->type->icon() : 'fa-trophy' }} text-[10px]"></i>
-                                        {{ $court->type->value ?? 'No asignado' }}
-                                    </span>
+                                    @if ($court->deportes->isEmpty())
+                                        <span class="text-xs text-gray-400">Sin deportes</span>
+                                    @else
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach ($court->deportes as $deporte)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-100">
+                                                    {{ $deporte->nombre }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="py-4 px-6">
                                     <button wire:click="toggleStatus({{ $court->id }})"
@@ -200,17 +207,24 @@
                                 @enderror
                             </div>
 
-                            <!-- Tipo de Deporte / Disciplina -->
+                            <!-- Deportes (canchas_deportes) -->
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Disciplina / Deporte <span class="text-red-500">*</span></label>
-                                <select wire:model="tipo"
-                                    class="w-full px-3 py-2 border @error('tipo') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
-                                    <option value="">-- Seleccione la Disciplina --</option>
-                                    @foreach($courtTypes as $courtType)
-                                        <option value="{{ $courtType->value }}">{{ $courtType->value }}</option>
-                                    @endforeach
-                                </select>
-                                @error('tipo')
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Deportes / Disciplinas <span class="text-red-500">*</span></label>
+                                <div class="max-h-40 overflow-y-auto rounded-lg border @error('deporte_ids') border-red-500 @else border-gray-300 @enderror p-3 space-y-2 bg-white">
+                                    @forelse ($deportes as $deporte)
+                                        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                            <input type="checkbox" wire:model="deporte_ids" value="{{ $deporte->id }}"
+                                                class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                            <span>{{ $deporte->nombre }}</span>
+                                        </label>
+                                    @empty
+                                        <p class="text-xs text-gray-400">No hay deportes registrados en la tabla <code>deportes</code>.</p>
+                                    @endforelse
+                                </div>
+                                @error('deporte_ids')
+                                    <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                                @enderror
+                                @error('deporte_ids.*')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>

@@ -50,12 +50,18 @@ class Sede extends Model
             return $imagen;
         }
 
-        // Ya viene con ruta relativa (imagenes/sedes/... o /imagenes/sedes/...)
         if (str_contains($imagen, '/')) {
             return asset(ltrim($imagen, '/'));
         }
 
-        // Solo nombre de archivo en BD
+        if (is_file(public_path('imagenes/sedes/' . $imagen))) {
+            return asset('imagenes/sedes/' . $imagen);
+        }
+
+        if (is_file(public_path('sedes/' . $imagen))) {
+            return asset('sedes/' . $imagen);
+        }
+
         return asset('imagenes/sedes/' . $imagen);
     }
 }

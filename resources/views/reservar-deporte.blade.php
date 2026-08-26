@@ -49,7 +49,7 @@
                     ]) }}"
                     class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition group block">
                     <div class="relative aspect-[16/10] bg-slate-200 overflow-hidden">
-                        <img src="{{ $sede->urlImagen() }}" alt="{{ $deporte['nombre'] }}"
+                        <img src="{{ $deporte['imagen_url'] }}" alt="{{ $deporte['nombre'] }}"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1459865266369-566976b10f9e?auto=format&fit=crop&w=800&q=80'">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>

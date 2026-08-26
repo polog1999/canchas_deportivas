@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\CourtType;
 use App\Models\Concerns\HasSpanishTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +17,6 @@ class Cancha extends Model
     protected $fillable = [
         'sede_id',
         'nombre',
-        'tipo',
         'precio_por_hora',
         'esta_activo',
     ];
@@ -27,7 +25,6 @@ class Cancha extends Model
     {
         return [
             'esta_activo' => 'boolean',
-            'tipo' => CourtType::class,
             'precio_por_hora' => 'decimal:2',
             'creado_en' => 'datetime',
             'actualizado_en' => 'datetime',
