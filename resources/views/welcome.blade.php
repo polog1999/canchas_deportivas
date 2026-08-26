@@ -140,7 +140,7 @@
                 </select>
                 <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-sky-700 text-[10px] pointer-events-none"></i>
             </div>
-        </div>
+        </div> 
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8" id="gridSedes">
             @forelse ($sedes as $sede)
