@@ -6,6 +6,7 @@ use App\Enums\CourtType;
 use App\Models\Concerns\HasSpanishTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cancha extends Model
@@ -36,6 +37,11 @@ class Cancha extends Model
     public function sede(): BelongsTo
     {
         return $this->belongsTo(Sede::class, 'sede_id');
+    }
+
+    public function deportes(): BelongsToMany
+    {
+        return $this->belongsToMany(Deporte::class, 'canchas_deportes', 'cancha_id', 'deporte_id');
     }
 
     public function canchasTusne(): HasMany

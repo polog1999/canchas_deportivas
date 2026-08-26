@@ -58,7 +58,7 @@ class Usuario extends Authenticatable
 
     public function getAuthPassword(): string
     {
-        return $this->clave;
+        return (string) ($this->getRawOriginal('clave') ?? '');
     }
 
     public function getAuthPasswordName(): string

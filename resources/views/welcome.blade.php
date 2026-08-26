@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Molitickets | Reserva de Canchas - Municipalidad de La Molina</title>
+    <title>Reserva de Canchas | Municipalidad de La Molina</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -76,7 +76,7 @@
                         <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
                             {{ $slide['title'] }}
                         </h1>
-                        <a href="{{ auth()->check() ? route('dashboard') : route('login') }}"
+                        <a href="#gridSedes"
                             class="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full bg-lime-500 hover:bg-lime-400 text-emerald-950 font-bold text-sm shadow-lg transition">
                             Reservar cancha
                             <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -101,14 +101,12 @@
                 <div>
                     <label class="block text-xs font-semibold text-sky-200 mb-1.5">Busca tu espacio deportivo</label>
                     <div class="relative">
-                        <select class="w-full appearance-none bg-white rounded-lg px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-lime-400">
-                            <option>Complejo deportivo</option>
-                            <option>Estadio Fútbol 11</option>
-                            <option>Complejo Musa</option>
-                            <option>Complejo El Valle</option>
-                            <option>Complejo Covima</option>
-                            <option>Complejo Kohatsu</option>
-                            <option>Campo de tenis</option>
+                        <select id="filtroSede"
+                            class="w-full appearance-none bg-white rounded-lg px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                            <option value="">Todas las sedes</option>
+                            @foreach ($sedes as $sede)
+                                <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
+                            @endforeach
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                     </div>
@@ -116,7 +114,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-sky-200 mb-1.5">Fecha</label>
                     <div class="relative">
-                        <input type="date" value="{{ now()->format('Y-m-d') }}"
+                        <input type="date" id="filtroFecha" value="{{ now()->format('Y-m-d') }}"
                             class="w-full bg-white rounded-lg px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-lime-400">
                         <i class="fa-regular fa-calendar absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
                     </div>
@@ -132,48 +130,59 @@
                 <h2 class="text-3xl sm:text-4xl font-bold text-[#1e3a5f]">Nuestros espacios</h2>
                 <p class="text-slate-500 mt-1 text-sm">Selecciona un complejo y reserva tu fecha disponible</p>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <button type="button" class="px-4 py-2 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold border border-sky-200">
-                    Tipo de evento <i class="fa-solid fa-chevron-down ml-1"></i>
-                </button>
-                <button type="button" class="px-4 py-2 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold border border-sky-200">
-                    Tipo de evento <i class="fa-solid fa-chevron-down ml-1"></i>
-                </button>
-                <button type="button" class="px-4 py-2 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold border border-sky-200">
-                    Categoría <i class="fa-solid fa-chevron-down ml-1"></i>
-                </button>
+            <div class="relative">
+                <select id="filtroDeporte"
+                    class="appearance-none pl-4 pr-9 py-2 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold border border-sky-200 focus:outline-none focus:ring-2 focus:ring-sky-300 cursor-pointer">
+                    <option value="">Deportes</option>
+                    @foreach ($deportes as $deporte)
+                        <option value="{{ $deporte->id }}">{{ $deporte->nombre }}</option>
+                    @endforeach
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-sky-700 text-[10px] pointer-events-none"></i>
             </div>
         </div>
 
-        @php
-            $espacios = [
-                ['nombre' => 'Estadio Fútbol 11', 'imagen' => 'https://images.unsplash.com/photo-1459865266369-566976b10f9e?auto=format&fit=crop&w=800&q=80'],
-                ['nombre' => 'Complejo Musa', 'imagen' => 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=800&q=80'],
-                ['nombre' => 'Complejo "El Valle"', 'imagen' => 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=800&q=80'],
-                ['nombre' => 'Complejo Covima', 'imagen' => 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80'],
-                ['nombre' => 'Complejo "Kohatsu"', 'imagen' => 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=800&q=80'],
-                ['nombre' => 'Campo de tenis', 'imagen' => 'https://images.unsplash.com/photo-1554068865-524785ef8b6f?auto=format&fit=crop&w=800&q=80'],
-            ];
-        @endphp
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
-            @foreach ($espacios as $espacio)
-                <article class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8" id="gridSedes">
+            @forelse ($sedes as $sede)
+                @php
+                    $deporteIds = $sede->canchas
+                        ->flatMap(fn ($c) => $c->deportes->pluck('id'))
+                        ->unique()
+                        ->values()
+                        ->implode(',');
+                @endphp
+                <article class="sede-card bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow"
+                    data-sede-id="{{ $sede->id }}"
+                    data-deportes="{{ $deporteIds }}">
                     <div class="aspect-[16/10] bg-slate-200 overflow-hidden">
-                        <img src="{{ $espacio['imagen'] }}" alt="{{ $espacio['nombre'] }}"
-                            class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                        <img src="{{ $sede->urlImagen() }}" alt="{{ $sede->nombre }}"
+                            class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                            onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1459865266369-566976b10f9e?auto=format&fit=crop&w=800&q=80'">
                     </div>
                     <div class="p-5 sm:p-6">
-                        <h3 class="text-xl font-bold text-[#1e3a5f]">{{ $espacio['nombre'] }}</h3>
-                        <p class="text-sm text-slate-500 mt-1">Municipalidad de La Molina</p>
-                        <a href="{{ auth()->check() ? route('dashboard') : route('login') }}"
-                            class="mt-5 block w-full text-center py-3 rounded-xl bg-[#1b5e3b] hover:bg-[#164d31] text-white font-bold text-sm transition">
+                        <h3 class="text-xl font-bold text-[#1e3a5f]">{{ $sede->nombre }}</h3>
+                        <p class="text-sm text-slate-500 mt-1">{{ $sede->direccion }}</p>
+                        @if ($sede->hora_inicio && $sede->hora_fin)
+                            <p class="text-xs text-slate-400 mt-1">
+                                Horario: {{ substr((string) $sede->hora_inicio, 0, 5) }} – {{ substr((string) $sede->hora_fin, 0, 5) }}
+                            </p>
+                        @endif
+                        <a href="{{ route('reservar.deporte', ['sede' => $sede->id, 'fecha' => now()->format('Y-m-d')]) }}"
+                            class="js-reservar-sede mt-5 block w-full text-center py-3 rounded-xl bg-[#1b5e3b] hover:bg-[#164d31] text-white font-bold text-sm transition"
+                            data-sede="{{ $sede->id }}">
                             Reservar fecha
                         </a>
                     </div>
                 </article>
-            @endforeach
+            @empty
+                <p class="sm:col-span-2 text-center text-slate-500 py-12">
+                    No hay sedes activas registradas por el momento.
+                </p>
+            @endforelse
         </div>
+        <p id="mensajeSinSedes" class="hidden text-center text-slate-500 py-12 sm:col-span-2" style="display:none">
+            No hay sedes para el deporte seleccionado.
+        </p>
     </main>
 
     {{-- Footer --}}
@@ -181,20 +190,10 @@
         <div class="h-1.5 bg-lime-400"></div>
         <div class="bg-[#1b5e3b] text-white py-6">
             <p class="text-center text-sm px-4">
-                © {{ date('Y') }} Molitickets - Todos los derechos reservados - Municipalidad de La Molina
+                © {{ date('Y') }} Municipalidad de La Molina - Todos los derechos reservados
             </p>
         </div>
     </footer>
-
-    {{-- Barra lateral decorativa (como maqueta) --}}
-    <div class="fixed left-0 top-1/2 -translate-y-1/2 z-30 hidden xl:flex flex-col gap-2">
-        <div class="w-10 h-10 bg-[#1e3a5f] text-white flex items-center justify-center rounded-r-lg shadow">
-            <i class="fa-solid fa-briefcase text-sm"></i>
-        </div>
-        <div class="w-10 h-10 bg-[#1e3a5f] text-white flex items-center justify-center rounded-r-lg shadow">
-            <i class="fa-solid fa-user text-sm"></i>
-        </div>
-    </div>
 
     <script>
         (function () {
@@ -220,6 +219,49 @@
             setInterval(() => {
                 showSlide((current + 1) % slides.length);
             }, 8000);
+
+            const filtroSede = document.getElementById('filtroSede');
+            const filtroDeporte = document.getElementById('filtroDeporte');
+            const filtroFecha = document.getElementById('filtroFecha');
+            const deporteBase = @json(url('/reservar/deporte'));
+            const vacioSedes = document.getElementById('mensajeSinSedes');
+
+            function actualizarEnlaces() {
+                const fecha = filtroFecha?.value || @json(now()->format('Y-m-d'));
+
+                document.querySelectorAll('.js-reservar-sede').forEach((a) => {
+                    const sede = a.dataset.sede;
+                    a.href = deporteBase
+                        + '?sede=' + encodeURIComponent(sede)
+                        + '&fecha=' + encodeURIComponent(fecha);
+                });
+            }
+
+            function filtrarSedes() {
+                const sedeId = filtroSede?.value || '';
+                const deporteId = filtroDeporte?.value || '';
+                let visibles = 0;
+
+                document.querySelectorAll('.sede-card').forEach((card) => {
+                    const matchSede = !sedeId || card.dataset.sedeId === sedeId;
+                    const deps = (card.dataset.deportes || '').split(',').filter(Boolean);
+                    const matchDeporte = !deporteId || deps.includes(deporteId);
+                    const ok = matchSede && matchDeporte;
+                    card.style.display = ok ? '' : 'none';
+                    if (ok) visibles++;
+                });
+
+                if (vacioSedes) {
+                    vacioSedes.style.display = visibles === 0 ? 'block' : 'none';
+                }
+
+                actualizarEnlaces();
+            }
+
+            filtroSede?.addEventListener('change', filtrarSedes);
+            filtroDeporte?.addEventListener('change', filtrarSedes);
+            filtroFecha?.addEventListener('change', actualizarEnlaces);
+            actualizarEnlaces();
         })();
     </script>
 </body>
