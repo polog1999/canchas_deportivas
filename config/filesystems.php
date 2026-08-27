@@ -65,6 +65,15 @@ return [
             'report' => false,
         ],
 
+        'slider' => [
+            'driver' => 'local',
+            'root' => public_path('imagenes/slider'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/imagenes/slider',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

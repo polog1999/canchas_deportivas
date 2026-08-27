@@ -2,13 +2,16 @@
 
 <div class="menu-sortable-item {{ $esRaiz ? 'bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden' : 'bg-white rounded-lg border border-gray-100' }}"
     data-id="{{ $menu->id }}"
-    data-has-children="{{ $menu->hijos->isNotEmpty() ? '1' : '0' }}">
+    data-has-children="{{ $menu->hijos->isNotEmpty() ? '1' : '0' }}"
+    wire:key="menu-item-{{ $menu->id }}-{{ $menu->id_padre }}-{{ $menu->orden }}">
 
     <div class="{{ $esRaiz ? 'p-4' : 'p-3' }} flex items-start gap-3">
-        <div class="drag-handle pt-1 px-1 text-gray-400 hover:text-emerald-600 cursor-grab active:cursor-grabbing"
-            title="Arrastrar">
-            <i class="fa-solid fa-grip-vertical"></i>
-        </div>
+        <button type="button"
+            class="drag-handle shrink-0 self-stretch min-w-[2.25rem] -ml-1 px-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 cursor-grab active:cursor-grabbing flex items-center justify-center select-none touch-none"
+            title="Arrastrar"
+            aria-label="Arrastrar menú">
+            <i class="fa-solid fa-grip-vertical pointer-events-none"></i>
+        </button>
 
         <div class="flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2">
@@ -26,7 +29,7 @@
             </p>
         </div>
 
-        <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+        <div class="flex items-center gap-1 shrink-0" data-no-drag>
             @if ($esRaiz)
                 <button type="button" wire:click="openModal({{ $menu->id }})"
                     class="w-8 h-8 rounded-lg text-sky-600 hover:bg-sky-50" title="Agregar submenú">
@@ -50,7 +53,8 @@
     </div>
 
     @if ($esRaiz)
-        <div class="menu-sortable-children border-t border-gray-100 bg-gray-50/60 pl-8 pr-4 py-2 space-y-2 min-h-[2.5rem]">
+        <div class="menu-sortable-children border-t border-dashed border-gray-200 bg-gray-50/70 pl-8 pr-4 py-3 space-y-2 min-h-[3rem]"
+            data-parent-id="{{ $menu->id }}">
             @foreach ($menu->hijos as $hijo)
                 @include('livewire.admin.partials.menu-sortable-item', ['menu' => $hijo, 'esRaiz' => false])
             @endforeach

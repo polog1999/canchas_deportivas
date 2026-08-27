@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\MisPagosManager;
+use App\Livewire\Admin\SliderManager;
 use App\Livewire\Admin\VerReservasManager;
 use App\Livewire\Admin\CourtManager;
 use App\Livewire\Admin\DeporteManager;
@@ -11,6 +12,7 @@ use App\Livewire\Admin\TusneCatalogManager;
 use App\Livewire\UserManagement;
 use App\Models\Deporte;
 use App\Models\Sede;
+use App\Models\Slider;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,7 +30,13 @@ Route::get('/', function () {
         ->orderBy('nombre')
         ->get(['id', 'nombre']);
 
-    return view('welcome', compact('sedes', 'deportes'));
+    $slides = Slider::query()
+        ->where('activo', true)
+        ->orderBy('orden')
+        ->orderBy('id')
+        ->get();
+
+    return view('welcome', compact('sedes', 'deportes', 'slides'));
 });
 
 Route::get('/reservar', function (\Illuminate\Http\Request $request) {
@@ -364,6 +372,10 @@ Route::middleware(['auth'])->prefix('portal')->group(function () {
     Route::get('/ver-reservas', VerReservasManager::class)
         ->middleware('permission:/portal/ver-reservas')
         ->name('ver-reservas.index');
+
+    Route::get('/slider', SliderManager::class)
+        ->middleware('permission:/portal/slider')
+        ->name('slider.index');
 
     Route::get('/roles-menus', RoleMenuManager::class)
         ->middleware('permission:/portal/roles-menus')

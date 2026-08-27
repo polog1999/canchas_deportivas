@@ -212,6 +212,13 @@ class MenuStructureManager extends Component
         }
 
         $this->dispatch('menus-reordenados');
+        $this->dispatch('swal', [
+            'icon' => 'success',
+            'title' => 'Orden guardado',
+            'text' => 'La estructura de menús se actualizó.',
+            'timer' => 1400,
+            'showConfirmButton' => false,
+        ]);
     }
 
     public function deleteMenu(int $id): void

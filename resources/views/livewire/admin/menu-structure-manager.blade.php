@@ -1,18 +1,26 @@
-<div class="p-6 bg-gray-50 min-h-screen">
+<div class="p-6 bg-gray-50 min-h-screen"
+    x-data
+    x-init="$nextTick(() => window.MenuSortable?.init())">
     <x-slot name="title">Estructura de Menús</x-slot>
 
     @push('styles')
         <style>
             .menu-sortable-root .sortable-ghost,
             .menu-sortable-children .sortable-ghost {
-                opacity: 0.45;
+                opacity: 0.4;
                 background: #ecfdf5 !important;
                 border-color: #6ee7b7 !important;
             }
 
+            .menu-sortable-root .sortable-chosen,
+            .menu-sortable-children .sortable-chosen {
+                cursor: grabbing;
+            }
+
             .menu-sortable-root .sortable-drag,
             .menu-sortable-children .sortable-drag {
-                box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15);
+                box-shadow: 0 12px 28px -8px rgb(0 0 0 / 0.25);
+                opacity: 1 !important;
             }
 
             .menu-sortable-children.sortable-drag-over {
@@ -21,6 +29,12 @@
                 outline-offset: -2px;
                 border-radius: 0.75rem;
             }
+
+            .drag-handle {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-touch-callout: none;
+            }
         </style>
     @endpush
 
@@ -28,7 +42,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">Estructura de Menús</h2>
-                <p class="text-sm text-gray-600">Arrastra las piezas para reordenar menús y submenús</p>
+                <p class="text-sm text-gray-600">Arrastra con el icono de agarre para reordenar menús y submenús</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <button type="button" wire:click="$refresh"
@@ -42,14 +56,17 @@
             </div>
         </div>
 
-        <div class="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
-            <i class="fa-solid fa-hand-pointer"></i>
-            Usa el icono <i class="fa-solid fa-grip-vertical mx-1"></i> para jalar y soltar. Suelta un ítem dentro de una carpeta para convertirlo en submenú.
+        <div class="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex items-start gap-2">
+            <i class="fa-solid fa-hand-pointer mt-0.5"></i>
+            <span>
+                Usa el icono <i class="fa-solid fa-grip-vertical mx-1"></i> (zona izquierda) para arrastrar.
+                Suelta dentro del área punteada de una carpeta para convertirlo en submenú.
+            </span>
         </div>
 
-        <div wire:key="menu-tree-{{ $raices->pluck('id')->join('-') }}-{{ $raices->sum(fn ($m) => $m->hijos->count()) }}"
-            id="menu-sortable-root"
-            class="menu-sortable-root space-y-3">
+        <div id="menu-sortable-root"
+            class="menu-sortable-root space-y-3"
+            wire:key="menu-tree-root">
             @forelse ($raices as $menu)
                 @include('livewire.admin.partials.menu-sortable-item', ['menu' => $menu, 'esRaiz' => true])
             @empty
@@ -139,23 +156,29 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
         <script>
-            (function () {
-                let sortableInstances = [];
+            window.MenuSortable = (function () {
+                let instances = [];
+                let dragging = false;
                 let saving = false;
+                let reinitTimer = null;
 
-                function destroySortables() {
-                    sortableInstances.forEach(instance => instance.destroy());
-                    sortableInstances = [];
+                function destroy() {
+                    instances.forEach((instance) => {
+                        try { instance.destroy(); } catch (e) {}
+                    });
+                    instances = [];
                 }
 
-                function serializeMenuTree(rootEl) {
+                function serialize(rootEl) {
                     const items = [];
 
                     function walk(container, parentId) {
                         Array.from(container.children)
-                            .filter(el => el.classList.contains('menu-sortable-item'))
+                            .filter((el) => el.classList && el.classList.contains('menu-sortable-item'))
                             .forEach((el, index) => {
                                 const id = parseInt(el.dataset.id, 10);
+                                if (!id) return;
+
                                 items.push({
                                     id,
                                     id_padre: parentId,
@@ -173,26 +196,45 @@
                     return items;
                 }
 
-                function initMenuSortables() {
-                    destroySortables();
+                function scheduleInit(delay = 40) {
+                    if (dragging) return;
+                    clearTimeout(reinitTimer);
+                    reinitTimer = setTimeout(init, delay);
+                }
 
-                    const root = document.getElementById('menu-sortable-root');
-                    if (!root || typeof Sortable === 'undefined') {
+                function init() {
+                    if (dragging || typeof Sortable === 'undefined') {
                         return;
                     }
 
+                    const root = document.getElementById('menu-sortable-root');
+                    if (!root) {
+                        return;
+                    }
+
+                    destroy();
+
                     const containers = [root, ...root.querySelectorAll('.menu-sortable-children')];
 
-                    containers.forEach(container => {
-                        sortableInstances.push(new Sortable(container, {
+                    containers.forEach((container) => {
+                        instances.push(new Sortable(container, {
                             group: 'menu-nested',
-                            animation: 180,
+                            animation: 150,
                             handle: '.drag-handle',
                             draggable: '.menu-sortable-item',
+                            filter: '[data-no-drag], button:not(.drag-handle), a, input, select, textarea',
+                            preventOnFilter: false,
                             fallbackOnBody: true,
-                            swapThreshold: 0.65,
+                            forceFallback: true,
+                            fallbackTolerance: 3,
+                            swapThreshold: 0.55,
+                            emptyInsertThreshold: 48,
                             ghostClass: 'sortable-ghost',
+                            chosenClass: 'sortable-chosen',
                             dragClass: 'sortable-drag',
+                            onStart() {
+                                dragging = true;
+                            },
                             onMove(evt) {
                                 const dragged = evt.dragged;
                                 const hasChildren = dragged.dataset.hasChildren === '1';
@@ -203,6 +245,7 @@
                                     return false;
                                 }
 
+                                // Menús con hijos solo pueden vivir en la raíz
                                 if (hasChildren && !isRootList) {
                                     return false;
                                 }
@@ -210,40 +253,53 @@
                                 return true;
                             },
                             onEnd() {
+                                dragging = false;
+
                                 if (saving) {
+                                    scheduleInit();
                                     return;
                                 }
 
-                                const payload = serializeMenuTree(root);
+                                const payload = serialize(root);
                                 const componentEl = root.closest('[wire\\:id]');
 
                                 if (!componentEl || !window.Livewire) {
+                                    scheduleInit();
+                                    return;
+                                }
+
+                                const component = window.Livewire.find(componentEl.getAttribute('wire:id'));
+                                if (!component) {
+                                    scheduleInit();
                                     return;
                                 }
 
                                 saving = true;
-                                window.Livewire.find(componentEl.getAttribute('wire:id'))
-                                    .call('reordenarMenus', payload)
+                                component.call('reordenarMenus', payload)
                                     .catch(() => {
                                         window.location.reload();
                                     })
                                     .finally(() => {
                                         saving = false;
+                                        scheduleInit(80);
                                     });
                             },
                         }));
                     });
                 }
 
-                document.addEventListener('DOMContentLoaded', initMenuSortables);
-
                 document.addEventListener('livewire:init', () => {
-                    Livewire.hook('morph.updated', ({ el }) => {
-                        if (el.querySelector && el.querySelector('#menu-sortable-root')) {
-                            initMenuSortables();
-                        }
+                    Livewire.hook('commit', ({ succeed }) => {
+                        succeed(() => scheduleInit(60));
                     });
+
+                    Livewire.on('menus-reordenados', () => scheduleInit(80));
                 });
+
+                document.addEventListener('DOMContentLoaded', () => scheduleInit(0));
+                document.addEventListener('livewire:navigated', () => scheduleInit(0));
+
+                return { init, scheduleInit };
             })();
         </script>
     @endpush

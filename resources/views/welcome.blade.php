@@ -20,44 +20,49 @@
     {{-- Hero --}}
     <section class="relative bg-slate-900">
         <div id="heroCarousel" class="relative min-h-[420px] sm:min-h-[480px] lg:min-h-[520px] overflow-hidden">
-            @php
-                $slides = [
-                    [
-                        'image' => 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80',
-                        'title' => 'Reserva tu cancha favorita en línea y juega con pasión en La Molina',
-                    ],
-                    [
-                        'image' => 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=1600&q=80',
-                        'title' => 'Encuentra el espacio deportivo ideal para tu equipo y tu familia',
-                    ],
-                ];
-            @endphp
-
-            @foreach ($slides as $index => $slide)
+            @forelse ($slides as $index => $slide)
                 <div class="hero-slide {{ $index === 0 ? 'active-slide' : 'hidden-slide' }}" data-slide="{{ $index }}">
-                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $slide['image'] }}')"></div>
+                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $slide->urlImagen() }}')"></div>
                     <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20"></div>
                     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-28 lg:py-32">
                         <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
-                            {{ $slide['title'] }}
+                            {{ $slide->titulo }}
+                        </h1>
+                        <a href="{{ $slide->enlace_boton }}"
+                            class="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white font-bold text-sm shadow-lg transition">
+                            {{ $slide->texto_boton }}
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+            @empty
+                <div class="hero-slide active-slide" data-slide="0">
+                    <div class="absolute inset-0 bg-cover bg-center"
+                        style="background-image: url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80')"></div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20"></div>
+                    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-28 lg:py-32">
+                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
+                            Reserva tu cancha favorita en línea y juega con pasión en La Molina
                         </h1>
                         <a href="#gridSedes"
-                            class="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full bg-lime-500 hover:bg-lime-400 text-emerald-950 font-bold text-sm shadow-lg transition">
+                            class="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white font-bold text-sm shadow-lg transition">
                             Reservar cancha
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                         </a>
                     </div>
                 </div>
-            @endforeach
+            @endforelse
 
-            <button type="button" id="heroPrev"
-                class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white shadow flex items-center justify-center z-10">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button type="button" id="heroNext"
-                class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white shadow flex items-center justify-center z-10">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
+            @if ($slides->count() > 1)
+                <button type="button" id="heroPrev"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white shadow flex items-center justify-center z-10">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button type="button" id="heroNext"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:bg-white shadow flex items-center justify-center z-10">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            @endif
         </div>
 
         {{-- Barra de búsqueda --}}
