@@ -18,4 +18,9 @@ class OracleService
         $tusne = DB::connection('oracle')->table('smaconceptod')->where('congrupo', $grupo)->where('concodigo', $codigo)->first();
         return $tusne;
     }
+     public function getMontoTusne(string $grupo, string $codigo)
+    {
+        $tusne = DB::connection('oracle')->table('smaconceptod')->where('congrupo', $grupo)->where('concodigo', $codigo)->first('conmonto');
+        return $tusne;
+    }
 }

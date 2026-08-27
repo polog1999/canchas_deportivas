@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ReservarTurnoController;
 use App\Livewire\Admin\MisPagosManager;
 use App\Livewire\Admin\SliderManager;
 use App\Livewire\Admin\VerReservasManager;
@@ -94,79 +95,8 @@ Route::get('/reservar/deporte', function (\Illuminate\Http\Request $request) {
     ]);
 })->name('reservar.deporte');
 
-Route::get('/reservar/turno', function (\Illuminate\Http\Request $request) {
-    $sedeId = (int) $request->query('sede', 0);
-    $deporteId = (int) $request->query('deporte_id', 0);
-    $fecha = $request->query('fecha', now()->format('Y-m-d'));
-
-    if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $fecha)) {
-        $fecha = now()->format('Y-m-d');
-    }
-
-    // Sin deporte → deportes de la sede elegida
-    if ($deporteId <= 0) {
-        return redirect()->route('reservar.deporte', [
-            'sede' => $sedeId,
-            'fecha' => $fecha,
-        ]);
-    }
-
-    $sede = Sede::query()
-        ->where('esta_activo', true)
-        ->with([
-            'canchas' => function ($q) use ($deporteId) {
-                $q->where('esta_activo', true)
-                    ->with('deportes')
-                    ->orderBy('nombre');
-
-                if ($deporteId > 0) {
-                    $q->whereHas('deportes', fn ($d) => $d->where('deportes.id', $deporteId));
-                }
-            },
-        ])
-        ->find($sedeId);
-
-    if (! $sede) {
-        return redirect()->route('reservar');
-    }
-
-    if ($deporteId > 0) {
-        $deporteNombre = (string) (Deporte::query()->where('id', $deporteId)->value('nombre') ?? 'Deporte');
-    } else {
-        $deporteNombre = $sede->canchas
-            ->flatMap(fn ($c) => $c->deportes->pluck('nombre'))
-            ->unique()
-            ->values()
-            ->implode(' · ') ?: 'Deporte';
-    }
-
-    $canchaIds = $sede->canchas->pluck('id');
-    $ocupadosPorCancha = ocupacionReservasPorCancha($canchaIds, $fecha);
-
-    $sedeData = [
-        'id' => $sede->id,
-        'nombre' => $sede->nombre,
-        'direccion' => $sede->direccion,
-        'imagen' => $sede->urlImagen(),
-        'hora_inicio' => $sede->hora_inicio ? substr((string) $sede->hora_inicio, 0, 5) : '08:00',
-        'hora_fin' => $sede->hora_fin ? substr((string) $sede->hora_fin, 0, 5) : '22:00',
-        'canchas' => $sede->canchas->map(fn ($c) => [
-            'id' => $c->id,
-            'nombre' => $c->nombre,
-            'detalle' => $c->deportes->pluck('nombre')->implode(' · ') ?: 'Cancha',
-            'deporte_ids' => $c->deportes->pluck('id')->values(),
-            'precio' => (float) $c->precio_por_hora,
-            'ocupados' => $ocupadosPorCancha[$c->id] ?? [],
-        ])->values(),
-    ];
-
-    return view('reservar-turno', [
-        'sede' => $sedeData,
-        'fecha' => $fecha,
-        'deporte' => $deporteNombre,
-        'deporte_id' => $deporteId > 0 ? $deporteId : null,
-    ]);
-})->name('reservar.turno');
+Route::get('/reservar/turno', ReservarTurnoController::class
+)->name('reservar.turno');
 
 Route::get('/reservar/ocupacion', function (\Illuminate\Http\Request $request) {
     $sedeId = (int) $request->query('sede', 0);

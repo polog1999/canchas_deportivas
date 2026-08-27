@@ -9,7 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-[#eef2ef] text-slate-800 antialiased" x-data="turnoMaqueta()">
+<body class="bg-[#eef2ef] text-slate-800 antialiased font-sans" x-data="turnoMaqueta()">
 
     <x-public-navbar
         :back-href="route('reservar.deporte', ['sede' => $sede['id'], 'fecha' => $fecha])"
@@ -34,11 +34,11 @@
                 </div>
 
                 <div class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-                    <button type="button" @click="cambiarDia(-1)" class="px-3 py-2 hover:bg-slate-100 text-slate-500">
+                    <button type="button" @click="cambiarDia(-1)" class="px-3 py-2 hover:bg-slate-100 text-slate-500 transition-colors">
                         <i class="fa-solid fa-chevron-left text-xs"></i>
                     </button>
-                    <div class="px-3 py-2 text-sm font-bold text-slate-800 min-w-[8.5rem] text-center" x-text="etiquetaFecha"></div>
-                    <button type="button" @click="cambiarDia(1)" class="px-3 py-2 hover:bg-slate-100 text-slate-500">
+                    <div class="px-3 py-2 text-sm font-bold text-slate-800 min-w-[8.5rem] text-center select-none" x-text="etiquetaFecha"></div>
+                    <button type="button" @click="cambiarDia(1)" class="px-3 py-2 hover:bg-slate-100 text-slate-500 transition-colors">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                     </button>
                 </div>
@@ -113,21 +113,21 @@
 
         <div class="mt-5 flex flex-col sm:flex-row gap-3 sm:justify-end">
             <a href="{{ route('reservar.deporte', ['sede' => $sede['id'], 'fecha' => $fecha]) }}"
-                class="inline-flex justify-center px-5 py-3 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                class="inline-flex justify-center px-5 py-3 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
                 Cambiar deporte
             </a>
         </div>
     </main>
 
-    {{-- Popup modal --}}
+    <!-- Modal Popup de Selección y Duración con precio de Oracle -->
     <div x-show="popup.visible" x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
         role="dialog" aria-modal="true">
-        <div class="absolute inset-0 bg-slate-900/50" @click="cerrarPopup()"></div>
-        <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-emerald-900/10 p-6 sm:p-7"
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="cerrarPopup()"></div>
+        <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-emerald-900/10 p-6 sm:p-7 z-10"
             @click.stop>
             <button type="button" @click="cerrarPopup()"
-                class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center">
+                class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
@@ -147,6 +147,7 @@
                 </div>
             </div>
 
+            <!-- Opciones de duración con cálculo dinámico -->
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Duración</p>
             <div class="space-y-3 mb-6">
                 <button type="button"
@@ -156,7 +157,7 @@
                         ? 'bg-[#1b5e3b]/10 border-[#1b5e3b] text-[#123d2a]'
                         : 'bg-white border-[#1b5e3b]/35 text-slate-700 hover:bg-[#1b5e3b]/5'">
                     <span>60 min</span>
-                    <span x-text="'PEN ' + precioDuracion(60)"></span>
+                    <span class="font-bold text-emerald-900" x-text="'PEN ' + precioDuracion(60).toFixed(2)"></span>
                 </button>
                 <button type="button"
                     @click="elegirDuracion(120)"
@@ -166,17 +167,18 @@
                         ? 'bg-[#1b5e3b]/10 border-[#1b5e3b] text-[#123d2a]'
                         : 'bg-white border-[#1b5e3b]/35 text-slate-700 hover:bg-[#1b5e3b]/5'">
                     <span>120 min</span>
-                    <span x-text="puede120 ? ('PEN ' + precioDuracion(120)) : 'No disponible'"></span>
+                    <span class="font-bold text-emerald-900" x-text="puede120 ? ('PEN ' + precioDuracion(120).toFixed(2)) : 'No disponible'"></span>
                 </button>
             </div>
 
             <button type="button" @click="continuar()"
                 class="w-full py-3.5 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white text-base font-bold shadow-sm transition">
-                Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60)"></span>
+                Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60).toFixed(2)"></span>
             </button>
         </div>
     </div>
 
+    <!-- Lógica en JavaScript con Alpine.js -->
     <script>
         function turnoMaqueta() {
             const club = @json($sede);
@@ -188,7 +190,8 @@
             const inicio = parseInt(String(club.hora_inicio || '08:00').split(':')[0], 10);
             const fin = parseInt(String(club.hora_fin || '22:00').split(':')[0], 10);
             const horas = [];
-            // Inclusivo: 06:00–18:00 → columnas 06 … 18
+
+            // Inclusivo: 08:00 a 22:00
             for (let h = inicio; h <= fin; h++) {
                 horas.push(h);
             }
@@ -233,7 +236,7 @@
                 precioDuracion(minutos) {
                     if (!this.seleccion) return 0;
                     const horas = (minutos || 60) / 60;
-                    return Math.round(this.seleccion.precioHora * horas);
+                    return (this.seleccion.precioHora * horas);
                 },
 
                 async cambiarDia(delta) {
@@ -270,7 +273,7 @@
                             ocupados: mapa[c.id] || mapa[String(c.id)] || [],
                         }));
                     } catch (e) {
-                        // silencioso: se mantienen los ocupados actuales
+                        // Mantiene ocupados actuales en caso de error
                     } finally {
                         this.cargandoOcupacion = false;
                     }
@@ -335,7 +338,7 @@
                         sede: String(this.club.id),
                         club: this.club.nombre,
                         direccion: this.club.direccion,
-                        imagen: this.club.imagen,
+                        imagen: this.club.imagen || '',
                         cancha: this.seleccion.cancha,
                         cancha_id: String(this.seleccion.canchaId),
                         detalle: this.seleccion.detalle,
@@ -345,11 +348,13 @@
                         precio: String(this.precioDuracion(this.seleccion.duracion)),
                         deporte: this.deporte,
                     });
+
                     if (this.deporteId) {
                         params.set('deporte_id', String(this.deporteId));
                     } else if (this.seleccion.deporteIds?.length) {
                         params.set('deporte_id', String(this.seleccion.deporteIds[0]));
                     }
+
                     window.location.href = @json(route('reservar.confirmar')) + '?' + params.toString();
                 },
             };
