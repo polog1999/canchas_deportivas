@@ -23,9 +23,8 @@
             @forelse ($slides as $index => $slide)
                 <div class="hero-slide {{ $index === 0 ? 'active-slide' : 'hidden-slide' }}" data-slide="{{ $index }}">
                     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $slide->urlImagen() }}')"></div>
-                    <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20"></div>
                     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-28 lg:py-32">
-                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
+                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
                             {{ $slide->titulo }}
                         </h1>
                         <a href="{{ $slide->enlace_boton }}"
@@ -39,9 +38,8 @@
                 <div class="hero-slide active-slide" data-slide="0">
                     <div class="absolute inset-0 bg-cover bg-center"
                         style="background-image: url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80')"></div>
-                    <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20"></div>
                     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-28 lg:py-32">
-                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
+                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
                             Reserva tu cancha favorita en línea y juega con pasión en La Molina
                         </h1>
                         <a href="#gridSedes"
