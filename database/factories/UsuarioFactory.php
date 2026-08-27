@@ -26,13 +26,23 @@ class UsuarioFactory extends Factory
         return [
             'rol_id' => $rol->id,
             'usuario' => fake()->unique()->userName(),
-            'nombre' => fake()->name(),
             'correo_electronico' => fake()->unique()->safeEmail(),
             'correo_verificado_en' => now(),
             'clave' => static::$password ??= 'password',
             'activo' => true,
             'token_recordar' => Str::random(10),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Usuario $usuario) {
+            $usuario->perfil()->create([
+                'nombres' => fake()->firstName(),
+                'apellido_paterno' => fake()->lastName(),
+                'apellido_materno' => fake()->lastName(),
+            ]);
+        });
     }
 
     public function unverified(): static

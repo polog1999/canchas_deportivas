@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Admin\MisPagosManager;
+use App\Livewire\Admin\VerReservasManager;
 use App\Livewire\Admin\CourtManager;
 use App\Livewire\Admin\DeporteManager;
 use App\Livewire\Admin\LocationManager;
@@ -12,10 +14,6 @@ use App\Models\Sede;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-
     $sedes = Sede::query()
         ->where('esta_activo', true)
         ->with([
@@ -248,6 +246,10 @@ Route::get('/reservar/confirmar', function () {
     return view('reservar-confirmar', compact('distritos'));
 })->name('reservar.confirmar');
 
+Route::get('/reservar/pago', function () {
+    return view('reservar-pago');
+})->name('reservar.pago');
+
 Route::get('/reservar/buscar-documento', function (\Illuminate\Http\Request $request) {
     $documento = preg_replace('/\D+/', '', (string) $request->query('documento', ''));
 
@@ -354,6 +356,14 @@ Route::middleware(['auth'])->prefix('portal')->group(function () {
     Route::get('/deportes', DeporteManager::class)
         ->middleware('permission:/portal/deportes')
         ->name('deportes.index');
+
+    Route::get('/mis-pagos', MisPagosManager::class)
+        ->middleware('permission:/portal/mis-pagos')
+        ->name('mis-pagos.index');
+
+    Route::get('/ver-reservas', VerReservasManager::class)
+        ->middleware('permission:/portal/ver-reservas')
+        ->name('ver-reservas.index');
 
     Route::get('/roles-menus', RoleMenuManager::class)
         ->middleware('permission:/portal/roles-menus')

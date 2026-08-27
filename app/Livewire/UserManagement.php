@@ -20,7 +20,6 @@ class UserManagement extends Component
 
     public $userId;
     public $usuario;
-    public $nombre;
     public $correo_electronico;
     public $clave;
     public $activo = true;
@@ -51,7 +50,6 @@ class UserManagement extends Component
                 'max:50',
                 Rule::unique('usuarios', 'usuario')->ignore($this->userId),
             ],
-            'nombre' => 'required|string|max:150',
             'correo_electronico' => [
                 'nullable',
                 'email',
@@ -67,9 +65,9 @@ class UserManagement extends Component
                 'max:15',
                 Rule::unique('perfiles', 'numero_documento')->ignore($this->profileId),
             ],
-            'nombres' => 'nullable|string|max:255',
-            'apellido_paterno' => 'nullable|string|max:255',
-            'apellido_materno' => 'nullable|string|max:255',
+            'nombres' => 'required|string|max:255',
+            'apellido_paterno' => 'required|string|max:255',
+            'apellido_materno' => 'required|string|max:255',
             'direccion' => 'nullable|string|max:255',
             'ubigeo_departamento' => 'nullable|string|max:255',
             'ubigeo_provincia' => 'nullable|string|max:255',
@@ -79,11 +77,13 @@ class UserManagement extends Component
 
     protected $validationAttributes = [
         'usuario' => 'usuario',
-        'nombre' => 'nombre',
         'correo_electronico' => 'correo electrónico',
         'clave' => 'contraseña',
         'rol_id' => 'rol',
         'numero_documento' => 'número de documento',
+        'nombres' => 'nombres',
+        'apellido_paterno' => 'apellido paterno',
+        'apellido_materno' => 'apellido materno',
     ];
 
     public function openModal()
@@ -104,7 +104,6 @@ class UserManagement extends Component
         $this->userId = null;
         $this->profileId = null;
         $this->usuario = '';
-        $this->nombre = '';
         $this->correo_electronico = '';
         $this->clave = '';
         $this->activo = true;
@@ -143,7 +142,6 @@ class UserManagement extends Component
             $user = Usuario::findOrFail($this->userId);
             $user->update([
                 'usuario' => $this->usuario,
-                'nombre' => $this->nombre,
                 'correo_electronico' => $this->correo_electronico,
                 'activo' => $this->activo,
                 'rol_id' => $this->rol_id,
@@ -166,7 +164,6 @@ class UserManagement extends Component
         } else {
             $user = Usuario::create([
                 'usuario' => $this->usuario,
-                'nombre' => $this->nombre,
                 'correo_electronico' => $this->correo_electronico,
                 'clave' => $this->clave,
                 'activo' => $this->activo,
@@ -193,7 +190,6 @@ class UserManagement extends Component
         $user = Usuario::with(['perfil', 'rol'])->findOrFail($id);
         $this->userId = $user->id;
         $this->usuario = $user->usuario;
-        $this->nombre = $user->nombre;
         $this->correo_electronico = $user->correo_electronico;
         $this->activo = $user->activo;
         $this->clave = '';
@@ -234,12 +230,12 @@ class UserManagement extends Component
         $users = Usuario::with(['perfil', 'rol'])
             ->where(function ($query) {
                 $query->where('usuario', 'ilike', '%' . $this->search . '%')
-                    ->orWhere('nombre', 'ilike', '%' . $this->search . '%')
                     ->orWhere('correo_electronico', 'ilike', '%' . $this->search . '%')
                     ->orWhereHas('perfil', function ($q) {
                         $q->where('numero_documento', 'ilike', '%' . $this->search . '%')
                             ->orWhere('nombres', 'ilike', '%' . $this->search . '%')
-                            ->orWhere('apellido_paterno', 'ilike', '%' . $this->search . '%');
+                            ->orWhere('apellido_paterno', 'ilike', '%' . $this->search . '%')
+                            ->orWhere('apellido_materno', 'ilike', '%' . $this->search . '%');
                     });
             })
             ->orderBy('id', 'desc')

@@ -11,21 +11,10 @@
 </head>
 <body class="bg-[#eef2ef] text-slate-800 antialiased" x-data="turnoMaqueta()">
 
-    <header class="bg-[#1b5e3b] text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-            <a href="{{ route('reservar.deporte', ['sede' => $sede['id'], 'fecha' => $fecha]) }}" class="inline-flex items-center gap-2 text-sm font-semibold hover:text-emerald-200">
-                <i class="fa-solid fa-arrow-left"></i>
-                Volver a deportes
-            </a>
-            <a href="/" class="flex items-center gap-2">
-                <img src="{{ asset('logo_municipal_negro.png') }}" alt="La Molina"
-                    class="h-8 w-auto bg-white rounded px-1.5 object-contain" onerror="this.style.display='none'">
-            </a>
-            <a href="{{ route('login') }}" class="text-sm font-semibold hover:text-emerald-200">
-                <i class="fa-regular fa-user mr-1"></i> Iniciar sesión
-            </a>
-        </div>
-    </header>
+    <x-public-navbar
+        :back-href="route('reservar.deporte', ['sede' => $sede['id'], 'fecha' => $fecha])"
+        back-label="Volver a deportes"
+    />
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div class="mb-5">
@@ -90,7 +79,7 @@
                                     <span x-show="estaOcupado(cancha, h)"
                                         class="absolute inset-1.5 rounded-md bg-slate-400/80 pointer-events-none"></span>
                                     <span x-show="estaSeleccionado(cancha, h)"
-                                        class="absolute inset-1.5 rounded-md bg-lime-400 pointer-events-none"></span>
+                                        class="absolute inset-1.5 rounded-md bg-[#1b5e3b] pointer-events-none"></span>
                                 </button>
                             </template>
                         </div>
@@ -113,7 +102,7 @@
                         <span class="w-4 h-4 rounded bg-slate-400"></span> No disponible
                     </span>
                     <span class="inline-flex items-center gap-1.5">
-                        <span class="w-4 h-4 rounded bg-lime-400"></span> Tu reserva
+                        <span class="w-4 h-4 rounded bg-[#1b5e3b]"></span> Tu reserva
                     </span>
                     <span class="inline-flex items-center gap-1.5">
                         <span class="w-4 h-4 rounded border border-slate-200 bg-white"></span> Libre
@@ -164,8 +153,8 @@
                     @click="elegirDuracion(60)"
                     class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border-2 text-base font-semibold transition"
                     :class="seleccion?.duracion === 60
-                        ? 'bg-lime-100 border-[#1b5e3b] text-[#123d2a]'
-                        : 'bg-white border-[#1b5e3b]/35 text-slate-700 hover:bg-lime-50'">
+                        ? 'bg-[#1b5e3b]/10 border-[#1b5e3b] text-[#123d2a]'
+                        : 'bg-white border-[#1b5e3b]/35 text-slate-700 hover:bg-[#1b5e3b]/5'">
                     <span>60 min</span>
                     <span x-text="'PEN ' + precioDuracion(60)"></span>
                 </button>
@@ -174,15 +163,15 @@
                     :disabled="!puede120"
                     class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border-2 text-base font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
                     :class="seleccion?.duracion === 120
-                        ? 'bg-lime-100 border-[#1b5e3b] text-[#123d2a]'
-                        : 'bg-white border-[#1b5e3b]/35 text-slate-700 hover:bg-lime-50'">
+                        ? 'bg-[#1b5e3b]/10 border-[#1b5e3b] text-[#123d2a]'
+                        : 'bg-white border-[#1b5e3b]/35 text-slate-700 hover:bg-[#1b5e3b]/5'">
                     <span>120 min</span>
                     <span x-text="puede120 ? ('PEN ' + precioDuracion(120)) : 'No disponible'"></span>
                 </button>
             </div>
 
             <button type="button" @click="continuar()"
-                class="w-full py-3.5 rounded-full bg-lime-400 hover:bg-lime-300 text-[#123d2a] text-base font-bold shadow-sm transition">
+                class="w-full py-3.5 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white text-base font-bold shadow-sm transition">
                 Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60)"></span>
             </button>
         </div>
@@ -303,9 +292,9 @@
                         return 'bg-slate-100 cursor-not-allowed';
                     }
                     if (this.estaSeleccionado(cancha, h)) {
-                        return 'bg-lime-50';
+                        return 'bg-[#1b5e3b]/10';
                     }
-                    return 'bg-white hover:bg-lime-100 cursor-pointer';
+                    return 'bg-white hover:bg-[#1b5e3b]/10 cursor-pointer';
                 },
 
                 seleccionar(event, cancha, h) {

@@ -10,21 +10,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 
-    <header class="bg-[#1b5e3b] text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-            <a href="/" class="inline-flex items-center gap-2 text-sm font-semibold hover:text-emerald-200">
-                <i class="fa-solid fa-arrow-left"></i>
-                Volver a sedes
-            </a>
-            <a href="/" class="flex items-center gap-2">
-                <img src="{{ asset('logo_municipal_negro.png') }}" alt="La Molina"
-                    class="h-8 w-auto bg-white rounded px-1.5 object-contain" onerror="this.style.display='none'">
-            </a>
-            <a href="{{ route('login') }}" class="text-sm font-semibold hover:text-emerald-200">
-                <i class="fa-regular fa-user mr-1"></i> Iniciar sesión
-            </a>
-        </div>
-    </header>
+    <x-public-navbar back-href="/" back-label="Volver a sedes" />
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="mb-6">

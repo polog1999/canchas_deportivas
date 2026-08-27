@@ -12,25 +12,18 @@
 </head>
 <body class="bg-[#f3f6f4] text-slate-800 antialiased" x-data="confirmarMaqueta()">
 
-    <header class="bg-[#1b5e3b] text-white">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-            <a :href="urlVolverHorarios" class="flex items-center gap-2 text-sm font-semibold hover:text-emerald-200">
+    <x-public-navbar>
+        <x-slot:back>
+            <a :href="urlVolverHorarios"
+                class="inline-flex items-center gap-2 text-sm font-semibold text-[#1b5e3b] hover:text-emerald-800 transition">
                 <i class="fa-solid fa-arrow-left"></i>
                 Volver a horarios
             </a>
-            <a href="/" class="flex items-center gap-2">
-                <img src="{{ asset('logo_municipal_negro.png') }}" alt="La Molina"
-                    class="h-8 w-auto bg-white rounded px-1.5 py-0.5 object-contain" onerror="this.style.display='none'">
-                <span class="font-bold text-sm hidden sm:inline">La Molina</span>
-            </a>
-            <a href="{{ route('login') }}" class="text-sm font-semibold hover:text-emerald-200">
-                <i class="fa-regular fa-user mr-1"></i> Cuenta
-            </a>
-        </div>
-    </header>
+        </x-slot:back>
+    </x-public-navbar>
 
     <div class="bg-white border-b border-emerald-100">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm font-semibold">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm font-semibold">
             <span class="text-emerald-700"><i class="fa-solid fa-circle-check mr-1"></i>1. Buscar</span>
             <i class="fa-solid fa-chevron-right text-slate-300 text-[10px]"></i>
             <span class="text-emerald-700"><i class="fa-solid fa-circle-check mr-1"></i>2. Elegir turno</span>
@@ -81,16 +74,37 @@
                             <p class="text-[11px] mt-1.5" :class="mensajeClase" x-text="mensaje" x-show="mensaje"></p>
                         </div>
 
-                        {{-- Nombre: visible tras validar; bloqueado y vacío si existe --}}
-                        <div class="sm:col-span-2" x-show="estado !== 'pendiente'" x-cloak>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nombre y apellido</label>
+                        {{-- Nombres / apellidos: visibles tras validar; bloqueados si el DNI existe --}}
+                        <div x-show="estado !== 'pendiente'" x-cloak>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nombres</label>
                             <div class="relative">
                                 <i class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                                <input type="text" x-model="form.nombre"
+                                <input type="text" x-model="form.nombres"
                                     :disabled="estado === 'existe'"
-                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta registrada' : 'Ej. Juan Pérez'"
-                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
-                                    :class="estado === 'existe' ? 'border-slate-200' : 'border-slate-200'">
+                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. Juan Carlos'"
+                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
+                            </div>
+                        </div>
+
+                        <div x-show="estado !== 'pendiente'" x-cloak>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Apellido paterno</label>
+                            <div class="relative">
+                                <i class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <input type="text" x-model="form.apellido_paterno"
+                                    :disabled="estado === 'existe'"
+                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. Pérez'"
+                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-2" x-show="estado !== 'pendiente'" x-cloak>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Apellido materno</label>
+                            <div class="relative">
+                                <i class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <input type="text" x-model="form.apellido_materno"
+                                    :disabled="estado === 'existe'"
+                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. García'"
+                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
                             </div>
                         </div>
 
@@ -161,7 +175,7 @@
                     </a>
                     <button type="button" @click="confirmar()"
                         :disabled="!puedeConfirmar || confirmando"
-                        class="inline-flex justify-center items-center gap-2 px-8 py-3 rounded-xl bg-lime-500 hover:bg-lime-400 disabled:opacity-40 disabled:cursor-not-allowed text-emerald-950 text-sm font-bold shadow-sm transition">
+                        class="inline-flex justify-center items-center gap-2 px-8 py-3 rounded-xl bg-[#1b5e3b] hover:bg-[#164d31] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold shadow-sm transition">
                         <i x-show="confirmando" class="fa-solid fa-spinner animate-spin"></i>
                         Confirmar reserva
                         <i x-show="!confirmando" class="fa-solid fa-arrow-right text-xs"></i>
@@ -203,7 +217,7 @@
                             <div class="h-px bg-white/10"></div>
                             <div class="flex justify-between items-end">
                                 <span class="text-xs text-emerald-200">Total estimado</span>
-                                <span class="text-2xl font-bold text-lime-300" x-text="'S/ ' + reserva.precio"></span>
+                                <span class="text-2xl font-bold text-emerald-200" x-text="'S/ ' + reserva.precio"></span>
                             </div>
                         </div>
                     </div>
@@ -261,7 +275,16 @@
             let debounceTimer = null;
 
             return {
-                form: { documento: '', nombre: '', telefono: '', email: '', clave: '', distrito_id: '' },
+                form: {
+                    documento: '',
+                    nombres: '',
+                    apellido_paterno: '',
+                    apellido_materno: '',
+                    telefono: '',
+                    email: '',
+                    clave: '',
+                    distrito_id: '',
+                },
                 estado: 'pendiente', // pendiente | existe | nuevo
                 buscando: false,
                 confirmando: false,
@@ -297,7 +320,9 @@
                     }
 
                     return this.form.documento.replace(/\D/g, '').length >= 8
-                        && this.form.nombre.trim().length > 2
+                        && this.form.nombres.trim().length > 1
+                        && this.form.apellido_paterno.trim().length > 1
+                        && this.form.apellido_materno.trim().length > 1
                         && this.form.telefono.trim().length > 6
                         && this.form.email.includes('@')
                         && String(this.form.distrito_id).length > 0;
@@ -306,7 +331,9 @@
                 onDocumentoInput() {
                     this.estado = 'pendiente';
                     this.mensaje = '';
-                    this.form.nombre = '';
+                    this.form.nombres = '';
+                    this.form.apellido_paterno = '';
+                    this.form.apellido_materno = '';
                     this.form.telefono = '';
                     this.form.email = '';
                     this.form.clave = '';
@@ -343,7 +370,9 @@
                         }
 
                         // No listar datos de BD: limpiar campos visibles
-                        this.form.nombre = '';
+                        this.form.nombres = '';
+                        this.form.apellido_paterno = '';
+                        this.form.apellido_materno = '';
                         this.form.telefono = '';
                         this.form.email = '';
                         this.form.clave = '';
@@ -371,6 +400,11 @@
                     this.confirmando = true;
                     this.errorConfirmacion = '';
 
+                    const irAPago = () => {
+                        const qs = window.location.search || '';
+                        window.location.href = @json(route('reservar.pago')) + qs;
+                    };
+
                     try {
                         if (this.estado === 'existe') {
                             const res = await fetch(@json(route('reservar.verificar-acceso')), {
@@ -390,12 +424,9 @@
                                 this.errorConfirmacion = data.mensaje || 'No se pudo verificar el acceso.';
                                 return;
                             }
-                            window.location.href = data.redirect || @json(route('dashboard'));
-                            return;
                         }
 
-                        // Usuario nuevo (maqueta): aún no crea cuenta, va a registro/login
-                        window.location.href = @json(route('login'));
+                        irAPago();
                     } catch (e) {
                         this.errorConfirmacion = 'Error de conexión. Intenta nuevamente.';
                     } finally {

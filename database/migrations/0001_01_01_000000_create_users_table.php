@@ -34,7 +34,6 @@ return new class extends Migration
             $table->foreignId('rol_id')->constrained('roles');
             $table->string('usuario', 50)->unique();
             $table->string('clave');
-            $table->string('nombre', 150);
             $table->string('correo_electronico', 150)->nullable();
             $table->timestamp('correo_verificado_en')->nullable();
             $table->boolean('activo')->default(true);

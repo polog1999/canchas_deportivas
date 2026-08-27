@@ -27,7 +27,6 @@ class Usuario extends Authenticatable
         'rol_id',
         'usuario',
         'clave',
-        'nombre',
         'correo_electronico',
         'correo_verificado_en',
         'activo',
@@ -95,6 +94,18 @@ class Usuario extends Authenticatable
     public function profile(): HasOne
     {
         return $this->perfil();
+    }
+
+    /** Nombre completo desde perfiles (nombres + apellidos). */
+    public function nombreCompleto(): string
+    {
+        $perfil = $this->relationLoaded('perfil') ? $this->perfil : $this->perfil()->first();
+
+        if ($perfil) {
+            return $perfil->nombreCompleto();
+        }
+
+        return (string) ($this->usuario ?: 'Usuario');
     }
 
     public function menus(): Collection

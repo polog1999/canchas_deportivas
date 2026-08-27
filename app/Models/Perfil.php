@@ -38,4 +38,13 @@ class Perfil extends Model
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
     }
+
+    public function nombreCompleto(): string
+    {
+        return trim(implode(' ', array_filter([
+            trim((string) $this->nombres),
+            trim((string) $this->apellido_paterno),
+            trim((string) $this->apellido_materno),
+        ], fn ($v) => $v !== '')));
+    }
 }

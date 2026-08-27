@@ -51,7 +51,6 @@
                             <tr class="hover:bg-gray-50/70 transition-colors">
                                 <td class="py-4 px-6">
                                     <div class="font-semibold text-gray-900">{{ $user->usuario }}</div>
-                                    <div class="text-xs text-gray-500">{{ $user->nombre }}</div>
                                     <div class="text-xs text-gray-400">{{ $user->correo_electronico }}</div>
                                 </td>
                                 <td class="py-4 px-6">
@@ -65,10 +64,9 @@
                                     @endif
                                 </td>
                                 <td class="py-4 px-6">
-                                    @if ($user->perfil && ($user->perfil->nombres || $user->perfil->apellido_paterno))
+                                    @if ($user->perfil && $user->perfil->nombreCompleto() !== '')
                                         <div class="font-medium text-gray-800">
-                                            {{ $user->perfil->nombres }} {{ $user->perfil->apellido_paterno }}
-                                            {{ $user->perfil->apellido_materno }}
+                                            {{ $user->perfil->nombreCompleto() }}
                                         </div>
                                         <div class="text-xs text-gray-400 truncate max-w-xs">
                                             {{ $user->perfil->direccion ?? 'Sin dirección' }}</div>
@@ -186,17 +184,6 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Nombre completo
-                                            <span class="text-red-500">*</span></label>
-                                        <input type="text" wire:model="nombre"
-                                            class="w-full px-3 py-2 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
-                                            placeholder="Ej: Juan Pérez" />
-                                        @error('nombre')
-                                            <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-
-                                    <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Correo
                                             Electrónico</label>
                                         <input type="email" wire:model="correo_electronico"
@@ -286,26 +273,35 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Nombres</label>
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Nombres <span class="text-red-500">*</span></label>
                                         <input type="text" wire:model.defer="nombres"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
+                                            class="w-full px-3 py-2 border @error('nombres') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Nombres" />
+                                        @error('nombres')
+                                            <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                                        @enderror
                                     </div>
 
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Apellido
-                                            Paterno</label>
+                                            Paterno <span class="text-red-500">*</span></label>
                                         <input type="text" wire:model.defer="apellido_paterno"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
+                                            class="w-full px-3 py-2 border @error('apellido_paterno') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Paterno" />
+                                        @error('apellido_paterno')
+                                            <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                                        @enderror
                                     </div>
 
                                     <div>
                                         <label class="block text-xs font-semibold text-gray-700 mb-1">Apellido
-                                            Materno</label>
+                                            Materno <span class="text-red-500">*</span></label>
                                         <input type="text" wire:model.defer="apellido_materno"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
+                                            class="w-full px-3 py-2 border @error('apellido_materno') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                             placeholder="Materno" />
+                                        @error('apellido_materno')
+                                            <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                                        @enderror
                                     </div>
 
                                     <div class="md:col-span-3">

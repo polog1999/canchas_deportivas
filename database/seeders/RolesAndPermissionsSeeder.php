@@ -39,28 +39,40 @@ class RolesAndPermissionsSeeder extends Seeder
                 'orden' => 3,
             ],
             [
+                'nombre' => 'Mis Pagos',
+                'ruta' => '/portal/mis-pagos',
+                'icono' => 'fa-receipt',
+                'orden' => 4,
+            ],
+            [
+                'nombre' => 'Ver Reservas',
+                'ruta' => '/portal/ver-reservas',
+                'icono' => 'fa-calendar-check',
+                'orden' => 5,
+            ],
+            [
                 'nombre' => 'Tusne',
                 'ruta' => '/portal/tusne-catalog',
                 'icono' => 'fa-list',
-                'orden' => 4,
+                'orden' => 6,
             ],
             [
                 'nombre' => 'Usuarios',
                 'ruta' => '/portal/users',
                 'icono' => 'fa-users',
-                'orden' => 5,
+                'orden' => 7,
             ],
             [
                 'nombre' => 'Roles y Menús',
                 'ruta' => '/portal/roles-menus',
                 'icono' => 'fa-shield',
-                'orden' => 6,
+                'orden' => 8,
             ],
             [
                 'nombre' => 'Estructura de Menús',
                 'ruta' => '/portal/menus',
                 'icono' => 'fa-sitemap',
-                'orden' => 7,
+                'orden' => 9,
             ],
         ];
 
@@ -84,11 +96,19 @@ class RolesAndPermissionsSeeder extends Seeder
             ['usuario' => 'admin'],
             [
                 'rol_id' => $rolAdmin->id,
-                'nombre' => 'Administrador',
                 'correo_electronico' => 'admin@gmail.com',
                 'clave' => 'password',
                 'activo' => true,
             ]
         );
+
+        $admin = Usuario::where('usuario', 'admin')->first();
+        if ($admin && ! $admin->perfil) {
+            $admin->perfil()->create([
+                'nombres' => 'Administrador',
+                'apellido_paterno' => 'Sistema',
+                'apellido_materno' => 'La Molina',
+            ]);
+        }
     }
 }

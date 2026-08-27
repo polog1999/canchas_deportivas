@@ -50,25 +50,67 @@
                     @enderror
                 </div>
 
-                <!-- Nombre Completo -->
+                <!-- Nombres y apellidos (perfiles) -->
                 <div>
-                    <label for="nombre" class="block text-sm font-medium text-gray-700">
-                        Nombres y Apellidos
+                    <label for="nombres" class="block text-sm font-medium text-gray-700">
+                        Nombres
                     </label>
                     <div class="mt-1 relative rounded-md shadow-sm">
-                        <input 
-                            id="nombre" 
-                            name="nombre" 
-                            type="text" 
-                            value="{{ old('nombre') }}"
-                            required 
-                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('nombre') border-red-300 @enderror" 
-                            placeholder="Juan Pérez"
+                        <input
+                            id="nombres"
+                            name="nombres"
+                            type="text"
+                            value="{{ old('nombres') }}"
+                            required
+                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('nombres') border-red-300 @enderror"
+                            placeholder="Juan Carlos"
                         >
                     </div>
-                    @error('nombre') 
-                        <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
+                    @error('nombres')
+                        <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span>
                     @enderror
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="apellido_paterno" class="block text-sm font-medium text-gray-700">
+                            Apellido paterno
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <input
+                                id="apellido_paterno"
+                                name="apellido_paterno"
+                                type="text"
+                                value="{{ old('apellido_paterno') }}"
+                                required
+                                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('apellido_paterno') border-red-300 @enderror"
+                                placeholder="Pérez"
+                            >
+                        </div>
+                        @error('apellido_paterno')
+                            <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="apellido_materno" class="block text-sm font-medium text-gray-700">
+                            Apellido materno
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <input
+                                id="apellido_materno"
+                                name="apellido_materno"
+                                type="text"
+                                value="{{ old('apellido_materno') }}"
+                                required
+                                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('apellido_materno') border-red-300 @enderror"
+                                placeholder="García"
+                            >
+                        </div>
+                        @error('apellido_materno')
+                            <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span>
+                        @enderror
+                    </div>
                 </div>
 
                 <!-- Correo Electrónico -->
