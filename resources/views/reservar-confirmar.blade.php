@@ -56,20 +56,12 @@
                         {{-- 1. DNI primero --}}
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">DNI / documento</label>
-                            <div class="flex gap-2">
-                                <div class="relative flex-1">
-                                    <i class="fa-regular fa-address-card absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                                    <input type="text" x-model="form.documento" @input="onDocumentoInput()"
-                                        maxlength="15" inputmode="numeric"
-                                        class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                        placeholder="12345678">
-                                </div>
-                                <button type="button" @click="buscarDocumento()"
-                                    :disabled="buscando || form.documento.replace(/\D/g,'').length < 8"
-                                    class="px-4 rounded-xl bg-[#1b5e3b] hover:bg-[#164d31] disabled:opacity-40 text-white text-sm font-semibold shrink-0">
-                                    <span x-show="!buscando">Validar</span>
-                                    <span x-show="buscando"><i class="fa-solid fa-spinner animate-spin"></i></span>
-                                </button>
+                            <div class="relative">
+                                <i class="fa-regular fa-address-card absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <input type="text" x-model="form.documento" @input="onDocumentoInput()"
+                                    maxlength="15" inputmode="numeric"
+                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    placeholder="12345678">
                             </div>
                             <p class="text-[11px] mt-1.5" :class="mensajeClase" x-text="mensaje" x-show="mensaje"></p>
                         </div>
@@ -400,7 +392,34 @@
                     this.confirmando = true;
                     this.errorConfirmacion = '';
 
-                    const irAPago = () => {
+                    const guardarYIrAPago = () => {
+                        const params = new URLSearchParams(window.location.search || '');
+                        const payload = {
+                            sede: params.get('sede') || '',
+                            club: params.get('club') || club,
+                            direccion: params.get('direccion') || direccion,
+                            imagen: params.get('imagen') || imagen,
+                            cancha: params.get('cancha') || cancha,
+                            cancha_id: params.get('cancha_id') || '',
+                            detalle: params.get('detalle') || detalle,
+                            fecha: params.get('fecha') || fecha,
+                            hora: params.get('hora') || hora,
+                            duracion: parseInt(params.get('duracion') || String(duracion), 10) || 60,
+                            precio: parseFloat(params.get('precio') || String(precio)) || 0,
+                            deporte: params.get('deporte') || deporte,
+                            deporte_id: params.get('deporte_id') || deporteId,
+                            estado_titular: this.estado,
+                            documento: this.form.documento.replace(/\D/g, ''),
+                            nombres: this.form.nombres.trim(),
+                            apellido_paterno: this.form.apellido_paterno.trim(),
+                            apellido_materno: this.form.apellido_materno.trim(),
+                            telefono: this.form.telefono.trim(),
+                            email: this.form.email.trim(),
+                            distrito_id: String(this.form.distrito_id || ''),
+                        };
+                        try {
+                            sessionStorage.setItem('reserva_pago', JSON.stringify(payload));
+                        } catch (e) { /* ignore */ }
                         const qs = window.location.search || '';
                         window.location.href = @json(route('reservar.pago')) + qs;
                     };
@@ -426,7 +445,7 @@
                             }
                         }
 
-                        irAPago();
+                        guardarYIrAPago();
                     } catch (e) {
                         this.errorConfirmacion = 'Error de conexión. Intenta nuevamente.';
                     } finally {

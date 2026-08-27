@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Pago | Municipalidad de La Molina</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -10,7 +11,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak]{display:none!important}</style>
 </head>
-<body class="bg-[#f3f6f4] text-slate-800 antialiased" x-data="{ aceptaTerminos: false, mostrarTerminos: false }">
+<body class="bg-[#f3f6f4] text-slate-800 antialiased" x-data="pagoReserva()">
 
     <x-public-navbar
         :back-href="url('/reservar/confirmar') . (request()->getQueryString() ? '?' . request()->getQueryString() : '')"
@@ -33,8 +34,20 @@
                 </span>
             </label>
 
-            {{-- Espacio para botón / widget Niubiz --}}
-            <div class="w-full max-w-md min-h-[48px]"></div>
+            <div class="w-full max-w-md space-y-3">
+                <p x-show="error" x-cloak x-text="error" class="text-sm text-red-600 text-center"></p>
+                <p x-show="exito" x-cloak x-text="exito" class="text-sm text-emerald-700 text-center"></p>
+
+                <button type="button"
+                    @click="pagar()"
+                    :disabled="!aceptaTerminos || pagando"
+                    class="w-full py-3 rounded-xl text-white text-sm font-semibold transition
+                        bg-[#1b5e3b] hover:bg-[#164d31]
+                        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1b5e3b]">
+                    <span x-show="!pagando">Pagar</span>
+                    <span x-show="pagando" x-cloak>Registrando…</span>
+                </button>
+            </div>
         </div>
     </main>
 
@@ -80,6 +93,92 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function pagoReserva() {
+            return {
+                aceptaTerminos: false,
+                mostrarTerminos: false,
+                pagando: false,
+                error: '',
+                exito: '',
+
+                payloadDesdeUrl() {
+                    const p = new URLSearchParams(window.location.search || '');
+                    return {
+                        sede: p.get('sede') || '',
+                        club: p.get('club') || '',
+                        direccion: p.get('direccion') || '',
+                        imagen: p.get('imagen') || '',
+                        cancha: p.get('cancha') || '',
+                        cancha_id: p.get('cancha_id') || '',
+                        detalle: p.get('detalle') || '',
+                        fecha: p.get('fecha') || '',
+                        hora: p.get('hora') || '',
+                        duracion: parseInt(p.get('duracion') || '60', 10) || 60,
+                        precio: parseFloat(p.get('precio') || '0') || 0,
+                        deporte: p.get('deporte') || '',
+                        deporte_id: p.get('deporte_id') || '',
+                    };
+                },
+
+                leerPayload() {
+                    let stored = null;
+                    try {
+                        stored = JSON.parse(sessionStorage.getItem('reserva_pago') || 'null');
+                    } catch (e) {
+                        stored = null;
+                    }
+                    return Object.assign({}, this.payloadDesdeUrl(), stored || {});
+                },
+
+                async pagar() {
+                    if (!this.aceptaTerminos || this.pagando) return;
+                    this.pagando = true;
+                    this.error = '';
+                    this.exito = '';
+
+                    const payload = this.leerPayload();
+                    payload.acepto_terminos = true;
+
+                    try {
+                        const res = await fetch(@json(route('reservar.registrar')), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            },
+                            body: JSON.stringify(payload),
+                        });
+
+                        const data = await res.json().catch(() => ({}));
+
+                        if (!res.ok || !data.ok) {
+                            if (data.errors) {
+                                const first = Object.values(data.errors)[0];
+                                this.error = Array.isArray(first) ? first[0] : String(first);
+                            } else {
+                                this.error = data.mensaje || data.message || 'No se pudo registrar la reserva.';
+                            }
+                            return;
+                        }
+
+                        try { sessionStorage.removeItem('reserva_pago'); } catch (e) {}
+                        this.exito = (data.mensaje || 'Reserva registrada.') + (data.voucher ? ' Voucher: ' + data.voucher : '');
+
+                        if (data.redirect) {
+                            setTimeout(() => { window.location.href = data.redirect; }, 1200);
+                        }
+                    } catch (e) {
+                        this.error = 'Error de conexión. Intenta nuevamente.';
+                    } finally {
+                        this.pagando = false;
+                    }
+                },
+            };
+        }
+    </script>
 
 </body>
 </html>

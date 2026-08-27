@@ -258,6 +258,9 @@ Route::get('/reservar/pago', function () {
     return view('reservar-pago');
 })->name('reservar.pago');
 
+Route::post('/reservar/registrar', \App\Http\Controllers\RegistrarReservaController::class)
+    ->name('reservar.registrar');
+
 Route::get('/reservar/buscar-documento', function (\Illuminate\Http\Request $request) {
     $documento = preg_replace('/\D+/', '', (string) $request->query('documento', ''));
 
