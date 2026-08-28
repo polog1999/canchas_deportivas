@@ -10,6 +10,8 @@ use App\Models\Reserva;
 use App\Models\Rol;
 use App\Models\Transaccion;
 use App\Models\Usuario;
+use App\Services\NiubizService;
+use App\Services\ReservaCorreoService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +22,7 @@ use Illuminate\Validation\ValidationException;
 
 class RegistrarReservaController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, NiubizService $niubiz): JsonResponse
     {
         $data = $request->validate([
             'acepto_terminos' => 'accepted',
@@ -42,6 +44,7 @@ class RegistrarReservaController extends Controller
             'cancha' => 'nullable|string|max:255',
             'deporte' => 'nullable|string|max:255',
             'deporte_id' => 'nullable',
+            'reserva_id' => 'nullable|integer',
         ], [
             'acepto_terminos.accepted' => 'Debes aceptar los términos y condiciones.',
             'cancha_id.required' => 'Falta la cancha de la reserva.',
@@ -49,42 +52,66 @@ class RegistrarReservaController extends Controller
             'hora.required' => 'Falta la hora de la reserva.',
         ]);
 
-        $usuario = $this->resolverUsuario($data);
+        $usuarioData = $this->resolverUsuario($data);
+        $usuario = $usuarioData['usuario'];
 
         $hora = preg_replace('/[^\d:]/', '', (string) $data['hora']);
         if (! preg_match('/^\d{1,2}:\d{2}$/', $hora)) {
             throw ValidationException::withMessages(['hora' => 'Hora inválida.']);
         }
 
-        $horaInicio = Carbon::createFromFormat('Y-m-d H:i', $data['fecha'] . ' ' . $hora);
+        $horaInicio = Carbon::createFromFormat('Y-m-d H:i', $data['fecha'].' '.$hora, 'America/Lima');
         $horaFin = $horaInicio->copy()->addMinutes((int) $data['duracion']);
-        $precio = (float) ($data['precio'] ?? 0);
+        $precio = round((float) ($data['precio'] ?? 0), 2);
 
         $cancha = Cancha::query()->whereKey($data['cancha_id'])->where('esta_activo', true)->first();
         if (! $cancha) {
             throw ValidationException::withMessages(['cancha_id' => 'La cancha no está disponible.']);
         }
 
-        // Evitar solape básico con otras reservas
-        $solapa = Reserva::query()
-            ->where('cancha_id', $cancha->id)
-            ->where(function ($q) {
-                $q->whereNull('estado')
-                    ->orWhereRaw('UPPER(estado) <> ?', ['CANCELADA']);
-            })
-            ->where('hora_inicio', '<', $horaFin)
-            ->where('hora_fin', '>', $horaInicio)
-            ->exists();
-
-        if ($solapa) {
-            throw ValidationException::withMessages([
-                'hora' => 'Ese horario ya no está disponible. Elige otro turno.',
-            ]);
+        $reserva = null;
+        if (! empty($data['reserva_id'])) {
+            $reserva = Reserva::query()
+                ->whereKey($data['reserva_id'])
+                ->where('usuario_id', $usuario->id)
+                ->whereRaw('LOWER(estado) = ?', ['pendiente'])
+                ->first();
         }
 
-        $resultado = DB::transaction(function () use ($data, $usuario, $cancha, $horaInicio, $horaFin, $precio) {
-            $codigoVoucher = 'VCH-' . strtoupper(Str::random(8));
-            $transaccionLocal = 'LOCAL-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(4));
+        if (! $reserva) {
+            $solapa = Reserva::query()
+                ->where('cancha_id', $cancha->id)
+                ->where('hora_inicio', '<', $horaFin)
+                ->where('hora_fin', '>', $horaInicio)
+                ->where(function ($q) {
+                    $q->whereNull('estado')
+                        ->orWhereRaw('UPPER(estado) NOT IN (?, ?)', ['CANCELADA', 'PAGO_FALLIDO']);
+                })
+                ->where(function ($q) use ($usuario) {
+                    $q->whereRaw('LOWER(estado) = ?', ['confirmada'])
+                        ->orWhere(function ($q2) use ($usuario) {
+                            $q2->whereRaw('LOWER(estado) = ?', ['pendiente'])
+                                ->where('usuario_id', '<>', $usuario->id);
+                        });
+                })
+                ->exists();
+
+            if ($solapa) {
+                throw ValidationException::withMessages([
+                    'hora' => 'Ese horario ya no está disponible. Elige otro turno.',
+                ]);
+            }
+
+            // Cancelar pendientes propias del mismo slot para no acumular
+            Reserva::query()
+                ->where('usuario_id', $usuario->id)
+                ->where('cancha_id', $cancha->id)
+                ->where('hora_inicio', $horaInicio)
+                ->where('hora_fin', $horaFin)
+                ->whereRaw('LOWER(estado) = ?', ['pendiente'])
+                ->update(['estado' => 'cancelada']);
+
+            $codigoVoucher = 'VCH-'.strtoupper(Str::random(8));
 
             $reserva = Reserva::create([
                 'usuario_id' => $usuario->id,
@@ -93,74 +120,171 @@ class RegistrarReservaController extends Controller
                 'hora_fin' => $horaFin,
                 'precio_total' => $precio,
                 'referencia_pago' => $codigoVoucher,
-                'estado' => 'confirmada',
+                'estado' => 'pendiente',
             ]);
+        }
+
+        if (! Auth::check()) {
+            Auth::login($usuario);
+        }
+
+        $returnQuery = $request->header('X-Pago-Query') ?: $request->getQueryString();
+
+        session([
+            'pago_reserva_id' => $reserva->id,
+            'pago_acepto_terminos' => true,
+            'pago_return_query' => $returnQuery,
+            'pago_usuario_nuevo' => $usuarioData['es_nuevo'],
+            'pago_usuario_login' => $usuarioData['usuario_login'],
+            'pago_clave_plana' => $usuarioData['clave_plana'],
+            'pago_meta' => [
+                'documento' => $data['documento'] ?? null,
+                'telefono' => $data['telefono'] ?? null,
+                'email' => $data['email'] ?? $usuario->correo_electronico,
+                'sede' => $data['sede'] ?? $cancha->sede_id,
+                'club' => $data['club'] ?? null,
+                'cancha' => $data['cancha'] ?? $cancha->nombre,
+                'deporte' => $data['deporte'] ?? null,
+                'deporte_id' => $data['deporte_id'] ?? null,
+            ],
+        ]);
+
+        // Monto 0: confirmar sin pasarela
+        if ($precio <= 0) {
+            return $this->confirmarSinPasarela($reserva, $data, $usuario, $cancha, $usuarioData);
+        }
+
+        $sessionKey = $niubiz->createSessionToken($reserva, $precio, $usuario);
+
+        if (! $sessionKey) {
+            throw ValidationException::withMessages([
+                'niubiz' => 'No se pudo conectar con la pasarela de pago. Intenta nuevamente.',
+            ]);
+        }
+
+        $timeoutUrl = route('reservar.pago');
+        if ($returnQuery) {
+            $timeoutUrl .= '?'.ltrim($returnQuery, '?');
+        }
+
+        return response()->json([
+            'ok' => true,
+            'sin_pasarela' => false,
+            'sessionKey' => $sessionKey,
+            'purchaseNumber' => (string) $reserva->id,
+            'amount' => number_format($precio, 2, '.', ''),
+            'merchantId' => config('niubiz.merchant_id'),
+            'reserva_id' => $reserva->id,
+            'voucher' => $reserva->referencia_pago,
+            'verifyUrl' => route('reservar.pago.verificar', ['purchaseNumber' => $reserva->id]),
+            'timeoutUrl' => $timeoutUrl,
+            'buttonUrl' => config('niubiz.button_url'),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array{usuario: Usuario, es_nuevo: bool, usuario_login: ?string, clave_plana: ?string}  $usuarioData
+     */
+    private function confirmarSinPasarela(
+        Reserva $reserva,
+        array $data,
+        Usuario $usuario,
+        Cancha $cancha,
+        array $usuarioData,
+    ): JsonResponse {
+        $resultado = DB::transaction(function () use ($reserva, $data, $usuario, $cancha) {
+            $reserva->update(['estado' => 'confirmada']);
 
             $transaccion = Transaccion::create([
                 'reserva_id' => $reserva->id,
-                'transaccion_id' => $transaccionLocal,
+                'transaccion_id' => 'LOCAL-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4)),
                 'codigo_autorizacion' => null,
                 'marca_tarjeta' => null,
                 'tarjeta_enmascarada' => null,
-                'monto' => $precio,
+                'monto' => 0,
                 'estado' => 'SIN_PASARELA',
                 'respuesta_bruta' => [
-                    'origen' => 'maqueta',
+                    'origen' => 'monto_cero',
                     'sin_niubiz' => true,
-                    'voucher' => $codigoVoucher,
+                    'voucher' => $reserva->referencia_pago,
                     'titular' => [
                         'documento' => $data['documento'] ?? null,
-                        'nombres' => $data['nombres'] ?? null,
-                        'apellido_paterno' => $data['apellido_paterno'] ?? null,
-                        'apellido_materno' => $data['apellido_materno'] ?? null,
-                        'telefono' => $data['telefono'] ?? null,
                         'email' => $data['email'] ?? $usuario->correo_electronico,
-                        'distrito_id' => $data['distrito_id'] ?? null,
                     ],
                     'reserva' => [
                         'sede_id' => $data['sede'] ?? $cancha->sede_id,
                         'club' => $data['club'] ?? null,
                         'cancha' => $data['cancha'] ?? $cancha->nombre,
                         'deporte' => $data['deporte'] ?? null,
-                        'deporte_id' => $data['deporte_id'] ?? null,
                     ],
                 ],
             ]);
 
             $pago = Pago::create([
                 'transaccion_id' => $transaccion->id,
-                'monto' => $precio,
-                'pagado_en' => now(),
+                'monto' => 0,
+                'pagado_en' => now('UTC'),
                 'acepto_terminos' => true,
             ]);
 
             return [
                 'reserva_id' => $reserva->id,
                 'pago_id' => $pago->id,
-                'voucher' => $codigoVoucher,
+                'voucher' => $reserva->referencia_pago,
             ];
         });
 
-        if (! Auth::check()) {
-            Auth::login($usuario);
-        }
+        $reserva->refresh();
+        app(ReservaCorreoService::class)->enviarConfirmacionPago(
+            $reserva,
+            array_merge($data, [
+                'club' => $data['club'] ?? null,
+                'cancha' => $data['cancha'] ?? $cancha->nombre,
+                'deporte' => $data['deporte'] ?? null,
+                'email' => $data['email'] ?? $usuario->correo_electronico,
+            ]),
+            $usuarioData['es_nuevo'],
+            $usuarioData['usuario_login'],
+            $usuarioData['clave_plana'],
+        );
+
+        session()->forget([
+            'pago_reserva_id',
+            'pago_acepto_terminos',
+            'pago_meta',
+            'pago_return_query',
+            'pago_usuario_nuevo',
+            'pago_usuario_login',
+            'pago_clave_plana',
+        ]);
 
         return response()->json([
             'ok' => true,
-            'mensaje' => 'Reserva registrada correctamente.',
+            'sin_pasarela' => true,
+            'mensaje' => 'Reserva confirmada (sin costo).',
             'reserva_id' => $resultado['reserva_id'],
             'voucher' => $resultado['voucher'],
-            'redirect' => url('/?reserva=' . $resultado['reserva_id']),
+            'redirect' => url('/?reserva='.$resultado['reserva_id'].'&pago=ok'),
         ]);
     }
 
     /**
      * @param  array<string, mixed>  $data
+     * @return array{usuario: Usuario, es_nuevo: bool, usuario_login: ?string, clave_plana: ?string}
      */
-    private function resolverUsuario(array $data): Usuario
+    private function resolverUsuario(array $data): array
     {
         if (Auth::check()) {
-            return Auth::user();
+            /** @var Usuario $authUser */
+            $authUser = Auth::user();
+
+            return [
+                'usuario' => $authUser,
+                'es_nuevo' => false,
+                'usuario_login' => $authUser->usuario,
+                'clave_plana' => null,
+            ];
         }
 
         $documento = preg_replace('/\D+/', '', (string) ($data['documento'] ?? ''));
@@ -173,7 +297,12 @@ class RegistrarReservaController extends Controller
                 ->first();
 
             if ($perfil?->usuario) {
-                return $perfil->usuario;
+                return [
+                    'usuario' => $perfil->usuario,
+                    'es_nuevo' => false,
+                    'usuario_login' => $perfil->usuario->usuario,
+                    'clave_plana' => null,
+                ];
             }
         }
 
@@ -194,14 +323,14 @@ class RegistrarReservaController extends Controller
 
         $usuarioLogin = $documento;
         if (Usuario::where('usuario', $usuarioLogin)->exists()) {
-            $usuarioLogin = 'u' . $documento . Str::lower(Str::random(3));
+            $usuarioLogin = 'u'.$documento.Str::lower(Str::random(3));
         }
 
         $usuario = Usuario::create([
             'rol_id' => $rolCliente->id,
             'usuario' => $usuarioLogin,
             'correo_electronico' => $data['email'] ?? null,
-            'clave' => $documento, // cast hashed en Usuario
+            'clave' => $documento,
             'activo' => true,
         ]);
 
@@ -214,6 +343,11 @@ class RegistrarReservaController extends Controller
             'ubigeo_distrito' => $data['distrito_id'] ?? null,
         ]);
 
-        return $usuario->fresh('perfil');
+        return [
+            'usuario' => $usuario->fresh('perfil'),
+            'es_nuevo' => true,
+            'usuario_login' => $usuarioLogin,
+            'clave_plana' => $documento,
+        ];
     }
 }

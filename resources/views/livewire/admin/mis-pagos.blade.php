@@ -28,7 +28,7 @@
                     <thead>
                         <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold tracking-wider border-b border-gray-100">
                             <th class="py-4 px-6">Pedido</th>
-                            <th class="py-4 px-6">Fecha pago</th>
+                            <th class="py-4 px-6">Fecha de pago</th>
                             <th class="py-4 px-6">Titular</th>
                             <th class="py-4 px-6">Reserva</th>
                             <th class="py-4 px-6">Monto</th>
@@ -122,7 +122,7 @@
                         <p><span class="text-gray-500">N° PEDIDO:</span> <strong>{{ $pagoSeleccionado['nro_pedido'] }}</strong></p>
                         <p><span class="text-gray-500">CÓDIGO VOUCHER:</span> <strong>{{ $pagoSeleccionado['codigo_voucher'] ?? '—' }}</strong></p>
                         <p><span class="text-gray-500">N° OPERACIÓN:</span> <strong>{{ $pagoSeleccionado['nro_operacion'] }}</strong></p>
-                        <p><span class="text-gray-500">FECHA Y HORA:</span> {{ $pagoSeleccionado['fecha_pago'] }}</p>
+                        <p><span class="text-gray-500">FECHA Y HORA DEL PAGO:</span> {{ $pagoSeleccionado['fecha_pago'] }} <span class="text-gray-400">(hora Perú)</span></p>
                     </div>
 
                     <div class="my-4 border-t border-dashed border-gray-300"></div>
@@ -139,7 +139,7 @@
                         <p><span class="text-gray-500">SEDE:</span> {{ $pagoSeleccionado['sede'] }}</p>
                         <p><span class="text-gray-500">CANCHA:</span> {{ $pagoSeleccionado['cancha'] }}</p>
                         <p><span class="text-gray-500">DEPORTE:</span> {{ $pagoSeleccionado['deporte'] }}</p>
-                        <p><span class="text-gray-500">TURNO:</span> {{ $pagoSeleccionado['fecha_turno'] }} · {{ $pagoSeleccionado['horario'] }}</p>
+                        <p><span class="text-gray-500">TURNO RESERVADO:</span> {{ $pagoSeleccionado['fecha_turno'] }} · {{ $pagoSeleccionado['horario'] }}</p>
                         <p><span class="text-gray-500">MEDIO:</span> {{ $pagoSeleccionado['medio_pago'] }}</p>
                     </div>
 

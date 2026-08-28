@@ -2,6 +2,11 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Pago;
+use App\Models\Usuario;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -15,91 +20,133 @@ class MisPagosManager extends Component
     public ?array $pagoSeleccionado = null;
 
     /**
-     * Maqueta: pagos ficticios adaptados a reservas de canchas.
-     *
-     * @return list<array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
-    private function pagosFicticios(): array
+    private function pagosReales(): Collection
     {
+        /** @var Usuario|null $usuario */
+        $usuario = Auth::user();
+
+        if (! $usuario) {
+            return collect();
+        }
+
+        $esAdmin = $usuario->tieneRol('admin', 'ADMIN', 'SUPERADMIN');
+
+        return Pago::query()
+            ->with([
+                'transaccion.reserva.usuario.perfil',
+                'transaccion.reserva.cancha.sede',
+                'transaccion.reserva.cancha.deportes',
+            ])
+            ->whereHas('transaccion.reserva', function ($q) use ($usuario, $esAdmin) {
+                $q->whereRaw('LOWER(estado) = ?', ['confirmada']);
+
+                if (! $esAdmin) {
+                    $q->where('usuario_id', $usuario->id);
+                }
+            })
+            ->orderByDesc('pagado_en')
+            ->get()
+            ->map(fn (Pago $pago) => $this->mapearPago($pago))
+            ->values();
+    }
+
+    private function formatearFechaPago(Pago $pago): string
+    {
+        $raw = $pago->getRawOriginal('pagado_en');
+        if (! $raw) {
+            return '—';
+        }
+
+        // Momento real del pago: en BD queda en UTC, se muestra en hora Perú.
+        return Carbon::parse($raw, 'UTC')
+            ->timezone('America/Lima')
+            ->format('d/m/Y H:i');
+    }
+
+    /**
+     * Hora de pared del turno (la que eligió el usuario), sin conversión de zona.
+     */
+    private function formatearHoraTurno(?Carbon $fecha, string $formato): string
+    {
+        if (! $fecha) {
+            return '—';
+        }
+
+        return $fecha->format($formato);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapearPago(Pago $pago): array
+    {
+        $transaccion = $pago->transaccion;
+        $reserva = $transaccion?->reserva;
+        $titular = $reserva?->usuario;
+        $perfil = $titular?->perfil;
+        $cancha = $reserva?->cancha;
+        $sede = $cancha?->sede;
+
+        $horaInicio = $reserva?->hora_inicio;
+        $horaFin = $reserva?->hora_fin;
+        $duracionMin = ($horaInicio && $horaFin)
+            ? (int) $horaInicio->diffInMinutes($horaFin)
+            : 60;
+
+        $deporte = data_get($transaccion?->respuesta_bruta, 'meta.deporte')
+            ?? data_get($transaccion?->respuesta_bruta, 'reserva.deporte')
+            ?? $cancha?->deportes?->first()?->nombre;
+
+        $monto = round((float) $pago->monto, 2);
+        $marca = trim((string) ($transaccion?->marca_tarjeta ?? ''));
+        $tarjeta = trim((string) ($transaccion?->tarjeta_enmascarada ?? ''));
+
+        if ($monto <= 0 || strtolower((string) $transaccion?->estado) === 'sin_pasarela') {
+            $medioPago = 'Gratuito';
+            $estado = 'Gratuito';
+        } else {
+            $medioPago = ($marca !== '' && $tarjeta !== '')
+                ? trim($marca.' '.$tarjeta)
+                : ($marca !== '' ? $marca : 'Tarjeta');
+            $estado = 'Pagado';
+        }
+
+        $concepto = 'Reserva de cancha';
+        if ($deporte) {
+            $concepto .= ' · '.$deporte;
+        }
+        $concepto .= ' · '.$duracionMin.' min';
+        if ($monto <= 0) {
+            $concepto .= ' (cortesía)';
+        }
+
         return [
-            [
-                'id' => 57,
-                'nro_pedido' => '57',
-                'nro_operacion' => 'NIUB-88421',
-                'codigo_voucher' => 'VCH-00057',
-                'fecha_pago' => '27/08/2026 16:44',
-                'titular' => 'Marco Junior Medina',
-                'dni' => '70829122',
-                'sede' => 'Old Trafford',
-                'cancha' => 'Cancha Neo 2',
-                'deporte' => 'Fútbol 11',
-                'fecha_turno' => '29/08/2026',
-                'horario' => '12:00 a 13:00 hs',
-                'concepto' => 'Reserva de cancha · Fútbol 11 · 60 min',
-                'medio_pago' => 'Tarjeta Visa **** 4521',
-                'monto' => 80.00,
-                'estado' => 'Pagado',
-            ],
-            [
-                'id' => 58,
-                'nro_pedido' => '58',
-                'nro_operacion' => 'NIUB-88455',
-                'codigo_voucher' => 'VCH-00058',
-                'fecha_pago' => '26/08/2026 10:12',
-                'titular' => 'Ana Lucía Quispe',
-                'dni' => '45678123',
-                'sede' => 'Camp Nou Molina',
-                'cancha' => 'Cancha 1',
-                'deporte' => 'Vóley',
-                'fecha_turno' => '28/08/2026',
-                'horario' => '18:00 a 19:00 hs',
-                'concepto' => 'Reserva de cancha · Vóley · 60 min',
-                'medio_pago' => 'Yape / Plin',
-                'monto' => 45.00,
-                'estado' => 'Pagado',
-            ],
-            [
-                'id' => 59,
-                'nro_pedido' => '59',
-                'nro_operacion' => 'GRATUITO',
-                'codigo_voucher' => 'VCH-00059',
-                'fecha_pago' => '25/08/2026 09:30',
-                'titular' => 'Carlos Eduardo Ríos',
-                'dni' => '70112233',
-                'sede' => 'San Francisco',
-                'cancha' => 'Cancha sintética A',
-                'deporte' => 'Fútbol 7',
-                'fecha_turno' => '27/08/2026',
-                'horario' => '07:00 a 08:00 hs',
-                'concepto' => 'Reserva de cancha · Fútbol 7 · 60 min (cortesía)',
-                'medio_pago' => 'Gratuito',
-                'monto' => 0.00,
-                'estado' => 'Gratuito',
-            ],
-            [
-                'id' => 60,
-                'nro_pedido' => '60',
-                'nro_operacion' => 'NIUB-88502',
-                'codigo_voucher' => 'VCH-00060',
-                'fecha_pago' => '24/08/2026 20:05',
-                'titular' => 'María Fernanda Soto',
-                'dni' => '77889900',
-                'sede' => 'Old Trafford',
-                'cancha' => 'Cancha 1',
-                'deporte' => 'Fútbol 11',
-                'fecha_turno' => '30/08/2026',
-                'horario' => '20:00 a 22:00 hs',
-                'concepto' => 'Reserva de cancha · Fútbol 11 · 120 min',
-                'medio_pago' => 'Tarjeta Mastercard **** 1190',
-                'monto' => 160.00,
-                'estado' => 'Pagado',
-            ],
+            'id' => $pago->id,
+            'nro_pedido' => (string) ($reserva?->id ?? $pago->id),
+            'nro_operacion' => (string) ($transaccion?->transaccion_id ?? '—'),
+            'codigo_voucher' => $reserva?->referencia_pago,
+            'fecha_pago' => $this->formatearFechaPago($pago),
+            'titular' => $titular?->nombreCompleto() ?? '—',
+            'dni' => $perfil?->numero_documento ?? '—',
+            'sede' => $sede?->nombre ?? '—',
+            'cancha' => $cancha?->nombre ?? '—',
+            'deporte' => $deporte ?? '—',
+            'fecha_turno' => $this->formatearHoraTurno($horaInicio, 'd/m/Y'),
+            'horario' => ($horaInicio && $horaFin)
+                ? $this->formatearHoraTurno($horaInicio, 'H:i').' a '.$this->formatearHoraTurno($horaFin, 'H:i').' hs'
+                : '—',
+            'concepto' => $concepto,
+            'medio_pago' => $medioPago,
+            'monto' => $monto,
+            'estado' => $estado,
         ];
     }
 
     public function verVoucher(int $id): void
     {
-        $pago = collect($this->pagosFicticios())->firstWhere('id', $id);
+        $pago = $this->pagosReales()->firstWhere('id', $id);
         if (! $pago) {
             return;
         }
@@ -119,10 +166,10 @@ class MisPagosManager extends Component
     {
         $q = mb_strtolower(trim($this->search));
 
-        $pagos = collect($this->pagosFicticios())
-            ->when($q !== '', function ($coleccion) use ($q) {
+        $pagos = $this->pagosReales()
+            ->when($q !== '', function (Collection $coleccion) use ($q) {
                 return $coleccion->filter(function (array $p) use ($q) {
-                    $haystack = mb_strtolower(implode(' ', [
+                    $haystack = mb_strtolower(implode(' ', array_filter([
                         $p['nro_pedido'],
                         $p['nro_operacion'],
                         $p['codigo_voucher'] ?? '',
@@ -133,7 +180,7 @@ class MisPagosManager extends Component
                         $p['deporte'],
                         $p['concepto'],
                         $p['estado'],
-                    ]));
+                    ])));
 
                     return str_contains($haystack, $q);
                 });

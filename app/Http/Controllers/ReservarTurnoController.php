@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Deporte;
 use App\Models\Sede;
+use App\Services\OcupacionReservasService;
 use App\Services\OracleService;
 use Illuminate\Http\Request;
 
 class ReservarTurnoController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request, OcupacionReservasService $ocupacion)
     {
         $sedeId = (int) $request->query('sede', 0);
         $deporteId = (int) $request->query('deporte_id', 0);
@@ -57,7 +58,7 @@ class ReservarTurnoController extends Controller
         }
 
         $canchaIds = $sede->canchas->pluck('id');
-        $ocupadosPorCancha = ocupacionReservasPorCancha($canchaIds, $fecha);
+        $ocupadosPorCancha = $ocupacion->porCancha($canchaIds, $fecha);
 
         // Instanciar el servicio Oracle usando app()
         $oracleService = app(OracleService::class);
