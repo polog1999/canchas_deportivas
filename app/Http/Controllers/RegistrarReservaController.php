@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\DocumentType;
 use App\Models\Cancha;
+use App\Models\Distrito;
 use App\Models\Pago;
 use App\Models\Perfil;
 use App\Models\Reserva;
@@ -11,6 +12,7 @@ use App\Models\Rol;
 use App\Models\Transaccion;
 use App\Models\Usuario;
 use App\Services\NiubizService;
+use App\Services\OracleService;
 use App\Services\ReservaCorreoService;
 use App\Support\ReservaFlow;
 use Carbon\Carbon;
@@ -61,7 +63,7 @@ class RegistrarReservaController extends Controller
             throw ValidationException::withMessages(['hora' => 'Hora inválida.']);
         }
 
-        $horaInicio = Carbon::createFromFormat('Y-m-d H:i', $data['fecha'].' '.$hora, 'America/Lima');
+        $horaInicio = Carbon::createFromFormat('Y-m-d H:i', $data['fecha'] . ' ' . $hora, 'America/Lima');
         $horaFin = $horaInicio->copy()->addMinutes((int) $data['duracion']);
         $precio = round((float) ($data['precio'] ?? 0), 2);
 
@@ -112,7 +114,7 @@ class RegistrarReservaController extends Controller
                 ->whereRaw('LOWER(estado) = ?', ['pendiente'])
                 ->update(['estado' => 'cancelada']);
 
-            $codigoVoucher = 'VCH-'.strtoupper(Str::random(8));
+            $codigoVoucher = 'VCH-' . strtoupper(Str::random(8));
 
             $reserva = Reserva::create([
                 'usuario_id' => $usuario->id,
@@ -167,7 +169,7 @@ class RegistrarReservaController extends Controller
             ? route('portal.reservar.pago')
             : route('reservar.pago');
         if ($returnQuery) {
-            $timeoutUrl .= '?'.ltrim($returnQuery, '?');
+            $timeoutUrl .= '?' . ltrim($returnQuery, '?');
         }
 
         return response()->json([
@@ -201,7 +203,7 @@ class RegistrarReservaController extends Controller
 
             $transaccion = Transaccion::create([
                 'reserva_id' => $reserva->id,
-                'transaccion_id' => 'LOCAL-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4)),
+                'transaccion_id' => 'LOCAL-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(4)),
                 'codigo_autorizacion' => null,
                 'marca_tarjeta' => null,
                 'tarjeta_enmascarada' => null,
@@ -239,6 +241,8 @@ class RegistrarReservaController extends Controller
         });
 
         $reserva->refresh();
+
+        $num_documento = $usuario->perfil->numero_documento;
         app(ReservaCorreoService::class)->enviarConfirmacionPago(
             $reserva,
             array_merge($data, [
@@ -261,6 +265,110 @@ class RegistrarReservaController extends Controller
             'pago_usuario_login',
             'pago_clave_plana',
         ]);
+        $serviceOracle = app(OracleService::class);
+        $codContribuyente = $serviceOracle->getCodContibuyente($num_documento);
+
+        if (!$codContribuyente) {
+            $codContribuyente = $this->generarCodigoContribuyente();
+            $apellidoPaterno = $usuario->perfil->apellido_paterno;
+            $apellidoMaterno = $usuario->perfil->apellido_materno;
+            $nombres = $usuario->perfil->nombres;
+            $telefono = $usuario->perfil->telefono;
+            $email = $usuario->correo_electronico;
+            $tipo_doi =  $usuario->perfil->tipo_documento->doi;
+            $distritoId = $usuario->perfil->ubigeo_distrito;
+            $codDistrito = Distrito::where('id',(int) $distritoId)->value('codigo');
+            $direccion = $usuario->perfil->direccion;
+            $contribuyente = DB::connection('oracle')->insert(
+                "INSERT INTO SMACARNOM
+         (MCNCONTRIB
+          , MCNESTADO
+          , MCNTIPO
+          , MCNAPEPAT
+          , MCNAPEMAT
+          , MCNNOMBRE
+          , MCNVIAS
+          , MCNDIRE
+          , MCNNUME
+          , MCNDPTO
+          , MCNCODURBA
+          , MCNURBA
+          , MCNMANZ
+          , MCNLOTE
+          , MCNAPENOMB
+          , MCNTIPODI
+          , MCNNRODI
+          , MCNTIPTELE
+          , MCNROTELE
+          , MCNEMAIL
+          , MCNDNI
+          , MCNRUC
+          , DISTRICODI
+          , MCNFECNAC
+          , CODCAT
+        --   , MCNFECHREG
+        --   , MCNHORA
+          , SEXO) 
+         VALUES
+         (  ?
+          , 'ERE04'
+          , 'TPE01'
+          , ?
+          , ?
+          , ?
+          , NULL
+          , ?
+          , NULL
+          , NULL
+          , NULL
+          , NULL
+          , NULL
+          , NULL
+          , ?
+          , ?--DOI01
+          , ?
+          , TRIM('02')
+          , ?
+          , ?
+          , ?
+          , NULL
+          , ?
+          , NULL
+          , NULL
+        --   , SYSDATE
+        --   , TO_CHAR(SYSDATE,'HH24:MI:SS')
+          , NULL)",
+                [
+                    $codContribuyente,
+                    trim($apellidoPaterno),
+                    trim($apellidoMaterno),
+                    trim($nombres),
+                    trim($direccion),
+                    trim($apellidoPaterno . ' ' . $apellidoMaterno . ' ' . $nombres), // MCNAPENOMB
+                    trim($tipo_doi),
+                    trim($num_documento),      // MCNNRODI
+                    trim($telefono),  // MCNROTELE
+                    trim($email),    // MCNEMAIL
+                    trim($usuario->perfil->tipo_documento->nombre == 'DNI' ?$num_documento: null),      // MCNDNI
+                    trim($codDistrito)        // DISTRICODI
+                ]
+            );
+         $usuario->perfil->update([
+            'cod_contrib' => $codContribuyente
+        ]);
+        }
+
+        // DB::connection('oracle')->statement("ALTER SESSION SET NLS_DATE_FORMAT = 'DD/MM/YYYY'");
+        //         $respuesta = DB::connection('oracle')->select(
+        //             "select ds_valores.fu_digito_generar('1312',?,?,?,'TALLERES DEPORTIVOS') AS liquidacion FROM DUAL",
+        //             [trim($tusne->grupo), trim($tusne->codigo), trim($numeroContribuyente)]
+        //         );
+
+        //         if (!empty($respuesta)) {
+        //             $inscripcion->numero_liquidacion = $respuesta[0]->liquidacion;
+        //             $inscripcion->save();
+        //         }
+       
 
         return response()->json([
             'ok' => true,
@@ -270,10 +378,18 @@ class RegistrarReservaController extends Controller
             'voucher' => $resultado['voucher'],
             'redirect' => ReservaFlow::desdePortalActivo()
                 ? route('mis-pagos.index')
-                : url('/?reserva='.$resultado['reserva_id'].'&pago=ok'),
+                : url('/?reserva=' . $resultado['reserva_id'] . '&pago=ok'),
         ]);
     }
+    public function generarCodigoContribuyente()
+    {
 
+        // Ejecutamos la query de Oracle directamente
+
+        $resultado = DB::connection('oracle')->selectOne("SELECT 'S' || LPAD(ADMIN.SEQ_MACARNOM.NEXTVAL, 7, '0') MCNCONTRIB FROM DUAL");
+
+        return $resultado->mcncontrib;
+    }
     /**
      * @param  array<string, mixed>  $data
      * @return array{usuario: Usuario, es_nuevo: bool, usuario_login: ?string, clave_plana: ?string}
@@ -298,7 +414,7 @@ class RegistrarReservaController extends Controller
             $perfil = Perfil::query()
                 ->with('usuario')
                 ->where('numero_documento', $documento)
-                ->whereHas('usuario', fn ($q) => $q->where('activo', true))
+                ->whereHas('usuario', fn($q) => $q->where('activo', true))
                 ->first();
 
             if ($perfil?->usuario) {
@@ -328,7 +444,7 @@ class RegistrarReservaController extends Controller
 
         $usuarioLogin = $documento;
         if (Usuario::where('usuario', $usuarioLogin)->exists()) {
-            $usuarioLogin = 'u'.$documento.Str::lower(Str::random(3));
+            $usuarioLogin = 'u' . $documento . Str::lower(Str::random(3));
         }
 
         $usuario = Usuario::create([

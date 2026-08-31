@@ -234,7 +234,7 @@
 
 
                                         {{-- DESCARGAR PDF --}}
-                                        <a
+                                        {{-- <a
                                             href="{{ route('mis-pagos.pdf', $pago['id']) }}"
                                             target="_blank"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition"
@@ -244,7 +244,7 @@
 
                                             PDF
 
-                                        </a>
+                                        </a> --}}
 
                                     </div>
 

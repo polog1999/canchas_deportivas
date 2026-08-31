@@ -14,7 +14,7 @@ class Perfil extends Model
 
     protected $fillable = [
         'usuario_id',
-        'tipo_documento',
+        'tipo_documento_id',
         'numero_documento',
         'nombres',
         'apellido_paterno',
@@ -46,5 +46,9 @@ class Perfil extends Model
             trim((string) $this->apellido_paterno),
             trim((string) $this->apellido_materno),
         ], fn ($v) => $v !== '')));
+    }
+
+    public function tipoDocumento(): BelongsTo{
+        return $this->belongsTo(TipoDocumento::class, 'tipo_documento_id');
     }
 }

@@ -23,4 +23,7 @@ class OracleService
         $tusne = DB::connection('oracle')->table('smaconceptod')->where('congrupo', $grupo)->where('concodigo', $codigo)->first('conmonto');
         return $tusne;
     }
+    public function  getCodContibuyente(string $numero_documento){
+        return DB::connection('oracle')->table('smacarnom')->where('mcndni', $numero_documento)->value('mcncontrib');
+    }
 }
