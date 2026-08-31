@@ -1,68 +1,566 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center p-4" wire:keydown.escape.window="cerrarVoucher">
-            <div class="absolute inset-0 bg-black/50" wire:click="cerrarVoucher"></div>
-            <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-                <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50">
-                    <h3 class="text-sm font-bold text-gray-800">Constancia de pago</h3>
-                    <button type="button" wire:click="cerrarVoucher"
-                        class="w-8 h-8 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 flex items-center justify-center">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
+<!DOCTYPE html>
+<html lang="es">
 
-                <div class="px-6 py-5 text-center text-sm text-gray-800 font-mono">
-                    <img src="{{ asset('logo_municipal_negro.png') }}" alt="La Molina"
-                        class="h-12 mx-auto mb-2 object-contain" onerror="this.style.display='none'">
-                    <p class="font-bold text-xs tracking-wide">MUNICIPALIDAD DE LA MOLINA</p>
-                    <p class="text-[11px] text-gray-500">RUC 20131372175</p>
-                    <p class="text-[11px] text-gray-500">Av. Elías Aparicio 740 - La Molina</p>
-                    <p class="mt-3 font-bold text-xs uppercase tracking-wider text-[#1b5e3b]">Reserva de canchas
-                        deportivas</p>
-                    <p class="text-[11px] text-gray-400">molicanchas.munimolina.gob.pe</p>
+<head>
 
-                    <div class="my-4 border-t border-dashed border-gray-300"></div>
+    <meta charset="UTF-8">
 
-                    <div class="text-left space-y-1 text-[12px]">
-                        <p><span class="text-gray-500">N° PEDIDO:</span>
-                            <strong>{{ $pagoSeleccionado['nro_pedido'] }}</strong></p>
-                        <p><span class="text-gray-500">CÓDIGO VOUCHER:</span>
-                            <strong>{{ $pagoSeleccionado['codigo_voucher'] ?? '—' }}</strong></p>
-                        <p><span class="text-gray-500">N° OPERACIÓN:</span>
-                            <strong>{{ $pagoSeleccionado['nro_operacion'] }}</strong></p>
-                        <p><span class="text-gray-500">FECHA Y HORA DEL PAGO:</span>
-                            {{ $pagoSeleccionado['fecha_pago'] }} <span class="text-gray-400">(hora Perú)</span></p>
-                    </div>
+    <title>Constancia de Pago</title>
 
-                    <div class="my-4 border-t border-dashed border-gray-300"></div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 text-left mb-2">Pagado por
-                    </p>
-                    <div class="text-left space-y-1 text-[12px]">
-                        <p><span class="text-gray-500">NOMBRE:</span>
-                            <strong>{{ $pagoSeleccionado['titular'] }}</strong></p>
-                        <p><span class="text-gray-500">DNI:</span> {{ $pagoSeleccionado['dni'] }}</p>
-                    </div>
+    <style>
 
-                    <div class="my-4 border-t border-dashed border-gray-300"></div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 text-left mb-2">Detalle</p>
-                    <div class="text-left space-y-1 text-[12px]">
-                        <p><span class="text-gray-500">CONCEPTO:</span> {{ $pagoSeleccionado['concepto'] }}</p>
-                        <p><span class="text-gray-500">SEDE:</span> {{ $pagoSeleccionado['sede'] }}</p>
-                        <p><span class="text-gray-500">CANCHA:</span> {{ $pagoSeleccionado['cancha'] }}</p>
-                        <p><span class="text-gray-500">DEPORTE:</span> {{ $pagoSeleccionado['deporte'] }}</p>
-                        <p><span class="text-gray-500">TURNO RESERVADO:</span> {{ $pagoSeleccionado['fecha_turno'] }} ·
-                            {{ $pagoSeleccionado['horario'] }}</p>
-                        <p><span class="text-gray-500">MEDIO:</span> {{ $pagoSeleccionado['medio_pago'] }}</p>
-                    </div>
+        @page {
+            margin: 20px;
+        }
 
-                    <div class="mt-5 border-2 border-gray-800 grid grid-cols-2 text-left">
-                        <div class="px-3 py-2 font-bold text-xs border-r border-gray-800">TOTAL PAGADO</div>
-                        <div class="px-3 py-2 font-bold text-sm text-right">
-                            S/ {{ number_format($pagoSeleccionado['monto'], 2) }}
-                        </div>
-                    </div>
+        * {
+            box-sizing: border-box;
+        }
 
-                    <p class="mt-5 text-xs font-semibold">¡Gracias por tu reserva!</p>
-                    <p class="text-[11px] text-gray-400">Conserve este ticket como constancia.</p>
-                    <p class="text-[11px] text-gray-400 mt-1">Canchas Deportivas — La Molina</p>
-                </div>
-            </div>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            color: #222;
+            font-size: 11px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ENCABEZADO
+        |--------------------------------------------------------------------------
+        */
+
+        .header {
+            text-align: center;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #1b5e3b;
+        }
+
+        .logo {
+            width: 75px;
+            height: auto;
+            margin-bottom: 5px;
+        }
+
+        .municipalidad {
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+        }
+
+        .ruc {
+            color: #666;
+            font-size: 9px;
+            margin-top: 3px;
+        }
+
+        .direccion {
+            color: #666;
+            font-size: 9px;
+            margin-top: 2px;
+        }
+
+        .titulo {
+            color: #1b5e3b;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        .web {
+            color: #888;
+            font-size: 8px;
+            margin-top: 3px;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SECCIONES
+        |--------------------------------------------------------------------------
+        */
+
+        .section {
+            margin-top: 12px;
+        }
+
+        .section-title {
+            background: #f3f4f6;
+            border-left: 3px solid #1b5e3b;
+            padding: 5px 7px;
+            font-weight: bold;
+            font-size: 9px;
+            text-transform: uppercase;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | TABLAS
+        |--------------------------------------------------------------------------
+        */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 3px 2px;
+            vertical-align: top;
+        }
+
+        td.label {
+            width: 38%;
+            color: #666;
+            font-size: 8px;
+            font-weight: bold;
+        }
+
+        td.value {
+            width: 62%;
+            color: #222;
+            font-size: 9px;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEPARADOR
+        |--------------------------------------------------------------------------
+        */
+
+        .separator {
+            border-top: 1px dashed #aaa;
+            margin: 10px 0;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ESTADO
+        |--------------------------------------------------------------------------
+        */
+
+        .badge {
+            display: inline-block;
+            padding: 3px 7px;
+            font-size: 8px;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+
+        .badge-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-free {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL
+        |--------------------------------------------------------------------------
+        */
+
+        .total {
+            margin-top: 14px;
+            border: 1.5px solid #222;
+            width: 100%;
+        }
+
+        .total td {
+            padding: 7px;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .total-label {
+            width: 60%;
+        }
+
+        .total-value {
+            width: 40%;
+            text-align: right;
+            font-size: 12px !important;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FOOTER
+        |--------------------------------------------------------------------------
+        */
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+            font-size: 8px;
+        }
+
+        .thanks {
+            color: #222;
+            font-weight: bold;
+            font-size: 9px;
+            margin-bottom: 4px;
+        }
+
+        .small {
+            font-size: 8px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    {{-- ==========================================================
+         ENCABEZADO
+         ========================================================== --}}
+
+    <div class="header">
+
+        @php
+            $logoPath = public_path('logo_municipal_negro.png');
+        @endphp
+
+        @if (file_exists($logoPath))
+
+            <img
+                src="{{ $logoPath }}"
+                class="logo"
+                alt="La Molina"
+            >
+
+        @endif
+
+        <div class="municipalidad">
+            MUNICIPALIDAD DE LA MOLINA
         </div>
+
+        <div class="ruc">
+            RUC 20131372175
+        </div>
+
+        <div class="direccion">
+            Av. Elías Aparicio 740 - La Molina
+        </div>
+
+        <div class="titulo">
+            Reserva de canchas deportivas
+        </div>
+
+        <div class="web">
+            molicanchas.munimolina.gob.pe
+        </div>
+
+    </div>
+
+
+    {{-- ==========================================================
+         INFORMACIÓN DEL PAGO
+         ========================================================== --}}
+
+    <div class="section">
+
+        <div class="section-title">
+            Información del pago
+        </div>
+
+        <table>
+
+            <tr>
+
+                <td class="label">
+                    N° PEDIDO
+                </td>
+
+                <td class="value">
+                    <strong>
+                        {{ $pagoSeleccionado['nro_pedido'] }}
+                    </strong>
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    CÓDIGO VOUCHER
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['codigo_voucher'] ?? '—' }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    N° OPERACIÓN
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['nro_operacion'] }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    FECHA Y HORA
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['fecha_pago'] }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    ESTADO
+                </td>
+
+                <td class="value">
+
+                    @if ($pagoSeleccionado['estado'] === 'Pagado')
+
+                        <span class="badge badge-paid">
+                            PAGADO
+                        </span>
+
+                    @elseif ($pagoSeleccionado['estado'] === 'Gratuito')
+
+                        <span class="badge badge-free">
+                            GRATUITO
+                        </span>
+
+                    @else
+
+                        {{ $pagoSeleccionado['estado'] }}
+
+                    @endif
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </div>
+
+
+    <div class="separator"></div>
+
+
+    {{-- ==========================================================
+         PAGADO POR
+         ========================================================== --}}
+
+    <div class="section">
+
+        <div class="section-title">
+            Pagado por
+        </div>
+
+        <table>
+
+            <tr>
+
+                <td class="label">
+                    NOMBRE
+                </td>
+
+                <td class="value">
+
+                    <strong>
+                        {{ $pagoSeleccionado['titular'] }}
+                    </strong>
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    DNI
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['dni'] }}
+                </td>
+
+            </tr>
+
+        </table>
+
+    </div>
+
+
+    <div class="separator"></div>
+
+
+    {{-- ==========================================================
+         DETALLE DE RESERVA
+         ========================================================== --}}
+
+    <div class="section">
+
+        <div class="section-title">
+            Detalle de la reserva
+        </div>
+
+        <table>
+
+            <tr>
+
+                <td class="label">
+                    CONCEPTO
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['concepto'] }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    SEDE
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['sede'] }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    CANCHA
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['cancha'] }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    DEPORTE
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['deporte'] }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    FECHA TURNO
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['fecha_turno'] }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    HORARIO
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['horario'] }}
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td class="label">
+                    MEDIO DE PAGO
+                </td>
+
+                <td class="value">
+                    {{ $pagoSeleccionado['medio_pago'] }}
+                </td>
+
+            </tr>
+
+        </table>
+
+    </div>
+
+
+    {{-- ==========================================================
+         TOTAL
+         ========================================================== --}}
+
+    <table class="total">
+
+        <tr>
+
+            <td class="total-label">
+                TOTAL PAGADO
+            </td>
+
+            <td class="total-value">
+                S/
+                {{ number_format($pagoSeleccionado['monto'], 2) }}
+            </td>
+
+        </tr>
+
+    </table>
+
+
+    {{-- ==========================================================
+         FOOTER
+         ========================================================== --}}
+
+    <div class="footer">
+
+        <div class="thanks">
+            ¡Gracias por tu reserva!
+        </div>
+
+        <div>
+            Conserve este documento como constancia de pago.
+        </div>
+
+        <div style="margin-top: 4px;">
+            Canchas Deportivas — La Molina
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

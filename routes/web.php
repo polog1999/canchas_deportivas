@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PagoPdfController;
 use App\Http\Controllers\PortalReservarController;
 use App\Http\Controllers\RegistrarReservaController;
 use App\Http\Controllers\ReservarController;
@@ -32,6 +33,15 @@ Route::post('/reservar/pago/verificar/{purchaseNumber}', \App\Http\Controllers\V
     ->name('reservar.pago.verificar');
 Route::get('/reservar/buscar-documento', [ReservarController::class, 'buscarDocumento'])->name('reservar.buscar-documento');
 Route::post('/reservar/verificar-acceso', [ReservarController::class, 'verificarAcceso'])->name('reservar.verificar-acceso');
+
+Route::middleware('auth')->group(function () {
+
+    Route::get(
+        '/mis-pagos/{id}/pdf',
+        PagoPdfController::class
+    )->name('mis-pagos.pdf');
+
+});
 
 Route::middleware(['auth'])->get('/dashboard', DashboardController::class)->name('dashboard');
 
