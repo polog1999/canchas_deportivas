@@ -22,10 +22,7 @@ class ReservarTurnoController extends Controller
 
         // Sin deporte → volver a deportes
         if ($deporteId <= 0) {
-            return redirect()->route('reservar.deporte', [
-                'sede' => $sedeId,
-                'fecha' => $fecha,
-            ]);
+            return redirect()->route('reservar.deporte', ['sede' => $sedeId, 'fecha' => $fecha]);
         }
 
         $sede = Sede::query()

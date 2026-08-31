@@ -73,11 +73,19 @@
                                     @endif
                                 </td>
                                 <td class="py-4 px-6 text-center">
-                                    <button type="button" wire:click="verVoucher({{ $pago['id'] }})"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold transition">
-                                        <i class="fa-solid fa-receipt"></i>
-                                        Ver
-                                    </button>
+                                    <div class="inline-flex items-center gap-2">
+                                        <button type="button" wire:click="verVoucher({{ $pago['id'] }})"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold transition">
+                                            <i class="fa-solid fa-receipt"></i>
+                                            Ver
+                                        </button>
+                                        <a href="{{ route('mis-pagos.voucher.pdf', $pago['id']) }}"
+                                            target="_blank"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold transition">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                            PDF
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -101,10 +109,18 @@
             <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                 <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50">
                     <h3 class="text-sm font-bold text-gray-800">Constancia de pago</h3>
-                    <button type="button" wire:click="cerrarVoucher"
-                        class="w-8 h-8 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 flex items-center justify-center">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('mis-pagos.voucher.pdf', $pagoSeleccionado['id']) }}"
+                            target="_blank"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold transition">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            Descargar PDF
+                        </a>
+                        <button type="button" wire:click="cerrarVoucher"
+                            class="w-8 h-8 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 flex items-center justify-center">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="px-6 py-5 text-center text-sm text-gray-800 font-mono">

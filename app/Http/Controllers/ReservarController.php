@@ -102,7 +102,9 @@ class ReservarController extends Controller
             ->orderBy('nombre')
             ->get(['id', 'nombre']);
 
-        return view('reservar-confirmar', compact('distritos'));
+        $usuarioPortal = null;
+
+        return view('reservar-confirmar', compact('distritos', 'usuarioPortal'));
     }
 
     public function pago(): View

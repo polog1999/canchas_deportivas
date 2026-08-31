@@ -12,12 +12,14 @@ class RoleMenuManager extends Component
 {
     public $rolId = null;
 
-    /** @var array<int, bool> */
+    /** @var array<string, bool> */
     public $menuAcceso = [];
 
     public $isRoleModalOpen = false;
     public $nuevoRolNombre = '';
     public $nuevoRolDescripcion = '';
+
+    public ?string $mensajeExito = null;
 
     public function mount(): void
     {
@@ -28,6 +30,7 @@ class RoleMenuManager extends Component
 
     public function updatedRolId(): void
     {
+        $this->mensajeExito = null;
         $this->cargarPermisos();
     }
 
@@ -47,8 +50,13 @@ class RoleMenuManager extends Component
         $asignados = $rol->menus->pluck('id')->all();
 
         foreach (Menu::orderBy('orden')->pluck('id') as $menuId) {
-            $this->menuAcceso[$menuId] = in_array($menuId, $asignados, true);
+            $this->menuAcceso[$this->claveMenu($menuId)] = in_array((int) $menuId, $asignados, true);
         }
+    }
+
+    private function claveMenu(int|string $menuId): string
+    {
+        return 'm'.(int) $menuId;
     }
 
     public function guardarPermisos(): void
@@ -58,17 +66,19 @@ class RoleMenuManager extends Component
         $ids = collect($this->menuAcceso)
             ->filter()
             ->keys()
-            ->map(fn ($id) => (int) $id)
+            ->map(fn (string $clave) => (int) ltrim($clave, 'm'))
             ->values()
             ->all();
 
         $rol->menus()->sync($ids);
 
-        $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => 'Permisos guardados',
-            'text' => 'Los menús del rol se actualizaron correctamente.',
-        ]);
+        $this->mensajeExito = 'Permisos guardados correctamente.';
+
+        $this->dispatch('swal',
+            icon: 'success',
+            title: 'Permisos guardados',
+            text: 'Los menús del rol se actualizaron correctamente.',
+        );
 
         $this->cargarPermisos();
     }
@@ -79,11 +89,11 @@ class RoleMenuManager extends Component
         $rol->activo = ! $rol->activo;
         $rol->save();
 
-        $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => $rol->activo ? 'Rol activado' : 'Rol desactivado',
-            'text' => 'El estado del rol se actualizó correctamente.',
-        ]);
+        $this->dispatch('swal',
+            icon: 'success',
+            title: $rol->activo ? 'Rol activado' : 'Rol desactivado',
+            text: 'El estado del rol se actualizó correctamente.',
+        );
     }
 
     public function openRoleModal(): void
@@ -125,11 +135,11 @@ class RoleMenuManager extends Component
         $this->cargarPermisos();
         $this->closeRoleModal();
 
-        $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => 'Rol creado',
-            'text' => 'El nuevo rol está listo para asignar menús.',
-        ]);
+        $this->dispatch('swal',
+            icon: 'success',
+            title: 'Rol creado',
+            text: 'El nuevo rol está listo para asignar menús.',
+        );
     }
 
     #[Layout('components.app-layout')]

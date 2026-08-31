@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DescargarVoucherPagoController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PortalReservarController;
 use App\Http\Controllers\RegistrarReservaController;
 use App\Http\Controllers\ReservarController;
 use App\Http\Controllers\ReservarTurnoController;
+use App\Livewire\Admin\CambiarContrasenaManager;
 use App\Livewire\Admin\CourtManager;
 use App\Livewire\Admin\DeporteManager;
 use App\Livewire\Admin\LocationManager;
@@ -60,6 +63,34 @@ Route::middleware(['auth'])->prefix('portal')->group(function () {
     Route::get('/mis-pagos', MisPagosManager::class)
         ->middleware('permission:/portal/mis-pagos')
         ->name('mis-pagos.index');
+
+    Route::get('/mis-pagos/{pago}/voucher.pdf', DescargarVoucherPagoController::class)
+        ->middleware('permission:/portal/mis-pagos')
+        ->name('mis-pagos.voucher.pdf');
+
+    Route::get('/cambiar-contrasena', CambiarContrasenaManager::class)
+        ->middleware('permission:/portal/cambiar-contrasena')
+        ->name('cambiar-contrasena.index');
+
+    Route::get('/reservar', [PortalReservarController::class, 'index'])
+        ->middleware('permission:/portal/reservar')
+        ->name('portal.reservar.index');
+
+    Route::get('/reservar/deporte', [PortalReservarController::class, 'deporte'])
+        ->middleware('permission:/portal/reservar')
+        ->name('portal.reservar.deporte');
+
+    Route::get('/reservar/turno', [PortalReservarController::class, 'turno'])
+        ->middleware('permission:/portal/reservar')
+        ->name('portal.reservar.turno');
+
+    Route::get('/reservar/confirmar', [PortalReservarController::class, 'confirmar'])
+        ->middleware('permission:/portal/reservar')
+        ->name('portal.reservar.confirmar');
+
+    Route::get('/reservar/pago', [PortalReservarController::class, 'pago'])
+        ->middleware('permission:/portal/reservar')
+        ->name('portal.reservar.pago');
 
     Route::get('/ver-reservas', VerReservasManager::class)
         ->middleware('permission:/portal/ver-reservas')

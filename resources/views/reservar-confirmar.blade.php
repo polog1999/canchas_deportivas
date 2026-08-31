@@ -60,10 +60,11 @@
                                 <i class="fa-regular fa-address-card absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                                 <input type="text" x-model="form.documento" @input="onDocumentoInput()"
                                     maxlength="15" inputmode="numeric"
-                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    :disabled="estado === 'sesion'"
+                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
                                     placeholder="12345678">
                             </div>
-                            <p class="text-[11px] mt-1.5" :class="mensajeClase" x-text="mensaje" x-show="mensaje"></p>
+                            <p class="text-[11px] mt-1.5" :class="mensajeClase" x-text="mensaje" x-show="mensaje && estado !== 'sesion'"></p>
                         </div>
 
                         {{-- Nombres / apellidos: visibles tras validar; bloqueados si el DNI existe --}}
@@ -72,7 +73,7 @@
                             <div class="relative">
                                 <i class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                                 <input type="text" x-model="form.nombres"
-                                    :disabled="estado === 'existe'"
+                                    :disabled="estado === 'existe' || estado === 'sesion'"
                                     :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. Juan Carlos'"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
                             </div>
@@ -83,7 +84,7 @@
                             <div class="relative">
                                 <i class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                                 <input type="text" x-model="form.apellido_paterno"
-                                    :disabled="estado === 'existe'"
+                                    :disabled="estado === 'existe' || estado === 'sesion'"
                                     :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. Pérez'"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
                             </div>
@@ -94,7 +95,7 @@
                             <div class="relative">
                                 <i class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                                 <input type="text" x-model="form.apellido_materno"
-                                    :disabled="estado === 'existe'"
+                                    :disabled="estado === 'existe' || estado === 'sesion'"
                                     :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. García'"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
                             </div>
@@ -110,6 +111,18 @@
                                     :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta registrada' : '999 999 999'"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
                             </div>
+                        </div>
+
+                        {{-- Correo en portal (sesión activa) --}}
+                        <div class="sm:col-span-2" x-show="estado === 'sesion'" x-cloak>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Correo electrónico</label>
+                            <div class="relative">
+                                <i class="fa-regular fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <input type="email" x-model="form.email"
+                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    placeholder="correo@ejemplo.com">
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-1.5">Recibirás el voucher en este correo.</p>
                         </div>
 
                         {{-- Correo solo si el DNI NO existe --}}
@@ -251,7 +264,7 @@
             if (deporteId) volverParams.set('deporte_id', deporteId);
             if (fecha) volverParams.set('fecha', fecha);
             const urlVolverHorarios = sedeId
-                ? (@json(url('/reservar/turno')) + '?' + volverParams.toString())
+                ? (@json(route('reservar.turno')) + '?' + volverParams.toString())
                 : @json(url('/'));
 
             const [h, m] = hora.split(':').map(Number);
@@ -266,18 +279,20 @@
 
             let debounceTimer = null;
 
+            const usuarioPortal = @json($usuarioPortal ?? null);
+
             return {
                 form: {
-                    documento: '',
-                    nombres: '',
-                    apellido_paterno: '',
-                    apellido_materno: '',
+                    documento: usuarioPortal?.documento || '',
+                    nombres: usuarioPortal?.nombres || '',
+                    apellido_paterno: usuarioPortal?.apellido_paterno || '',
+                    apellido_materno: usuarioPortal?.apellido_materno || '',
                     telefono: '',
-                    email: '',
+                    email: usuarioPortal?.email || '',
                     clave: '',
-                    distrito_id: '',
+                    distrito_id: usuarioPortal?.distrito_id || '',
                 },
-                estado: 'pendiente', // pendiente | existe | nuevo
+                estado: usuarioPortal ? 'sesion' : 'pendiente', // pendiente | existe | nuevo | sesion
                 buscando: false,
                 confirmando: false,
                 mensaje: '',
@@ -306,6 +321,11 @@
                 get puedeConfirmar() {
                     if (this.estado === 'pendiente') return false;
 
+                    if (this.estado === 'sesion') {
+                        return this.form.documento.replace(/\D/g, '').length >= 8
+                            && this.form.email.includes('@');
+                    }
+
                     if (this.estado === 'existe') {
                         return this.form.documento.replace(/\D/g, '').length >= 8
                             && this.form.clave.trim().length >= 4;
@@ -321,6 +341,7 @@
                 },
 
                 onDocumentoInput() {
+                    if (this.estado === 'sesion') return;
                     this.estado = 'pendiente';
                     this.mensaje = '';
                     this.form.nombres = '';
@@ -408,7 +429,7 @@
                             precio: parseFloat(params.get('precio') || String(precio)) || 0,
                             deporte: params.get('deporte') || deporte,
                             deporte_id: params.get('deporte_id') || deporteId,
-                            estado_titular: this.estado,
+                            estado_titular: this.estado === 'sesion' ? 'existe' : this.estado,
                             documento: this.form.documento.replace(/\D/g, ''),
                             nombres: this.form.nombres.trim(),
                             apellido_paterno: this.form.apellido_paterno.trim(),

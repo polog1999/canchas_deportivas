@@ -31,29 +31,30 @@
             <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-6">
                 @csrf
                 
-                <!-- Usuario -->
+                <!-- Correo electrónico -->
                 <div>
-                    <label for="usuario" class="block text-sm font-medium text-gray-700">
-                        Usuario
+                    <label for="correo_electronico" class="block text-sm font-medium text-gray-700">
+                        Correo electrónico
                     </label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <input 
-                            id="usuario" 
-                            name="usuario" 
-                            type="text" 
-                            value="{{ old('usuario') }}"
+                            id="correo_electronico" 
+                            name="correo_electronico" 
+                            type="email" 
+                            value="{{ old('correo_electronico') }}"
                             required 
                             autofocus
-                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('usuario') border-red-300 focus:ring-red-500 focus:border-red-500 @enderror" 
-                            placeholder="tu_usuario"
+                            autocomplete="email"
+                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm placeholder-gray-400 @error('correo_electronico') border-red-300 focus:ring-red-500 focus:border-red-500 @enderror" 
+                            placeholder="correo@ejemplo.com"
                         >
                     </div>
-                    @error('usuario') 
+                    @error('correo_electronico') 
                         <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> 
                     @enderror
                 </div>

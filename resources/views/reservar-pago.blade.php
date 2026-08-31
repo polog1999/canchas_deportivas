@@ -14,7 +14,7 @@
 <body class="bg-[#f3f6f4] text-slate-800 antialiased" x-data="pagoReserva()">
 
     <x-public-navbar
-        :back-href="url('/reservar/confirmar') . (request()->getQueryString() ? '?' . request()->getQueryString() : '')"
+        :back-href="route('reservar.confirmar') . (request()->getQueryString() ? '?' . request()->getQueryString() : '')"
         back-label="Volver a confirmar"
     />
 

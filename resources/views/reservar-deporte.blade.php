@@ -10,7 +10,10 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 
-    <x-public-navbar back-href="/" back-label="Volver a sedes" />
+    <x-public-navbar
+        :back-href="url('/')"
+        back-label="Volver a sedes"
+    />
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="mb-6">
@@ -63,7 +66,7 @@
                 <div class="sm:col-span-2 lg:col-span-3 xl:col-span-4 bg-white rounded-2xl border border-slate-200 p-10 text-center">
                     <p class="font-semibold text-slate-700">Esta sede no tiene deportes asociados.</p>
                     <p class="text-sm text-slate-500 mt-1">Vincula canchas con deportes en administración (`canchas_deportes`).</p>
-                    <a href="/" class="inline-flex mt-5 px-5 py-2.5 rounded-xl bg-[#1b5e3b] text-white text-sm font-bold">
+                    <a href="{{ url('/') }}" class="inline-flex mt-5 px-5 py-2.5 rounded-xl bg-[#1b5e3b] text-white text-sm font-bold">
                         Volver a sedes
                     </a>
                 </div>

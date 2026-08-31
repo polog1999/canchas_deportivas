@@ -97,8 +97,9 @@ class Menu extends Model
         }
 
         $path = parse_url($this->url(), PHP_URL_PATH) ?: '/';
+        $path = ltrim($path, '/');
 
-        return request()->is(ltrim($path, '/'));
+        return request()->is($path) || request()->is($path.'/*');
     }
 
     /**

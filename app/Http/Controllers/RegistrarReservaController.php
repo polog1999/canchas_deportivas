@@ -12,6 +12,7 @@ use App\Models\Transaccion;
 use App\Models\Usuario;
 use App\Services\NiubizService;
 use App\Services\ReservaCorreoService;
+use App\Support\ReservaFlow;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -162,7 +163,9 @@ class RegistrarReservaController extends Controller
             ]);
         }
 
-        $timeoutUrl = route('reservar.pago');
+        $timeoutUrl = ReservaFlow::desdePortalActivo()
+            ? route('portal.reservar.pago')
+            : route('reservar.pago');
         if ($returnQuery) {
             $timeoutUrl .= '?'.ltrim($returnQuery, '?');
         }
@@ -265,7 +268,9 @@ class RegistrarReservaController extends Controller
             'mensaje' => 'Reserva confirmada (sin costo).',
             'reserva_id' => $resultado['reserva_id'],
             'voucher' => $resultado['voucher'],
-            'redirect' => url('/?reserva='.$resultado['reserva_id'].'&pago=ok'),
+            'redirect' => ReservaFlow::desdePortalActivo()
+                ? route('mis-pagos.index')
+                : url('/?reserva='.$resultado['reserva_id'].'&pago=ok'),
         ]);
     }
 

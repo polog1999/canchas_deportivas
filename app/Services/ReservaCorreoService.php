@@ -11,6 +11,7 @@ class ReservaCorreoService
 {
     public function __construct(
         private readonly MailConfigService $mailConfig,
+        private readonly ReservaVoucherService $voucherService,
     ) {}
 
     /**
@@ -39,17 +40,39 @@ class ReservaCorreoService
         $mailer = $this->mailConfig->mailerActivo();
         $smtpHost = (string) config('mail.mailers.smtp.host', '');
 
+        $voucher = $this->voucherService->datosDesdeReserva($reserva, $meta);
+
         $detalle = [
-            'voucher' => $reserva->referencia_pago,
-            'monto' => (float) $reserva->precio_total,
-            'club' => $meta['club'] ?? $reserva->cancha?->sede?->nombre,
-            'cancha' => $meta['cancha'] ?? $reserva->cancha?->nombre,
-            'deporte' => $meta['deporte'] ?? null,
-            'fecha' => $reserva->hora_inicio?->format('d/m/Y'),
-            'hora_inicio' => $reserva->hora_inicio?->format('H:i'),
-            'hora_fin' => $reserva->hora_fin?->format('H:i'),
-            'titular' => $usuario?->nombreCompleto(),
+            'voucher' => $voucher['codigo_voucher'] ?? $reserva->referencia_pago,
+            'monto' => (float) $voucher['monto'],
+            'club' => $voucher['sede'] ?? null,
+            'cancha' => $voucher['cancha'] ?? null,
+            'deporte' => ($voucher['deporte'] ?? null) !== '—' ? $voucher['deporte'] : null,
+            'fecha' => $voucher['fecha_turno'] ?? null,
+            'hora_inicio' => null,
+            'hora_fin' => null,
+            'titular' => $voucher['titular'] ?? $usuario?->nombreCompleto(),
         ];
+
+        if (! empty($voucher['horario']) && $voucher['horario'] !== '—') {
+            if (preg_match('/^(\d{2}:\d{2})\s+a\s+(\d{2}:\d{2})/', $voucher['horario'], $matches)) {
+                $detalle['hora_inicio'] = $matches[1];
+                $detalle['hora_fin'] = $matches[2];
+            }
+        }
+
+        $pdfContenido = null;
+        $pdfNombre = null;
+
+        try {
+            $pdfContenido = $this->voucherService->contenidoPdf($voucher);
+            $pdfNombre = $this->voucherService->nombreArchivo($voucher);
+        } catch (\Throwable $e) {
+            Log::error('ReservaCorreo: no se pudo generar el PDF del voucher', [
+                'reserva_id' => $reserva->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         try {
             Mail::mailer($mailer)->to($correo)->send(new ReservaPagoConfirmadoMail(
@@ -58,6 +81,8 @@ class ReservaCorreoService
                 usuarioNuevo: $usuarioNuevo,
                 usuarioLogin: $usuarioLogin ?? $usuario?->usuario,
                 clavePlana: $clavePlana,
+                pdfContenido: $pdfContenido,
+                pdfNombre: $pdfNombre,
             ));
 
             Log::info('ReservaCorreo: correo enviado', [

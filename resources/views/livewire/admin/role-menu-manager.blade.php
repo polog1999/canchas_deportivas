@@ -29,6 +29,13 @@
             </div>
         </div>
 
+        @if ($mensajeExito)
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex items-center gap-2">
+                <i class="fa-solid fa-circle-check"></i>
+                {{ $mensajeExito }}
+            </div>
+        @endif
+
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
             <div class="flex flex-col md:flex-row gap-3 md:items-end">
                 <div class="flex-1">
@@ -55,16 +62,28 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold tracking-wider border-b border-gray-100">
-                            <th class="py-3 px-6">Menú</th>
+                            <th class="py-3 px-4 w-16 text-center">Acceso</th>
+                            <th class="py-3 px-4">Menú</th>
                             <th class="py-3 px-6">Ruta</th>
-                            <th class="py-3 px-6 text-center w-28">Acceso</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm divide-y divide-gray-100">
                         @forelse ($menus as $menu)
-                            <tr class="hover:bg-gray-50/70">
-                                <td class="py-3 px-6">
-                                    <div class="flex items-center gap-2 {{ $menu->id_padre ? 'pl-6 font-medium text-gray-800' : 'font-bold text-gray-900' }}">
+                            @php($clave = 'm'.$menu->id)
+                            <tr wire:key="menu-permiso-{{ $menu->id }}" class="hover:bg-gray-50/70">
+                                <td class="py-3 px-4 text-center align-middle">
+                                    @if ($menu->esEnlace())
+                                        <input type="checkbox"
+                                            id="menu-acceso-{{ $menu->id }}"
+                                            wire:key="menu-acceso-{{ $menu->id }}"
+                                            wire:model.live="menuAcceso.{{ $clave }}"
+                                            class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                    @else
+                                        <span class="text-gray-300 text-xs" title="Solo agrupa submenús">—</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2 {{ $menu->id_padre ? 'pl-4 font-medium text-gray-800' : 'font-bold text-gray-900' }}">
                                         @if ($menu->id_padre)
                                             <span class="text-gray-300 text-xs">└</span>
                                         @endif
@@ -72,13 +91,8 @@
                                         {{ $menu->nombre }}
                                     </div>
                                 </td>
-                                <td class="py-3 px-6 text-gray-500 font-mono text-xs">
+                                <td class="py-3 px-6 text-gray-500 font-mono text-xs align-middle">
                                     {{ $menu->esEnlace() ? $menu->ruta : '---' }}
-                                </td>
-                                <td class="py-3 px-6 text-center">
-                                    <input type="checkbox"
-                                        wire:model="menuAcceso.{{ $menu->id }}"
-                                        class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                                 </td>
                             </tr>
                         @empty
@@ -126,4 +140,22 @@
             </div>
         </div>
     @endif
+
+    <script>
+        const mostrarSwalRoles = (payload) => {
+            const data = payload?.detail?.[0] ?? payload?.detail ?? payload ?? {};
+            Swal.fire({
+                icon: data.icon || 'success',
+                title: data.title || 'Operación exitosa',
+                text: data.text || '',
+                confirmButtonColor: '#059669',
+            });
+        };
+
+        window.addEventListener('swal', mostrarSwalRoles);
+
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('swal', (payload) => mostrarSwalRoles({ detail: [payload] }));
+        });
+    </script>
 </div>

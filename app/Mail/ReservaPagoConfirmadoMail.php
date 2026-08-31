@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\Reserva;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -22,6 +23,8 @@ class ReservaPagoConfirmadoMail extends Mailable
         public bool $usuarioNuevo = false,
         public ?string $usuarioLogin = null,
         public ?string $clavePlana = null,
+        public ?string $pdfContenido = null,
+        public ?string $pdfNombre = null,
     ) {}
 
     public function envelope(): Envelope
@@ -38,5 +41,22 @@ class ReservaPagoConfirmadoMail extends Mailable
         return new Content(
             view: 'emails.reserva-pago-confirmado',
         );
+    }
+
+    /**
+     * @return array<int, Attachment>
+     */
+    public function attachments(): array
+    {
+        if ($this->pdfContenido === null || $this->pdfContenido === '') {
+            return [];
+        }
+
+        $nombre = $this->pdfNombre ?: 'voucher-reserva.pdf';
+
+        return [
+            Attachment::fromData(fn () => $this->pdfContenido, $nombre)
+                ->withMime('application/pdf'),
+        ];
     }
 }

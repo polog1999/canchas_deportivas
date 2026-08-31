@@ -45,6 +45,18 @@ class RolesAndPermissionsSeeder extends Seeder
                 'orden' => 4,
             ],
             [
+                'nombre' => 'Cambiar contraseña',
+                'ruta' => '/portal/cambiar-contrasena',
+                'icono' => 'fa-key',
+                'orden' => 11,
+            ],
+            [
+                'nombre' => 'Reservar más',
+                'ruta' => '/portal/reservar',
+                'icono' => 'fa-calendar-plus',
+                'orden' => 12,
+            ],
+            [
                 'nombre' => 'Ver Reservas',
                 'ruta' => '/portal/ver-reservas',
                 'icono' => 'fa-calendar-check',

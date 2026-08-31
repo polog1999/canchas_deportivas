@@ -7,6 +7,7 @@ use App\Models\Reserva;
 use App\Models\Transaccion;
 use App\Services\NiubizService;
 use App\Services\ReservaCorreoService;
+use App\Support\ReservaFlow;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +23,9 @@ class VerificarPagoNiubizController extends Controller
         ]);
 
         $pagoUrl = function (?string $error = null) {
-            $url = route('reservar.pago');
+            $url = ReservaFlow::desdePortalActivo()
+                ? route('portal.reservar.pago')
+                : route('reservar.pago');
             $qs = session('pago_return_query');
             if ($qs) {
                 $url .= '?'.ltrim($qs, '?');
@@ -46,6 +49,14 @@ class VerificarPagoNiubizController extends Controller
         if (strtolower((string) $reserva->estado) === 'confirmada') {
             Log::channel('niubiz')->warning("[Verify] Reserva #{$purchaseNumber} ya confirmada");
 
+            if (ReservaFlow::desdePortalActivo()) {
+                ReservaFlow::limpiarMarcaPortal();
+
+                return redirect()
+                    ->route('mis-pagos.index')
+                    ->with('success', '¡Pago completado! Tu reserva quedó confirmada.');
+            }
+
             return redirect('/?reserva='.$reserva->id.'&pago=ok')
                 ->with('success', '¡Pago completado con éxito!');
         }
@@ -57,6 +68,14 @@ class VerificarPagoNiubizController extends Controller
                 usleep(500000);
                 $reserva->refresh();
                 if (strtolower((string) $reserva->estado) === 'confirmada') {
+                    if (ReservaFlow::desdePortalActivo()) {
+                        ReservaFlow::limpiarMarcaPortal();
+
+                        return redirect()
+                            ->route('mis-pagos.index')
+                            ->with('success', '¡Pago completado! Tu reserva quedó confirmada.');
+                    }
+
                     return redirect('/?reserva='.$reserva->id.'&pago=ok')
                         ->with('success', '¡Pago completado con éxito!');
                 }
@@ -158,6 +177,14 @@ class VerificarPagoNiubizController extends Controller
                 ]);
 
                 Log::channel('niubiz')->info("[Verify] Pago autorizado reserva #{$reserva->id}");
+
+                if (ReservaFlow::desdePortalActivo()) {
+                    ReservaFlow::limpiarMarcaPortal();
+
+                    return redirect()
+                        ->route('mis-pagos.index')
+                        ->with('success', '¡Pago completado! Tu reserva quedó confirmada.');
+                }
 
                 return redirect('/?reserva='.$reserva->id.'&pago=ok&voucher='.urlencode((string) $reserva->referencia_pago))
                     ->with('success', '¡Pago completado con éxito!');
