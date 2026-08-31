@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DescargarVoucherPagoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PortalReservarController;
 use App\Http\Controllers\RegistrarReservaController;
@@ -63,10 +62,6 @@ Route::middleware(['auth'])->prefix('portal')->group(function () {
     Route::get('/mis-pagos', MisPagosManager::class)
         ->middleware('permission:/portal/mis-pagos')
         ->name('mis-pagos.index');
-
-    Route::get('/mis-pagos/{pago}/voucher.pdf', DescargarVoucherPagoController::class)
-        ->middleware('permission:/portal/mis-pagos')
-        ->name('mis-pagos.voucher.pdf');
 
     Route::get('/cambiar-contrasena', CambiarContrasenaManager::class)
         ->middleware('permission:/portal/cambiar-contrasena')

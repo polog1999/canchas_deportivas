@@ -36,7 +36,7 @@
                                 </table>
                             @else
                                 <p style="margin:0 0 16px;font-size:14px;line-height:1.6;">
-                                    Tu pago fue registrado correctamente. Adjuntamos el comprobante en PDF y te dejamos un resumen a continuación:
+                                    Tu pago fue registrado correctamente. Este es el comprobante de tu reserva:
                                 </p>
                             @endif
 

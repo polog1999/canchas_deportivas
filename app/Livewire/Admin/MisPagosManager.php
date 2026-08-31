@@ -4,7 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Pago;
 use App\Models\Usuario;
-use App\Services\ReservaVoucherService;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -32,7 +32,6 @@ class MisPagosManager extends Component
         }
 
         $esAdmin = $usuario->tieneRol('admin', 'ADMIN', 'SUPERADMIN');
-        $voucherService = app(ReservaVoucherService::class);
 
         return Pago::query()
             ->with([
@@ -49,8 +48,96 @@ class MisPagosManager extends Component
             })
             ->orderByDesc('pagado_en')
             ->get()
-            ->map(fn (Pago $pago) => $voucherService->datosDesdePago($pago))
+            ->map(fn (Pago $pago) => $this->mapearPago($pago))
             ->values();
+    }
+
+    private function formatearFechaPago(Pago $pago): string
+    {
+        $raw = $pago->getRawOriginal('pagado_en');
+        if (! $raw) {
+            return '—';
+        }
+
+        return Carbon::parse($raw, 'UTC')
+            ->timezone('America/Lima')
+            ->format('d/m/Y H:i');
+    }
+
+    private function formatearHoraTurno(?Carbon $fecha, string $formato): string
+    {
+        if (! $fecha) {
+            return '—';
+        }
+
+        return $fecha->format($formato);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapearPago(Pago $pago): array
+    {
+        $transaccion = $pago->transaccion;
+        $reserva = $transaccion?->reserva;
+        $titular = $reserva?->usuario;
+        $perfil = $titular?->perfil;
+        $cancha = $reserva?->cancha;
+        $sede = $cancha?->sede;
+
+        $horaInicio = $reserva?->hora_inicio;
+        $horaFin = $reserva?->hora_fin;
+        $duracionMin = ($horaInicio && $horaFin)
+            ? (int) $horaInicio->diffInMinutes($horaFin)
+            : 60;
+
+        $deporte = data_get($transaccion?->respuesta_bruta, 'meta.deporte')
+            ?? data_get($transaccion?->respuesta_bruta, 'reserva.deporte')
+            ?? $cancha?->deportes?->first()?->nombre;
+
+        $monto = round((float) $pago->monto, 2);
+        $marca = trim((string) ($transaccion?->marca_tarjeta ?? ''));
+        $tarjeta = trim((string) ($transaccion?->tarjeta_enmascarada ?? ''));
+
+        if ($monto <= 0 || strtolower((string) $transaccion?->estado) === 'sin_pasarela') {
+            $medioPago = 'Gratuito';
+            $estado = 'Gratuito';
+        } else {
+            $medioPago = ($marca !== '' && $tarjeta !== '')
+                ? trim($marca.' '.$tarjeta)
+                : ($marca !== '' ? $marca : 'Tarjeta');
+            $estado = 'Pagado';
+        }
+
+        $concepto = 'Reserva de cancha';
+        if ($deporte) {
+            $concepto .= ' · '.$deporte;
+        }
+        $concepto .= ' · '.$duracionMin.' min';
+        if ($monto <= 0) {
+            $concepto .= ' (cortesía)';
+        }
+
+        return [
+            'id' => $pago->id,
+            'nro_pedido' => (string) ($reserva?->id ?? $pago->id),
+            'nro_operacion' => (string) ($transaccion?->transaccion_id ?? '—'),
+            'codigo_voucher' => $reserva?->referencia_pago,
+            'fecha_pago' => $this->formatearFechaPago($pago),
+            'titular' => $titular?->nombreCompleto() ?? '—',
+            'dni' => $perfil?->numero_documento ?? '—',
+            'sede' => $sede?->nombre ?? '—',
+            'cancha' => $cancha?->nombre ?? '—',
+            'deporte' => $deporte ?? '—',
+            'fecha_turno' => $this->formatearHoraTurno($horaInicio, 'd/m/Y'),
+            'horario' => ($horaInicio && $horaFin)
+                ? $this->formatearHoraTurno($horaInicio, 'H:i').' a '.$this->formatearHoraTurno($horaFin, 'H:i').' hs'
+                : '—',
+            'concepto' => $concepto,
+            'medio_pago' => $medioPago,
+            'monto' => $monto,
+            'estado' => $estado,
+        ];
     }
 
     public function verVoucher(int $id): void
