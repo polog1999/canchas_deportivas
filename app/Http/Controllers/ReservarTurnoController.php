@@ -64,6 +64,8 @@ class ReservarTurnoController extends Controller
             'id' => $sede->id,
             'nombre' => $sede->nombre,
             'direccion' => $sede->direccion,
+            'enlace_mapas' => $sede->enlace_mapas,
+            'mapa_embed' => $sede->urlMapaEmbed(),
             'imagen' => method_exists($sede, 'urlImagen') ? $sede->urlImagen() : null,
             'hora_inicio' => $sede->hora_inicio ? substr((string) $sede->hora_inicio, 0, 5) : '08:00',
             'hora_fin' => $sede->hora_fin ? substr((string) $sede->hora_fin, 0, 5) : '22:00',

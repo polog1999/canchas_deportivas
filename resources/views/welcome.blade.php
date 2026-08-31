@@ -129,7 +129,19 @@
                     </div>
                     <div class="p-5 sm:p-6">
                         <h3 class="text-xl font-bold text-[#1e3a5f]">{{ $sede->nombre }}</h3>
-                        <p class="text-sm text-slate-500 mt-1">{{ $sede->direccion }}</p>
+                        @if (filled($sede->direccion))
+                            <p class="text-sm text-slate-500 mt-1 flex items-start gap-1.5">
+                                <i class="fa-solid fa-location-dot text-slate-400 mt-0.5"></i>
+                                <span>{{ $sede->direccion }}</span>
+                            </p>
+                        @endif
+                        @if (filled($sede->enlace_mapas))
+                            <a href="{{ $sede->enlace_mapas }}" target="_blank" rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-700 hover:text-emerald-800">
+                                <i class="fa-solid fa-map-location-dot"></i>
+                                Ver en el mapa
+                            </a>
+                        @endif
                         @if ($sede->hora_inicio && $sede->hora_fin)
                             <p class="text-xs text-slate-400 mt-1">
                                 Horario: {{ substr((string) $sede->hora_inicio, 0, 5) }} – {{ substr((string) $sede->hora_fin, 0, 5) }}

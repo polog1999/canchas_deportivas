@@ -118,6 +118,41 @@
                 Cambiar deporte
             </a>
         </div>
+
+        @if (!empty($sede['mapa_embed']) || !empty($sede['enlace_mapas']) || !empty($sede['direccion']))
+            <section class="mt-8 bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-bold text-[#123d2a]">Ubicación</h2>
+                        @if (!empty($sede['direccion']))
+                            <p class="text-sm text-slate-500 mt-1 flex items-start gap-1.5">
+                                <i class="fa-solid fa-location-dot text-slate-400 mt-0.5"></i>
+                                <span>{{ $sede['direccion'] }}</span>
+                            </p>
+                        @endif
+                    </div>
+                    @if (!empty($sede['enlace_mapas']))
+                        <a href="{{ $sede['enlace_mapas'] }}" target="_blank" rel="noopener noreferrer"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-sm font-semibold border border-emerald-100 hover:bg-emerald-100 transition">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                            Abrir en Google Maps
+                        </a>
+                    @endif
+                </div>
+                @if (!empty($sede['mapa_embed']))
+                    <div class="aspect-[16/9] sm:aspect-[21/9] bg-slate-100">
+                        <iframe
+                            title="Mapa de {{ $sede['nombre'] }}"
+                            src="{{ $sede['mapa_embed'] }}"
+                            class="w-full h-full border-0"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                @endif
+            </section>
+        @endif
     </main>
 
     <!-- MODAL POPUP: SELECTOR TUSNE COMPLETO -->

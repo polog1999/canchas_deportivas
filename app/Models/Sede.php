@@ -64,4 +64,34 @@ class Sede extends Model
 
         return asset('imagenes/sedes/' . $imagen);
     }
+
+    /**
+     * URL embebible para iframe a partir de enlace_mapas (coords @lat,lng o búsqueda).
+     */
+    public function urlMapaEmbed(): ?string
+    {
+        $enlace = trim((string) $this->enlace_mapas);
+        if ($enlace === '') {
+            return null;
+        }
+
+        if (str_contains($enlace, '/maps/embed')) {
+            return $enlace;
+        }
+
+        if (preg_match('/@(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/', $enlace, $m)) {
+            return 'https://maps.google.com/maps?q='.$m[1].','.$m[2].'&z=16&output=embed';
+        }
+
+        if (preg_match('/[?&]q=([^&]+)/', $enlace, $m)) {
+            return 'https://maps.google.com/maps?q='.$m[1].'&z=15&output=embed';
+        }
+
+        $consulta = trim((string) ($this->direccion ?: $this->nombre));
+        if ($consulta === '') {
+            return null;
+        }
+
+        return 'https://maps.google.com/maps?q='.rawurlencode($consulta.' La Molina Lima Perú').'&z=15&output=embed';
+    }
 }
