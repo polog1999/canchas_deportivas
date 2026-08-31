@@ -9,6 +9,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class MisPagosManager extends Component
 {
@@ -187,4 +188,24 @@ class MisPagosManager extends Component
             'pagos' => $pagos,
         ]);
     }
+    public function descargarPdf(int $id)
+{
+    $pago = $this->pagosReales()->firstWhere('id', $id);
+
+    if (! $pago) {
+        abort(404, 'Pago no encontrado.');
+    }
+// Tu lógica de generación de PDF (sin cambios)
+        $customPaper = [0, 0, 226.772, 841.89];
+    $pdf = Pdf::loadView('pdf.constancia-pago', [
+        'pagoSeleccionado' => $pago,
+        // 'pagoSeleccionado' => $this->pagoSeleccionado,
+    ]) ->setPaper($customPaper, 'portrait')
+            ->setOption('isRemoteEnabled', true);
+
+    return response()->streamDownload(
+        fn () => print($pdf->output()),
+        'constancia-pago-' . $pago['nro_pedido'] . '.pdf'
+    );
+}
 }

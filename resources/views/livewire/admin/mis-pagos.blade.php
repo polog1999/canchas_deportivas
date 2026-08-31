@@ -26,7 +26,8 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold tracking-wider border-b border-gray-100">
+                        <tr
+                            class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold tracking-wider border-b border-gray-100">
                             <th class="py-4 px-6">Pedido</th>
                             <th class="py-4 px-6">Fecha de pago</th>
                             <th class="py-4 px-6">Titular</th>
@@ -41,7 +42,8 @@
                             <tr class="hover:bg-gray-50/70 transition-colors">
                                 <td class="py-4 px-6">
                                     <div class="font-bold text-gray-900">#{{ $pago['nro_pedido'] }}</div>
-                                    <div class="text-[11px] text-gray-400">{{ $pago['codigo_voucher'] ?? $pago['nro_operacion'] }}</div>
+                                    <div class="text-[11px] text-gray-400">
+                                        {{ $pago['codigo_voucher'] ?? $pago['nro_operacion'] }}</div>
                                 </td>
                                 <td class="py-4 px-6 whitespace-nowrap">{{ $pago['fecha_pago'] }}</td>
                                 <td class="py-4 px-6">
@@ -49,7 +51,8 @@
                                     <div class="text-[11px] text-gray-400">DNI {{ $pago['dni'] }}</div>
                                 </td>
                                 <td class="py-4 px-6">
-                                    <div class="font-medium text-gray-900">{{ $pago['sede'] }} · {{ $pago['cancha'] }}</div>
+                                    <div class="font-medium text-gray-900">{{ $pago['sede'] }} · {{ $pago['cancha'] }}
+                                    </div>
                                     <div class="text-[11px] text-gray-500">
                                         {{ $pago['deporte'] }} · {{ $pago['fecha_turno'] }} · {{ $pago['horario'] }}
                                     </div>
@@ -59,25 +62,42 @@
                                 </td>
                                 <td class="py-4 px-6">
                                     @if ($pago['estado'] === 'Pagado')
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-800">
                                             Pagado
                                         </span>
                                     @elseif ($pago['estado'] === 'Gratuito')
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-100 text-sky-800">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-100 text-sky-800">
                                             Gratuito
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
                                             {{ $pago['estado'] }}
                                         </span>
                                     @endif
                                 </td>
                                 <td class="py-4 px-6 text-center">
-                                    <button type="button" wire:click="verVoucher({{ $pago['id'] }})"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold transition">
-                                        <i class="fa-solid fa-receipt"></i>
-                                        Ver
-                                    </button>
+                                    <div class="flex items-center justify-center gap-2">
+
+                                        {{-- Ver voucher --}}
+                                        <button type="button" wire:click="verVoucher({{ $pago['id'] }})"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold transition">
+                                            <i class="fa-solid fa-receipt"></i>
+                                            Ver
+                                        </button>
+
+                                        {{-- Descargar PDF --}}
+                                        <button type="button" wire:click="descargarPdf({{ $pago['id'] }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="descargarPdf({{ $pago['id'] }})"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition disabled:opacity-50">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                            PDF
+                                        </button>
+
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -95,8 +115,7 @@
 
     {{-- Voucher / ticket ficticio --}}
     @if ($mostrarVoucher && $pagoSeleccionado)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
-            wire:keydown.escape.window="cerrarVoucher">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" wire:keydown.escape.window="cerrarVoucher">
             <div class="absolute inset-0 bg-black/50" wire:click="cerrarVoucher"></div>
             <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                 <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50">
@@ -113,22 +132,29 @@
                     <p class="font-bold text-xs tracking-wide">MUNICIPALIDAD DE LA MOLINA</p>
                     <p class="text-[11px] text-gray-500">RUC 20131372175</p>
                     <p class="text-[11px] text-gray-500">Av. Elías Aparicio 740 - La Molina</p>
-                    <p class="mt-3 font-bold text-xs uppercase tracking-wider text-[#1b5e3b]">Reserva de canchas deportivas</p>
+                    <p class="mt-3 font-bold text-xs uppercase tracking-wider text-[#1b5e3b]">Reserva de canchas
+                        deportivas</p>
                     <p class="text-[11px] text-gray-400">molicanchas.munimolina.gob.pe</p>
 
                     <div class="my-4 border-t border-dashed border-gray-300"></div>
 
                     <div class="text-left space-y-1 text-[12px]">
-                        <p><span class="text-gray-500">N° PEDIDO:</span> <strong>{{ $pagoSeleccionado['nro_pedido'] }}</strong></p>
-                        <p><span class="text-gray-500">CÓDIGO VOUCHER:</span> <strong>{{ $pagoSeleccionado['codigo_voucher'] ?? '—' }}</strong></p>
-                        <p><span class="text-gray-500">N° OPERACIÓN:</span> <strong>{{ $pagoSeleccionado['nro_operacion'] }}</strong></p>
-                        <p><span class="text-gray-500">FECHA Y HORA DEL PAGO:</span> {{ $pagoSeleccionado['fecha_pago'] }} <span class="text-gray-400">(hora Perú)</span></p>
+                        <p><span class="text-gray-500">N° PEDIDO:</span>
+                            <strong>{{ $pagoSeleccionado['nro_pedido'] }}</strong></p>
+                        <p><span class="text-gray-500">CÓDIGO VOUCHER:</span>
+                            <strong>{{ $pagoSeleccionado['codigo_voucher'] ?? '—' }}</strong></p>
+                        <p><span class="text-gray-500">N° OPERACIÓN:</span>
+                            <strong>{{ $pagoSeleccionado['nro_operacion'] }}</strong></p>
+                        <p><span class="text-gray-500">FECHA Y HORA DEL PAGO:</span>
+                            {{ $pagoSeleccionado['fecha_pago'] }} <span class="text-gray-400">(hora Perú)</span></p>
                     </div>
 
                     <div class="my-4 border-t border-dashed border-gray-300"></div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 text-left mb-2">Pagado por</p>
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 text-left mb-2">Pagado por
+                    </p>
                     <div class="text-left space-y-1 text-[12px]">
-                        <p><span class="text-gray-500">NOMBRE:</span> <strong>{{ $pagoSeleccionado['titular'] }}</strong></p>
+                        <p><span class="text-gray-500">NOMBRE:</span>
+                            <strong>{{ $pagoSeleccionado['titular'] }}</strong></p>
                         <p><span class="text-gray-500">DNI:</span> {{ $pagoSeleccionado['dni'] }}</p>
                     </div>
 
@@ -139,7 +165,8 @@
                         <p><span class="text-gray-500">SEDE:</span> {{ $pagoSeleccionado['sede'] }}</p>
                         <p><span class="text-gray-500">CANCHA:</span> {{ $pagoSeleccionado['cancha'] }}</p>
                         <p><span class="text-gray-500">DEPORTE:</span> {{ $pagoSeleccionado['deporte'] }}</p>
-                        <p><span class="text-gray-500">TURNO RESERVADO:</span> {{ $pagoSeleccionado['fecha_turno'] }} · {{ $pagoSeleccionado['horario'] }}</p>
+                        <p><span class="text-gray-500">TURNO RESERVADO:</span> {{ $pagoSeleccionado['fecha_turno'] }} ·
+                            {{ $pagoSeleccionado['horario'] }}</p>
                         <p><span class="text-gray-500">MEDIO:</span> {{ $pagoSeleccionado['medio_pago'] }}</p>
                     </div>
 
