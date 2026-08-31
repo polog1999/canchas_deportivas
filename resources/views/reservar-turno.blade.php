@@ -48,6 +48,7 @@
                 </p>
             </div>
 
+            <!-- Grilla Horaria -->
             <div class="overflow-x-auto relative" x-show="canchas.length">
                 <div class="min-w-[900px] relative" id="grillaTurnos">
                     <div class="grid border-b border-slate-100"
@@ -95,7 +96,7 @@
             <div class="px-4 sm:px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <p class="text-xs text-slate-500 flex items-start gap-2">
                     <i class="fa-solid fa-circle-info text-sky-600 mt-0.5"></i>
-                    La ocupación se valida con las reservas reales (hora inicio / hora fin).
+                    Tarifas diferenciadas automáticamente para Público General, Campeonatos Corporativos y Ligas Distritales.
                 </p>
                 <div class="flex items-center gap-4 text-xs font-semibold text-slate-600">
                     <span class="inline-flex items-center gap-1.5">
@@ -119,21 +120,23 @@
         </div>
     </main>
 
-    <!-- Modal Popup de Selección y Duración con precio de Oracle -->
+    <!-- MODAL POPUP: SELECTOR TUSNE COMPLETO -->
     <div x-show="popup.visible" x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
         role="dialog" aria-modal="true">
         <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="cerrarPopup()"></div>
-        <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-emerald-900/10 p-6 sm:p-7 z-10"
+        <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-emerald-900/10 p-6 sm:p-7 z-10 max-h-[90vh] overflow-y-auto"
             @click.stop>
+            
             <button type="button" @click="cerrarPopup()"
                 class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <div class="flex items-center justify-between gap-3 pr-10 mb-5 pb-4 border-b border-slate-100">
+            <!-- 1. Cabecera -->
+            <div class="flex items-center justify-between gap-3 pr-10 mb-4 pb-3 border-b border-slate-100">
                 <div class="inline-flex items-center gap-2.5 min-w-0">
-                    <span class="w-10 h-10 rounded-xl bg-emerald-50 text-[#1b5e3b] flex items-center justify-center shrink-0">
+                    <span class="w-10 h-10 rounded-xl bg-emerald-50 text-[#1b5e3b] flex items-center justify-center shrink-0 text-lg">
                         <i class="fa-solid fa-futbol"></i>
                     </span>
                     <div class="min-w-0">
@@ -141,36 +144,122 @@
                         <p class="text-xs text-slate-500 truncate" x-text="seleccion?.detalle"></p>
                     </div>
                 </div>
-                <div class="inline-flex items-center gap-2 shrink-0 text-sm font-semibold text-slate-600 bg-slate-50 px-3 py-2 rounded-xl">
+                <div class="inline-flex items-center gap-1.5 shrink-0 text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
                     <i class="fa-regular fa-clock text-[#1b5e3b]"></i>
                     <span x-text="rangoHora"></span>
                 </div>
             </div>
 
-            <!-- Opciones de duración con cálculo dinámico -->
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Duración</p>
-            <div class="space-y-3 mb-6">
+            <!-- 2. SELECTOR DE MODALIDAD TUSNE (Público General, Campeonato, Liga, Entrenamiento) -->
+            <div class="mb-4">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    1. ¿Para qué utilizarás la cancha?
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    
+                    <!-- Opción 1: Alquiler Regular (Pichanga / Práctica) -->
+                    <button type="button"
+                        @click="cambiarTipoUso('alquiler_regular')"
+                        class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
+                        :class="seleccion?.tipoUso === 'alquiler_regular'
+                            ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
+                        <i class="fa-solid fa-futbol text-emerald-700 mt-0.5 text-sm"></i>
+                        <div class="min-w-0">
+                            <p class="font-bold text-xs">Público General</p>
+                            <p class="text-[10px] text-slate-500 leading-tight">Práctica libre / Pichanga</p>
+                        </div>
+                    </button>
+
+                    <!-- Opción 2: Campeonato Corporativo -->
+                    <button type="button"
+                        @click="cambiarTipoUso('campeonato_corporativo')"
+                        class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
+                        :class="seleccion?.tipoUso === 'campeonato_corporativo'
+                            ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
+                        <i class="fa-solid fa-trophy text-amber-600 mt-0.5 text-sm"></i>
+                        <div class="min-w-0">
+                            <p class="font-bold text-xs">Campeonato / Torneo</p>
+                            <p class="text-[10px] text-slate-500 leading-tight">Eventos corporativos</p>
+                        </div>
+                    </button>
+
+                    <!-- Opción 3: Liga Distrital Oficial -->
+                    <button type="button"
+                        @click="cambiarTipoUso('liga_oficial')"
+                        class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
+                        :class="seleccion?.tipoUso === 'liga_oficial'
+                            ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
+                        <i class="fa-solid fa-shield-halved text-blue-600 mt-0.5 text-sm"></i>
+                        <div class="min-w-0">
+                            <p class="font-bold text-xs">Liga Distrital (Oficial)</p>
+                            <p class="text-[10px] text-slate-500 leading-tight">Partidos de campeonato</p>
+                        </div>
+                    </button>
+
+                    <!-- Opción 4: Liga Distrital Entrenamientos -->
+                    <button type="button"
+                        @click="cambiarTipoUso('liga_entrenamiento')"
+                        class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
+                        :class="seleccion?.tipoUso === 'liga_entrenamiento'
+                            ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
+                        <i class="fa-solid fa-person-running text-teal-600 mt-0.5 text-sm"></i>
+                        <div class="min-w-0">
+                            <p class="font-bold text-xs">Liga (Entrenamiento)</p>
+                            <p class="text-[10px] text-slate-500 leading-tight">Prácticas de clubes</p>
+                        </div>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- 3. DETALLE DEL TUSNE SELECCIONADO Y TURNO AUTOMÁTICO -->
+            <div class="mb-4 bg-slate-50 border border-slate-200/80 rounded-2xl p-3">
+                <div class="flex items-center justify-between text-xs mb-1.5">
+                    <span class="font-semibold text-slate-500">Turno detectado:</span>
+                    <span class="font-bold px-2 py-0.5 rounded-md text-[11px]"
+                        :class="esNoche ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'">
+                        <i class="fa-solid mr-1" :class="esNoche ? 'fa-moon' : 'fa-sun'"></i>
+                        <span x-text="esNoche ? 'Nocturno (Con iluminación)' : 'Diurno (Luz solar)'"></span>
+                    </span>
+                </div>
+                <div class="text-[11px] text-slate-700 flex items-start gap-1.5 border-t border-slate-200/60 pt-2">
+                    <i class="fa-solid fa-barcode text-emerald-600 mt-0.5 text-xs"></i>
+                    <div class="min-w-0">
+                        <span class="font-bold text-emerald-800" x-text="tusneActivo ? ('TUSNE Cód: ' + tusneActivo.codigo) : 'Tarifa General'"></span>
+                        <p class="text-slate-500 truncate text-[10px]" x-text="tusneActivo?.descripcion || 'Sin concepto'"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. DURACIÓN Y MONTO DE ORACLE -->
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. Duración de la reserva</p>
+            <div class="space-y-2.5 mb-6">
                 <button type="button"
                     @click="elegirDuracion(60)"
-                    class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border-2 text-base font-semibold transition"
+                    class="w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 text-sm font-semibold transition"
                     :class="seleccion?.duracion === 60
-                        ? 'bg-[#1b5e3b]/10 border-[#1b5e3b] text-[#123d2a]'
-                        : 'bg-white border-[#1b5e3b]/35 text-slate-700 hover:bg-[#1b5e3b]/5'">
-                    <span>60 min</span>
-                    <span class="font-bold text-emerald-900" x-text="'PEN ' + precioDuracion(60).toFixed(2)"></span>
+                        ? 'bg-emerald-50 border-emerald-600 text-emerald-950'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
+                    <span>60 minutos (1 hora)</span>
+                    <span class="font-bold text-emerald-900 text-base" x-text="'PEN ' + precioDuracion(60).toFixed(2)"></span>
                 </button>
                 <button type="button"
                     @click="elegirDuracion(120)"
                     :disabled="!puede120"
-                    class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border-2 text-base font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    class="w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 text-sm font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
                     :class="seleccion?.duracion === 120
-                        ? 'bg-[#1b5e3b]/10 border-[#1b5e3b] text-[#123d2a]'
-                        : 'bg-white border-[#1b5e3b]/35 text-slate-700 hover:bg-[#1b5e3b]/5'">
-                    <span>120 min</span>
-                    <span class="font-bold text-emerald-900" x-text="puede120 ? ('PEN ' + precioDuracion(120).toFixed(2)) : 'No disponible'"></span>
+                        ? 'bg-emerald-50 border-emerald-600 text-emerald-950'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
+                    <span>120 minutos (2 horas)</span>
+                    <span class="font-bold text-emerald-900 text-base" x-text="puede120 ? ('PEN ' + precioDuracion(120).toFixed(2)) : 'No disponible'"></span>
                 </button>
             </div>
 
+            <!-- 5. BOTÓN CONTINUAR -->
             <button type="button" @click="continuar()"
                 class="w-full py-3.5 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white text-base font-bold shadow-sm transition">
                 Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60).toFixed(2)"></span>
@@ -178,7 +267,7 @@
         </div>
     </div>
 
-    <!-- Lógica en JavaScript con Alpine.js -->
+    <!-- Script Alpine.js -->
     <script>
         function turnoMaqueta() {
             const club = @json($sede);
@@ -191,7 +280,6 @@
             const fin = parseInt(String(club.hora_fin || '22:00').split(':')[0], 10);
             const horas = [];
 
-            // Inclusivo: 08:00 a 22:00
             for (let h = inicio; h <= fin; h++) {
                 horas.push(h);
             }
@@ -207,6 +295,41 @@
                 popup: { visible: false },
                 cargandoOcupacion: false,
                 puede120: false,
+
+                get esNoche() {
+                    if (!this.seleccion) return false;
+                    return this.seleccion.hora >= 18; // 18:00 hs en adelante es turno Noche
+                },
+
+                // BUSCADOR AUTOMÁTICO DE TUSNE SEGÚN CANCHA, TURNO Y MODALIDAD ELEGIDA
+                get tusneActivo() {
+                    if (!this.seleccion) return null;
+                    const c = this.canchas.find(item => item.id === this.seleccion.canchaId);
+                    if (!c || !c.tusnes?.length) return null;
+
+                    const turno = this.esNoche ? 'noche' : (this.seleccion.hora === 6 ? 'madrugada_especial' : 'dia');
+                    const uso = this.seleccion.tipoUso || 'alquiler_regular';
+
+                    // 1. Coincidencia por modalidad (Uso) y turno (Día/Noche)
+                    let match = c.tusnes.find(t => 
+                        (t.tipo_uso === uso || t.tipo_uso === 'todos') && 
+                        (t.horario_turno === turno || t.horario_turno === 'todos')
+                    );
+
+                    // 2. Coincidencia solo por turno si no hay específica
+                    if (!match) {
+                        match = c.tusnes.find(t => t.horario_turno === turno || t.horario_turno === 'todos');
+                    }
+
+                    return match || c.tusnes[0];
+                },
+
+                get precioHoraActual() {
+                    if (this.tusneActivo && this.tusneActivo.precio_hora > 0) {
+                        return Number(this.tusneActivo.precio_hora);
+                    }
+                    return Number(this.seleccion?.precioBase || 0);
+                },
 
                 get etiquetaFecha() {
                     const d = new Date(this.fecha + 'T12:00:00');
@@ -236,7 +359,12 @@
                 precioDuracion(minutos) {
                     if (!this.seleccion) return 0;
                     const horas = (minutos || 60) / 60;
-                    return (this.seleccion.precioHora * horas);
+                    return (this.precioHoraActual * horas);
+                },
+
+                cambiarTipoUso(tipo) {
+                    if (!this.seleccion) return;
+                    this.seleccion.tipoUso = tipo;
                 },
 
                 async cambiarDia(delta) {
@@ -273,7 +401,6 @@
                             ocupados: mapa[c.id] || mapa[String(c.id)] || [],
                         }));
                     } catch (e) {
-                        // Mantiene ocupados actuales en caso de error
                     } finally {
                         this.cargandoOcupacion = false;
                     }
@@ -311,9 +438,10 @@
                         canchaId: cancha.id,
                         cancha: cancha.nombre,
                         detalle: cancha.detalle,
-                        precioHora: Number(cancha.precio) || 0,
+                        precioBase: Number(cancha.precio) || 0,
                         hora: h,
                         duracion: 60,
+                        tipoUso: 'alquiler_regular', // Inicia en alquiler regular
                         deporteIds: cancha.deporte_ids || [],
                     };
                     this.popup.visible = true;
@@ -334,6 +462,8 @@
                 continuar() {
                     if (!this.seleccion) return;
                     const horaStr = this.horaLabel(this.seleccion.hora);
+                    const tusne = this.tusneActivo;
+
                     const params = new URLSearchParams({
                         sede: String(this.club.id),
                         club: this.club.nombre,
@@ -345,8 +475,13 @@
                         fecha: this.fecha,
                         hora: horaStr,
                         duracion: String(this.seleccion.duracion),
-                        precio: String(this.precioDuracion(this.seleccion.duracion)),
+                        precio: String(this.precioDuracion(this.seleccion.duracion).toFixed(2)),
                         deporte: this.deporte,
+                        // Datos TUSNE resueltos para la confirmación y pago
+                        tusne_id: tusne ? String(tusne.id) : '',
+                        codigo_tusne: tusne ? String(tusne.codigo) : '',
+                        grupo_tusne: tusne ? String(tusne.grupo) : '23',
+                        tipo_uso: this.seleccion.tipoUso,
                     });
 
                     if (this.deporteId) {

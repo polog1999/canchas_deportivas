@@ -6,7 +6,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">Canchas y Espacios Deportivos</h2>
-                <p class="text-sm text-gray-600">Administra los campos de juego, losas y escenarios asignados a cada sede municipal.</p>
+                <p class="text-sm text-gray-600">Administra los campos de juego, losas y los conceptos TUSNE que aplican a cada cancha.</p>
             </div>
 
             <button wire:click="openModal"
@@ -30,7 +30,6 @@
 
             <!-- Filtros desplegables -->
             <div class="flex flex-col sm:flex-row w-full md:w-auto gap-3">
-                
                 <!-- Filtro por Sede -->
                 <select wire:model.live="selectedLocationFilter"
                     class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">
@@ -64,6 +63,7 @@
                             <th class="py-4 px-6">Cancha / Campo</th>
                             <th class="py-4 px-6">Sede Asignada</th>
                             <th class="py-4 px-6">Deportes</th>
+                            <th class="py-4 px-6">Conceptos TUSNE Asociados</th>
                             <th class="py-4 px-6">Estado</th>
                             <th class="py-4 px-6 text-center">Acciones</th>
                         </tr>
@@ -93,12 +93,28 @@
                                 </td>
                                 <td class="py-4 px-6">
                                     @if ($court->deportes->isEmpty())
-                                        <span class="text-xs text-gray-400">Sin deportes</span>
+                                        <span class="text-xs text-gray-400 italic">Sin deportes</span>
                                     @else
                                         <div class="flex flex-wrap gap-1">
                                             @foreach ($court->deportes as $deporte)
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-100">
                                                     {{ $deporte->nombre }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="py-4 px-6">
+                                    @if ($court->catalogosTusne->isEmpty())
+                                        <span class="text-xs text-red-500 italic font-medium">Sin TUSNE vinculado</span>
+                                    @else
+                                        <div class="flex flex-wrap gap-1.5 max-w-md">
+                                            @foreach ($court->catalogosTusne as $tusne)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-800 border border-slate-200"
+                                                    title="{{ $tusne->descripcion_local }}">
+                                                    <span class="font-bold text-emerald-700">Cód. {{ $tusne->codigo_tusne }}</span>
+                                                    <span class="text-slate-400">|</span>
+                                                    <span class="truncate max-w-[150px]">{{ $tusne->descripcion_local }}</span>
                                                 </span>
                                             @endforeach
                                         </div>
@@ -128,7 +144,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="py-8 px-6 text-center text-gray-500">
+                                <td colspan="6" class="py-8 px-6 text-center text-gray-500">
                                     <div class="flex flex-col items-center justify-center gap-2">
                                         <i class="fa-regular fa-folder-open text-3xl text-gray-300"></i>
                                         <span>No se encontraron canchas registradas con los filtros seleccionados.</span>
@@ -166,7 +182,7 @@
                     x-transition:leave="transition ease-in duration-200"
                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    class="relative z-10 inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                    class="relative z-10 inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
 
                     <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                         <h3 class="text-lg font-bold text-gray-900">
@@ -179,7 +195,7 @@
                     </div>
 
                     <form wire:submit.prevent="saveCourt">
-                        <div class="bg-white px-6 py-6 space-y-4">
+                        <div class="bg-white px-6 py-6 space-y-5 max-h-[75vh] overflow-y-auto">
 
                             <!-- Sede a la que pertenece -->
                             <div>
@@ -209,37 +225,58 @@
 
                             <!-- Deportes (canchas_deportes) -->
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Deportes / Disciplinas <span class="text-red-500">*</span></label>
-                                <div class="max-h-40 overflow-y-auto rounded-lg border @error('deporte_ids') border-red-500 @else border-gray-300 @enderror p-3 space-y-2 bg-white">
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Deportes / Disciplinas Permitidas <span class="text-red-500">*</span></label>
+                                <div class="max-h-36 overflow-y-auto rounded-lg border @error('deporte_ids') border-red-500 @else border-gray-300 @enderror p-3 space-y-1.5 bg-white">
                                     @forelse ($deportes as $deporte)
-                                        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                        <label class="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:bg-slate-50 p-1 rounded">
                                             <input type="checkbox" wire:model="deporte_ids" value="{{ $deporte->id }}"
                                                 class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
                                             <span>{{ $deporte->nombre }}</span>
                                         </label>
                                     @empty
-                                        <p class="text-xs text-gray-400">No hay deportes registrados en la tabla <code>deportes</code>.</p>
+                                        <p class="text-xs text-gray-400">No hay deportes registrados.</p>
                                     @endforelse
                                 </div>
                                 @error('deporte_ids')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
-                                @error('deporte_ids.*')
-                                    <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
-                                @enderror
                             </div>
 
-                             <!-- Sede a la que pertenece -->
+                            <!-- Conceptos TUSNE Múltiples (canchas_tusne) -->
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Tusne <span class="text-red-500">*</span></label>
-                                <select wire:model="catalogo_tusne_id"
-                                    class="w-full px-3 py-2 border @error('sede_id') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
-                                    <option value="">-- Seleccione la Tusne --</option>
-                                    @foreach($tusnes as $t)
-                                        <option value="{{ $t->id }}">{{ $t->descripcion_local }}</option>
-                                    @endforeach
-                                </select>
-                                @error('sede_id')
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-xs font-semibold text-gray-700">Conceptos TUSNE Aplicables <span class="text-red-500">*</span></label>
+                                    <span class="text-[11px] text-emerald-700 font-medium">Seleccione todos los TUSNEs con los que se puede pagar esta cancha</span>
+                                </div>
+
+                                <div class="max-h-52 overflow-y-auto rounded-lg border @error('catalogo_tusne_ids') border-red-500 @else border-gray-300 @enderror p-2.5 space-y-2 bg-white">
+                                    @forelse ($tusnes as $t)
+                                        <label class="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-50 border border-slate-100 hover:border-slate-200 cursor-pointer transition">
+                                            <input type="checkbox" wire:model="catalogo_tusne_ids" value="{{ $t->id }}"
+                                                class="mt-1 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                            <div class="text-xs flex-grow">
+                                                <div class="flex items-center gap-2 flex-wrap justify-between">
+                                                    <span class="font-semibold text-gray-900">{{ $t->descripcion_local }}</span>
+                                                    <span class="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-200">
+                                                        Cód: {{ $t->codigo_tusne }} (G: {{ $t->grupo_tusne }})
+                                                    </span>
+                                                </div>
+                                                <div class="text-[11px] text-gray-500 mt-1 flex flex-wrap gap-2">
+                                                    <span class="capitalize">Horario: <strong>{{ $t->modificador_tiempo }}</strong></span>
+                                                    <span>·</span>
+                                                    <span class="capitalize">Tipo: <strong>{{ $t->tipo_cliente }}</strong></span>
+                                                    @if($t->tiene_recaudacion_taquilla)
+                                                        <span>·</span>
+                                                        <span class="text-amber-600 font-medium">Con Taquilla</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </label>
+                                    @empty
+                                        <p class="text-xs text-gray-400 p-2">No hay conceptos TUSNE registrados en el catálogo.</p>
+                                    @endforelse
+                                </div>
+                                @error('catalogo_tusne_ids')
                                     <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
                                 @enderror
                             </div>

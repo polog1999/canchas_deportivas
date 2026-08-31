@@ -17,22 +17,24 @@ class CatalogoTusne extends Model
         'grupo_tusne',
         'codigo_tusne',
         'descripcion_local',
+        'tipo_espacio',
+        'tipo_uso',
+        'horario_turno',
+        'tipo_cliente',
+        'tiene_taquilla',
         'incluye_camerinos',
         'incluye_tribunas',
         'incluye_arcos_f11',
-        'tiene_recaudacion_taquilla',
-        'modificador_tiempo',
-        'tipo_cliente',
         'esta_activo',
     ];
 
     protected function casts(): array
     {
         return [
+            'tiene_taquilla' => 'boolean',
             'incluye_camerinos' => 'boolean',
             'incluye_tribunas' => 'boolean',
             'incluye_arcos_f11' => 'boolean',
-            'tiene_recaudacion_taquilla' => 'boolean',
             'esta_activo' => 'boolean',
             'creado_en' => 'datetime',
             'actualizado_en' => 'datetime',

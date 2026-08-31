@@ -45,6 +45,12 @@ class Cancha extends Model
     {
         return $this->hasMany(CanchaTusne::class, 'cancha_id');
     }
+    
+    // RELACIÓN MUCHOS A MUCHOS CON CATÁLOGO TUSNE
+    public function catalogosTusne(): BelongsToMany
+    {
+        return $this->belongsToMany(CatalogoTusne::class, 'canchas_tusne', 'cancha_id', 'catalogo_tusne_id');
+    }
 
     public function horarios(): HasMany
     {

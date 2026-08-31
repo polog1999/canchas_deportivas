@@ -20,7 +20,7 @@ class ReservarTurnoController extends Controller
             $fecha = now()->format('Y-m-d');
         }
 
-        // Sin deporte → deportes de la sede elegida
+        // Sin deporte → volver a deportes
         if ($deporteId <= 0) {
             return redirect()->route('reservar.deporte', [
                 'sede' => $sedeId,
@@ -33,7 +33,7 @@ class ReservarTurnoController extends Controller
             ->with([
                 'canchas' => function ($q) use ($deporteId) {
                     $q->where('esta_activo', true)
-                        ->with(['deportes', 'canchasTusne.catalogoTusne'])
+                        ->with(['deportes', 'catalogosTusne' => fn($t) => $t->where('esta_activo', true)])
                         ->orderBy('nombre');
 
                     if ($deporteId > 0) {
@@ -60,7 +60,7 @@ class ReservarTurnoController extends Controller
         $canchaIds = $sede->canchas->pluck('id');
         $ocupadosPorCancha = $ocupacion->porCancha($canchaIds, $fecha);
 
-        // Instanciar el servicio Oracle usando app()
+        // Servicio Oracle para consultar los montos reales de cada TUSNE
         $oracleService = app(OracleService::class);
 
         $sedeData = [
@@ -72,37 +72,43 @@ class ReservarTurnoController extends Controller
             'hora_fin' => $sede->hora_fin ? substr((string) $sede->hora_fin, 0, 5) : '22:00',
             'canchas' => $sede->canchas->map(function ($c) use ($ocupadosPorCancha, $oracleService) {
                 
-                // Precio base local por defecto
-                $precio = (float) $c->precio_por_hora;
-
-                // Obtener el TUSNE vinculado a la cancha
-                $canchaTusne = $c->canchasTusne->first();
-                $catalogoTusne = $canchaTusne?->catalogoTusne;
-
-                if ($catalogoTusne && !empty($catalogoTusne->grupo_tusne) && !empty($catalogoTusne->codigo_tusne)) {
-                    try {
-                        // Consulta del monto a Oracle
-                        $montoOracle = $oracleService->getMontoTusne(
-                            (string) $catalogoTusne->grupo_tusne,
-                            (string) $catalogoTusne->codigo_tusne
-                        );
-
-                        $monto = $montoOracle->conmonto ?? $montoOracle->CONMONTO ?? null;
-                        if ($monto !== null) {
-                            $precio = (float) $monto;
+                // Mapear todos los TUSNEs asociados a esta cancha con su monto de Oracle
+                $tusnesMapeados = $c->catalogosTusne->map(function ($t) use ($oracleService, $c) {
+                    $montoOracle = null;
+                    if (!empty($t->grupo_tusne) && !empty($t->codigo_tusne)) {
+                        try {
+                            $montoObj = $oracleService->getMontoTusne((string)$t->grupo_tusne, (string)$t->codigo_tusne);
+                            $montoVal = $montoObj->conmonto ?? $montoObj->CONMONTO ?? null;
+                            if ($montoVal !== null) {
+                                $montoOracle = (float)$montoVal;
+                            }
+                        } catch (\Throwable $th) {
+                            // En caso de caída de conexión
                         }
-                    } catch (\Throwable $th) {
-                        // En caso de error de conexión mantiene el precio base local
                     }
-                }
+
+                    return [
+                        'id' => $t->id,
+                        'grupo' => $t->grupo_tusne,
+                        'codigo' => $t->codigo_tusne,
+                        'descripcion' => $t->descripcion_local,
+                        'tipo_espacio' => $t->tipo_espacio,
+                        'tipo_uso' => $t->tipo_uso,             // 'alquiler_regular', 'campeonato_corporativo', 'liga_oficial', etc.
+                        'horario_turno' => $t->horario_turno,   // 'dia', 'noche', 'madrugada_especial', 'todos'
+                        'tipo_cliente' => $t->tipo_cliente,     // 'general', 'vecino', etc.
+                        'tiene_taquilla' => (bool)$t->tiene_taquilla,
+                        'precio_hora' => $montoOracle !== null ? $montoOracle : (float)$c->precio_por_hora,
+                    ];
+                })->values();
 
                 return [
                     'id' => $c->id,
                     'nombre' => $c->nombre,
                     'detalle' => $c->deportes->pluck('nombre')->implode(' · ') ?: 'Cancha',
                     'deporte_ids' => $c->deportes->pluck('id')->values(),
-                    'precio' => $precio,
+                    'precio' => (float) $c->precio_por_hora,
                     'ocupados' => $ocupadosPorCancha[$c->id] ?? [],
+                    'tusnes' => $tusnesMapeados, // Colección completa de TUSNEs asociados
                 ];
             })->values(),
         ];
