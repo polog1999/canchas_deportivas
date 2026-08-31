@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\PreparaReservaDatos;
 use App\Models\Cancha;
 use App\Models\Distrito;
 use App\Models\Perfil;
 use App\Models\Sede;
+use App\Models\Usuario;
 use App\Services\OcupacionReservasService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +18,8 @@ use Illuminate\View\View;
 
 class ReservarController extends Controller
 {
+    use PreparaReservaDatos;
+
     public function index(): RedirectResponse
     {
         // Esa pantalla de listado de complejos ya no forma parte del flujo
@@ -112,16 +116,7 @@ class ReservarController extends Controller
 
     public function confirmar(): View
     {
-        $distritos = Distrito::query()
-            ->orderBy('nombre')
-            ->get(['id', 'nombre']);
-
-        $usuarioPortal = null;
-
-        return view('reservar-confirmar', compact(
-            'distritos',
-            'usuarioPortal'
-        ));
+        return view('reservar-confirmar', $this->datosConfirmar(Auth::check()));
     }
 
     public function pago(): View
@@ -206,29 +201,7 @@ class ReservarController extends Controller
 
         $usuario = $perfil->usuario;
 
-        // Usar valor crudo de BD
-        // (el cast 'hashed' no debe interferir en la comparación)
-        $claveAlmacenada = (string) $usuario->getRawOriginal('clave');
-
-        $claveValida = false;
-
-        if ($claveAlmacenada !== '') {
-            if (Hash::isHashed($claveAlmacenada)) {
-                $claveValida = Hash::check(
-                    $data['clave'],
-                    $claveAlmacenada
-                );
-            } else {
-                // Compatibilidad con claves legacy
-                // (texto plano en BD)
-                $claveValida = hash_equals(
-                    $claveAlmacenada,
-                    $data['clave']
-                );
-            }
-        }
-
-        if (! $claveValida) {
+        if (! $this->claveUsuarioValida($usuario, $data['clave'])) {
             return response()->json([
                 'ok' => false,
                 'mensaje' => 'Contraseña incorrecta.',
@@ -242,5 +215,49 @@ class ReservarController extends Controller
             'mensaje' => 'Acceso verificado.',
             'redirect' => route('dashboard'),
         ]);
+    }
+
+    public function verificarClaveSesion(Request $request): JsonResponse
+    {
+        if (! Auth::check()) {
+            return response()->json([
+                'ok' => false,
+                'mensaje' => 'Debes iniciar sesión para continuar.',
+            ], 401);
+        }
+
+        $data = $request->validate([
+            'clave' => 'required|string|min:4',
+        ]);
+
+        /** @var Usuario $usuario */
+        $usuario = Auth::user();
+
+        if (! $this->claveUsuarioValida($usuario, $data['clave'])) {
+            return response()->json([
+                'ok' => false,
+                'mensaje' => 'Contraseña incorrecta.',
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'mensaje' => 'Contraseña verificada.',
+        ]);
+    }
+
+    private function claveUsuarioValida(Usuario $usuario, string $clave): bool
+    {
+        $claveAlmacenada = (string) $usuario->getRawOriginal('clave');
+
+        if ($claveAlmacenada === '') {
+            return false;
+        }
+
+        if (Hash::isHashed($claveAlmacenada)) {
+            return Hash::check($clave, $claveAlmacenada);
+        }
+
+        return hash_equals($claveAlmacenada, $clave);
     }
 }

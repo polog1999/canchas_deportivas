@@ -79,10 +79,16 @@
                 Revisa y confirma tu reserva
             </h1>
 
-            <p class="text-sm text-slate-500 mt-2 max-w-2xl">
+            <p class="text-sm text-slate-500 mt-2 max-w-2xl" x-show="estado !== 'sesion'">
                 Verifica el turno de
                 <span class="font-semibold text-slate-700" x-text="reserva.club"></span>
                 e identifica al titular con su documento.
+            </p>
+
+            <p class="text-sm text-slate-500 mt-2 max-w-2xl" x-show="estado === 'sesion'" x-cloak>
+                Verifica el turno de
+                <span class="font-semibold text-slate-700" x-text="reserva.club"></span>
+                y confirma con tu contraseña para continuar al pago.
             </p>
 
         </div>
@@ -100,10 +106,17 @@
                             <i class="fa-solid fa-id-card"></i>
                         </span>
 
-                        <h2 class="font-bold text-slate-900">
+                        <h2 class="font-bold text-slate-900" x-text="estado === 'sesion' ? 'Confirmar identidad' : 'Datos del titular'">
                             Datos del titular
                         </h2>
 
+                    </div>
+
+
+                    <div x-show="estado === 'sesion'" x-cloak
+                        class="mb-4 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-800">
+                        <i class="fa-solid fa-circle-check mr-1"></i>
+                        Reservarás con tu cuenta activa. Ingresa tu contraseña para continuar al pago.
                     </div>
 
 
@@ -113,7 +126,7 @@
                         {{-- TIPO DE DOCUMENTO --}}
                         {{-- ================================================= --}}
 
-                        <div class="sm:col-span-2">
+                        <div class="sm:col-span-2" x-show="estado !== 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                                 Tipo de documento
@@ -154,7 +167,7 @@
                         {{-- DNI / DOCUMENTO --}}
                         {{-- ================================================= --}}
 
-                        <div class="sm:col-span-2">
+                        <div class="sm:col-span-2" x-show="estado !== 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                                 DNI / documento
@@ -166,21 +179,21 @@
                                     class="fa-regular fa-address-card absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
                                 <input type="text" x-model="form.documento" @input="onDocumentoInput()"
-                                    maxlength="15" inputmode="numeric" :disabled="estado === 'sesion'"
+                                    maxlength="15" inputmode="numeric"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
                                     placeholder="12345678">
 
                             </div>
 
                             <p class="text-[11px] mt-1.5" :class="mensajeClase" x-text="mensaje"
-                                x-show="mensaje && estado !== 'sesion'"></p>
+                                x-show="mensaje"></p>
 
                         </div>
 
 
                         {{-- Nombres / apellidos --}}
 
-                        <div x-show="estado !== 'pendiente'" x-cloak>
+                        <div x-show="estado !== 'pendiente' && estado !== 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                                 Nombres
@@ -201,7 +214,7 @@
                         </div>
 
 
-                        <div x-show="estado !== 'pendiente'" x-cloak>
+                        <div x-show="estado !== 'pendiente' && estado !== 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                                 Apellido paterno
@@ -222,7 +235,7 @@
                         </div>
 
 
-                        <div class="sm:col-span-2" x-show="estado !== 'pendiente'" x-cloak>
+                        <div class="sm:col-span-2" x-show="estado !== 'pendiente' && estado !== 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                                 Apellido materno
@@ -245,7 +258,7 @@
 
                         {{-- Teléfono --}}
 
-                        <div x-show="estado !== 'pendiente'" x-cloak
+                        <div x-show="estado !== 'pendiente' && estado !== 'sesion'" x-cloak
                             :class="estado === 'nuevo' ? '' : 'sm:col-span-2'">
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
@@ -262,32 +275,6 @@
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
 
                             </div>
-
-                        </div>
-
-
-                        {{-- Correo en portal (sesión activa) --}}
-
-                        <div class="sm:col-span-2" x-show="estado === 'sesion'" x-cloak>
-
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">
-                                Correo electrónico
-                            </label>
-
-                            <div class="relative">
-
-                                <i
-                                    class="fa-regular fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-
-                                <input type="email" x-model="form.email"
-                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    placeholder="correo@ejemplo.com">
-
-                            </div>
-
-                            <p class="text-[11px] text-slate-400 mt-1.5">
-                                Recibirás el voucher en este correo.
-                            </p>
 
                         </div>
 
@@ -348,9 +335,9 @@
                         </div>
 
 
-                        {{-- Contraseña solo si el DNI SÍ existe --}}
+                        {{-- Contraseña si el DNI existe o hay sesión activa --}}
 
-                        <div class="sm:col-span-2" x-show="estado === 'existe'" x-cloak>
+                        <div class="sm:col-span-2" x-show="estado === 'existe' || estado === 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                                 Contraseña
@@ -367,9 +354,13 @@
 
                             </div>
 
-                            <p class="text-[11px] text-slate-400 mt-1.5">
+                            <p class="text-[11px] text-slate-400 mt-1.5" x-show="estado === 'existe'">
                                 Ya tienes cuenta. Confirma con tu contraseña; tus datos personales se tomarán de la base
                                 de datos.
+                            </p>
+
+                            <p class="text-[11px] text-slate-400 mt-1.5" x-show="estado === 'sesion'">
+                                Por seguridad, confirma tu identidad con la contraseña de tu cuenta.
                             </p>
 
                         </div>
@@ -649,6 +640,8 @@
                     'sesion' :
                     'pendiente',
 
+                documentoEditable: usuarioPortal?.documento_editable ?? false,
+
                 buscando: false,
 
                 confirmando: false,
@@ -709,11 +702,7 @@
                     }
 
                     if (this.estado === 'sesion') {
-
-                        return this.form.tipo_documento_id &&
-                            this.form.documento.replace(/\D/g, '').length >= 8 &&
-                            this.form.email.includes('@');
-
+                        return this.form.clave.trim().length >= 4;
                     }
 
                     if (this.estado === 'existe') {
@@ -1089,6 +1078,54 @@
                                 this.errorConfirmacion =
                                     data.mensaje ||
                                     'No se pudo verificar el acceso.';
+
+                                return;
+
+                            }
+
+                        }
+
+                        if (this.estado === 'sesion') {
+
+                            const res = await fetch(
+                                @json(route('reservar.verificar-clave-sesion')), {
+
+                                    method: 'POST',
+
+                                    headers: {
+
+                                        'Content-Type': 'application/json',
+
+                                        'Accept': 'application/json',
+
+                                        'X-CSRF-TOKEN': document.querySelector(
+                                            'meta[name="csrf-token"]'
+                                        ).content,
+
+                                    },
+
+                                    body: JSON.stringify({
+
+                                        clave: this.form.clave,
+
+                                    }),
+
+                                }
+                            );
+
+
+                            const data =
+                                await res.json();
+
+
+                            if (
+                                !res.ok ||
+                                !data.ok
+                            ) {
+
+                                this.errorConfirmacion =
+                                    data.mensaje ||
+                                    'No se pudo verificar tu contraseña.';
 
                                 return;
 

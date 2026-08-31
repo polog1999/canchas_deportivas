@@ -189,6 +189,7 @@ trait PreparaReservaDatos
             }
 
             $usuarioPortal = [
+                'tipo_documento_id' => $usuario->perfil?->tipo_documento_id ?: 1,
                 'documento' => $documento,
                 'documento_editable' => strlen($documento) < 8,
                 'nombres' => $usuario->perfil?->nombres ?? '',

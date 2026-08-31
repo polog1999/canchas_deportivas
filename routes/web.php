@@ -33,6 +33,9 @@ Route::post('/reservar/pago/verificar/{purchaseNumber}', \App\Http\Controllers\V
     ->name('reservar.pago.verificar');
 Route::get('/reservar/buscar-documento', [ReservarController::class, 'buscarDocumento'])->name('reservar.buscar-documento');
 Route::post('/reservar/verificar-acceso', [ReservarController::class, 'verificarAcceso'])->name('reservar.verificar-acceso');
+Route::post('/reservar/verificar-clave-sesion', [ReservarController::class, 'verificarClaveSesion'])
+    ->middleware('auth')
+    ->name('reservar.verificar-clave-sesion');
 
 Route::middleware('auth')->group(function () {
 
