@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\DocumentType;
 use App\Models\Cancha;
 use App\Models\Distrito;
 use App\Models\Pago;
@@ -38,7 +37,8 @@ class RegistrarReservaController extends Controller
             'nombres' => 'nullable|string|max:255',
             'apellido_paterno' => 'nullable|string|max:255',
             'apellido_materno' => 'nullable|string|max:255',
-            'telefono' => 'nullable|string|max:30',
+            'telefono' => 'nullable|string|max:9',
+            'tipo_documento_id' => 'nullable|integer|in:1,2,3',
             'email' => 'nullable|email|max:150',
             'distrito_id' => 'nullable|string|max:20',
             'estado_titular' => 'nullable|in:existe,nuevo',
@@ -456,12 +456,13 @@ class RegistrarReservaController extends Controller
         ]);
 
         $usuario->perfil()->create([
-            'tipo_documento' => DocumentType::DNI->value,
+            'tipo_documento_id' => (int) ($data['tipo_documento_id'] ?? 1),
             'numero_documento' => $documento,
             'nombres' => $nombres,
             'apellido_paterno' => $apellidoPaterno,
             'apellido_materno' => $apellidoMaterno,
             'ubigeo_distrito' => $data['distrito_id'] ?? null,
+            'telefono' => $this->normalizarTelefono($data['telefono'] ?? null),
         ]);
 
         return [
@@ -470,5 +471,16 @@ class RegistrarReservaController extends Controller
             'usuario_login' => $usuarioLogin,
             'clave_plana' => $documento,
         ];
+    }
+
+    private function normalizarTelefono(?string $telefono): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $telefono);
+
+        if ($digits === '' || strlen($digits) < 7) {
+            return null;
+        }
+
+        return substr($digits, 0, 9);
     }
 }

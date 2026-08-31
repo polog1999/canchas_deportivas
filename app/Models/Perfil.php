@@ -23,6 +23,8 @@ class Perfil extends Model
         'ubigeo_departamento',
         'ubigeo_provincia',
         'ubigeo_distrito',
+        'cod_contrib',
+        'telefono',
     ];
 
     protected function casts(): array
