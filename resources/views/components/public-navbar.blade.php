@@ -31,12 +31,40 @@
             @endif
 
             @auth
-                <a href="{{ route('dashboard') }}"
-                    class="inline-flex items-center gap-2 text-sm font-semibold hover:text-emerald-200 transition whitespace-nowrap">
-                    <i class="fa-regular fa-user"></i>
-                    <span class="hidden sm:inline">{{ auth()->user()->loadMissing('perfil')->nombreCompleto() }}</span>
-                    <span class="sm:hidden">Cuenta</span>
-                </a>
+                @php
+                    $nombreMostrar = auth()->user()->loadMissing('perfil')->nombreParaMostrar();
+                @endphp
+
+                <details class="relative group" data-user-menu>
+                    <summary
+                        class="inline-flex items-center gap-2 text-sm font-semibold hover:text-emerald-200 transition whitespace-nowrap cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+                        <i class="fa-regular fa-user"></i>
+                        <span class="max-w-[12rem] truncate">{{ $nombreMostrar }}</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] transition-transform group-open:rotate-180"></i>
+                    </summary>
+
+                    <div
+                        class="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white text-slate-800 shadow-xl border border-slate-200/80 py-1 z-50">
+                        <div class="px-4 py-3 border-b border-slate-100">
+                            <p class="text-sm font-semibold truncate">{{ $nombreMostrar }}</p>
+                        </div>
+
+                        <a href="{{ route('dashboard') }}"
+                            class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 transition">
+                            <i class="fa-solid fa-gauge-high w-4 text-emerald-700"></i>
+                            Ir al portal
+                        </a>
+
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit"
+                                class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
+                                <i class="fa-solid fa-right-from-bracket w-4"></i>
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </div>
+                </details>
             @else
                 <a href="{{ route('login') }}"
                     class="inline-flex items-center gap-2 text-sm font-semibold hover:text-emerald-200 transition whitespace-nowrap">
@@ -47,6 +75,18 @@
         </div>
     </div>
 </header>
+
+@once
+    <script>
+        document.addEventListener('click', (event) => {
+            document.querySelectorAll('details[data-user-menu][open]').forEach((menu) => {
+                if (!menu.contains(event.target)) {
+                    menu.removeAttribute('open');
+                }
+            });
+        });
+    </script>
+@endonce
 
 @if ($backHref || isset($back))
     <div class="bg-white border-b border-emerald-100">

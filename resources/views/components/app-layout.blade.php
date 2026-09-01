@@ -196,7 +196,7 @@
 
                 <div class="flex items-center gap-4">
                     <span class="text-sm font-medium text-slate-600 hidden sm:block">
-                        Hola, {{ auth()->user()->nombreCompleto() }}
+                        Hola, {{ auth()->user()->loadMissing('perfil')->nombreParaMostrar() }}
                     </span>
 
                     {{-- <div class="relative">

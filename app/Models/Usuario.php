@@ -108,6 +108,43 @@ class Usuario extends Authenticatable
         return (string) ($this->usuario ?: 'Usuario');
     }
 
+    /** Nombre legible para la interfaz (nunca el DNI, login ni correo). */
+    public function nombreParaMostrar(): string
+    {
+        $perfil = $this->relationLoaded('perfil') ? $this->perfil : $this->perfil()->first();
+
+        if (! $perfil) {
+            return 'Mi cuenta';
+        }
+
+        $candidatos = [
+            trim($perfil->nombreCompleto()),
+            trim((string) $perfil->nombres),
+            trim(implode(' ', array_filter([
+                trim((string) $perfil->apellido_paterno),
+                trim((string) $perfil->apellido_materno),
+            ], fn ($v) => $v !== ''))),
+        ];
+
+        foreach ($candidatos as $display) {
+            if ($display === '') {
+                continue;
+            }
+
+            if (preg_match('/^\d{6,}$/', preg_replace('/\s+/', '', $display))) {
+                continue;
+            }
+
+            if (filter_var($display, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+
+            return $display;
+        }
+
+        return 'Mi cuenta';
+    }
+
     public function menus(): Collection
     {
         if (! $this->rol) {
