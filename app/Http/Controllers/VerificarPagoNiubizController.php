@@ -856,14 +856,25 @@ class VerificarPagoNiubizController extends Controller
 
                 $resNumLiquidacion = $serviceOracle->generarNumLiquidacion($tusne->grupo_tusne, $tusne->codigo_tusne, $codContribuyente);
                 $numLiquidacion = null;
+
                 if (!empty($resNumLiquidacion)) {
                     $numLiquidacion =  $resNumLiquidacion[0]->liquidacion;
                 }
+
+                //================================================ACTUALIZANDO LA CANTIDAD DE CONCEPTOS TUSNES CON LA CANTIDAD DE HORAS ========================================
+                // $horaInicio = Carbon::parse($reserva->hora_inicio);
+                // $horaFin    = Carbon::parse($reserva->hora_fin);
+
+                // $cantidadHoras = (int) $horaInicio->diffInHours($horaFin);
+                $cantidadHoras = $reserva->cantidad_horas;
+                $serviceOracle->actualizarCantidadConcepto($cantidadHoras, $numLiquidacion);
+
+
                 $pago->update([
                     'num_liquidacion' => $numLiquidacion ?? null
                 ]);
 
-                $serviceOracle->insertarEnOracle($tusne->grupo_tusne, $tusne->codigo_tusne, $codContribuyente, $pago->monto, $purchaseNumber, $pago->transaccion_id, $pago->pagado_en, $numLiquidacion);
+                $serviceOracle->insertarEnOracle($tusne->grupo_tusne, $tusne->codigo_tusne, $codContribuyente, $pago->monto, $purchaseNumber, $pago->transaccion_id, $pago->pagado_en, $numLiquidacion, $cantidadHoras);
 
 
 

@@ -235,7 +235,7 @@ class RegistrarReservaController extends Controller
             $pago = Pago::create([
                 'transaccion_id' => $transaccion->id,
                 'monto' => 0,
-                'pagado_en' => now('UTC'),
+                'pagado_en' => now(),
                 'acepto_terminos' => true,
                 'id_catalogos_tusne' => $catalogoTusneId,
             ]);
