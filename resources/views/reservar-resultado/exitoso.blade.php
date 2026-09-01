@@ -70,11 +70,19 @@
         </p>
 
         <div class="flex flex-col sm:flex-row gap-3 pt-2 print:hidden">
-            <button type="button" onclick="window.print()"
-                class="inline-flex justify-center items-center gap-2 px-5 py-3 rounded-xl bg-[#1b5e3b] hover:bg-[#164d31] text-white text-sm font-semibold transition">
-                <i class="fa-solid fa-print"></i>
-                Imprimir comprobante
-            </button>
+            @if (! empty($comprobante['url_pdf']))
+                <a href="{{ $comprobante['url_pdf'] }}" target="_blank" rel="noopener"
+                    class="inline-flex justify-center items-center gap-2 px-5 py-3 rounded-xl bg-[#1b5e3b] hover:bg-[#164d31] text-white text-sm font-semibold transition">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    Imprimir comprobante
+                </a>
+            @else
+                <button type="button" onclick="window.print()"
+                    class="inline-flex justify-center items-center gap-2 px-5 py-3 rounded-xl bg-[#1b5e3b] hover:bg-[#164d31] text-white text-sm font-semibold transition">
+                    <i class="fa-solid fa-print"></i>
+                    Imprimir comprobante
+                </button>
+            @endif
 
             @if ($urlMisPagos)
                 <a href="{{ $urlMisPagos }}"
@@ -92,11 +100,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    @media print {
-        body * { visibility: hidden; }
-        #comprobante-pago, #comprobante-pago * { visibility: visible; }
-        #comprobante-pago { position: absolute; left: 0; top: 0; width: 100%; }
-    }
-</style>

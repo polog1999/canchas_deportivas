@@ -980,6 +980,8 @@
                             deporte_id: params.get('deporte_id') ||
                                 deporteId,
 
+                            tusne_id: params.get('tusne_id') || '',
+
                             estado_titular: this.estado === 'sesion' ?
                                 'existe' :
                                 this.estado,

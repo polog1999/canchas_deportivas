@@ -13,6 +13,7 @@ use App\Models\Usuario;
 use App\Services\NiubizService;
 use App\Services\OracleService;
 use App\Services\ReservaCorreoService;
+use App\Support\CatalogoTusneReserva;
 use App\Support\ReservaFlow;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -47,6 +48,7 @@ class RegistrarReservaController extends Controller
             'cancha' => 'nullable|string|max:255',
             'deporte' => 'nullable|string|max:255',
             'deporte_id' => 'nullable',
+            'tusne_id' => 'nullable|integer|exists:catalogos_tusne,id',
             'reserva_id' => 'nullable|integer',
         ], [
             'acepto_terminos.accepted' => 'Debes aceptar los términos y condiciones.',
@@ -132,6 +134,7 @@ class RegistrarReservaController extends Controller
         }
 
         $returnQuery = $request->header('X-Pago-Query') ?: $request->getQueryString();
+        $catalogoTusneId = CatalogoTusneReserva::idDesdeDatos($data, $cancha);
 
         session([
             'pago_reserva_id' => $reserva->id,
@@ -149,6 +152,7 @@ class RegistrarReservaController extends Controller
                 'cancha' => $data['cancha'] ?? $cancha->nombre,
                 'deporte' => $data['deporte'] ?? null,
                 'deporte_id' => $data['deporte_id'] ?? null,
+                'tusne_id' => $catalogoTusneId,
             ],
         ]);
 
@@ -201,6 +205,8 @@ class RegistrarReservaController extends Controller
         $resultado = DB::transaction(function () use ($reserva, $data, $usuario, $cancha) {
             $reserva->update(['estado' => 'confirmada']);
 
+            $catalogoTusneId = CatalogoTusneReserva::idDesdeDatos($data, $cancha);
+
             $transaccion = Transaccion::create([
                 'reserva_id' => $reserva->id,
                 'transaccion_id' => 'LOCAL-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(4)),
@@ -231,6 +237,7 @@ class RegistrarReservaController extends Controller
                 'monto' => 0,
                 'pagado_en' => now('UTC'),
                 'acepto_terminos' => true,
+                'id_catalogos_tusne' => $catalogoTusneId,
             ]);
 
             return [

@@ -17,6 +17,8 @@ class Pago extends Model
         'monto',
         'pagado_en',
         'acepto_terminos',
+        'id_catalogos_tusne',
+        'num_liquidacion',
     ];
 
     protected function casts(): array
@@ -33,5 +35,10 @@ class Pago extends Model
     public function transaccion(): BelongsTo
     {
         return $this->belongsTo(Transaccion::class, 'transaccion_id');
+    }
+
+    public function catalogoTusne(): BelongsTo
+    {
+        return $this->belongsTo(CatalogoTusne::class, 'id_catalogos_tusne');
     }
 }

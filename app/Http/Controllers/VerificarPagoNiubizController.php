@@ -9,6 +9,7 @@ use App\Models\Transaccion;
 use App\Services\NiubizService;
 use App\Services\OracleService;
 use App\Services\ReservaCorreoService;
+use App\Support\CatalogoTusneReserva;
 use App\Support\ReservaFlow;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -324,6 +325,8 @@ class VerificarPagoNiubizController extends Controller
                                 'pago_acepto_terminos',
                                 true
                             ),
+                            'id_catalogos_tusne' =>
+                            CatalogoTusneReserva::idDesdeMeta($meta),
                         ]);
                     }
                 );

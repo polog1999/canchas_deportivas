@@ -160,6 +160,7 @@
                         detalle: params.get('detalle') || '', fecha, hora,
                         duracion, precio: parseFloat(params.get('precio') || '0'),
                         deporte: params.get('deporte') || '', deporte_id: deporteId,
+                        tusne_id: params.get('tusne_id') || '',
                         documento: this.form.documento.replace(/\D/g, ''),
                         nombres: this.form.nombres, apellido_paterno: this.form.apellido_paterno,
                         apellido_materno: this.form.apellido_materno, email: this.form.email.trim(),

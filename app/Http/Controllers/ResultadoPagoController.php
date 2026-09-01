@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pago;
 use App\Models\Reserva;
 use App\Support\ReservaFlow;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class ResultadoPagoController extends Controller
@@ -119,6 +121,15 @@ class ResultadoPagoController extends Controller
                 : 'No se pudo completar el pago. Intenta nuevamente.';
         }
 
+        $pagoId = Pago::query()
+            ->whereHas('transaccion', fn ($q) => $q->where('reserva_id', $reserva->id))
+            ->orderByDesc('id')
+            ->value('id');
+
+        $urlPdf = ($pagoId && Auth::check())
+            ? route('mis-pagos.pdf', $pagoId)
+            : null;
+
         return [
             'numero_pedido' => (string) $reserva->id,
             'voucher' => $voucher !== '' ? $voucher : (string) $reserva->referencia_pago,
@@ -134,6 +145,8 @@ class ResultadoPagoController extends Controller
             'marca_tarjeta' => $transaccion?->marca_tarjeta,
             'tarjeta_enmascarada' => $transaccion?->tarjeta_enmascarada,
             'codigo_autorizacion' => $transaccion?->codigo_autorizacion,
+            'pago_id' => $pagoId,
+            'url_pdf' => $urlPdf,
         ];
     }
 

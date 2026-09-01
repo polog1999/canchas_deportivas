@@ -11,6 +11,7 @@ class ReservaCorreoService
 {
     public function __construct(
         private readonly MailConfigService $mailConfig,
+        private readonly ConstanciaPagoPdfService $constanciaPagoPdf,
     ) {}
 
     /**
@@ -52,12 +53,15 @@ class ReservaCorreoService
         ];
 
         try {
+            $pdfAdjunto = $this->constanciaPagoPdf->adjuntoDesdeReserva($reserva);
+
             Mail::mailer($mailer)->to($correo)->send(new ReservaPagoConfirmadoMail(
                 reserva: $reserva,
                 detalle: $detalle,
                 usuarioNuevo: $usuarioNuevo,
                 usuarioLogin: $usuarioLogin ?? $usuario?->usuario,
                 clavePlana: $clavePlana,
+                pdfAdjunto: $pdfAdjunto,
             ));
 
             Log::info('ReservaCorreo: correo enviado', [
@@ -66,6 +70,7 @@ class ReservaCorreoService
                 'destino' => $correo,
                 'mailer' => $mailer,
                 'smtp_host' => $smtpHost,
+                'pdf_adjunto' => $pdfAdjunto !== null,
             ]);
         } catch (\Throwable $e) {
             Log::error('ReservaCorreo: error al enviar correo', [
