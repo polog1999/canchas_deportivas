@@ -51,4 +51,18 @@ class ReservaFlow
     {
         session()->forget('reserva_desde_portal');
     }
+
+    /**
+     * @param  array<string, mixed>  $params
+     */
+    public static function rutaResultado(string $estado, array $params = []): string
+    {
+        $params = array_merge(['estado' => $estado], $params);
+
+        if (self::desdePortalActivo()) {
+            return route('portal.reservar.resultado', $params);
+        }
+
+        return route('reservar.resultado', $params);
+    }
 }

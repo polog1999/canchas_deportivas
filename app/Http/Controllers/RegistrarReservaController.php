@@ -376,9 +376,10 @@ class RegistrarReservaController extends Controller
             'mensaje' => 'Reserva confirmada (sin costo).',
             'reserva_id' => $resultado['reserva_id'],
             'voucher' => $resultado['voucher'],
-            'redirect' => ReservaFlow::desdePortalActivo()
-                ? route('mis-pagos.index')
-                : url('/?reserva=' . $resultado['reserva_id'] . '&pago=ok'),
+            'redirect' => ReservaFlow::rutaResultado('exitoso', [
+                'reserva' => $resultado['reserva_id'],
+                'voucher' => $resultado['voucher'],
+            ]),
         ]);
     }
     public function generarCodigoContribuyente()

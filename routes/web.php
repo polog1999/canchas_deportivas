@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ResultadoPagoController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PagoPdfController;
@@ -28,6 +29,7 @@ Route::get('/reservar/turno', ReservarTurnoController::class)->name('reservar.tu
 Route::get('/reservar/ocupacion', [ReservarController::class, 'ocupacion'])->name('reservar.ocupacion');
 Route::get('/reservar/confirmar', [ReservarController::class, 'confirmar'])->name('reservar.confirmar');
 Route::get('/reservar/pago', [ReservarController::class, 'pago'])->name('reservar.pago');
+Route::get('/reservar/resultado', ResultadoPagoController::class)->name('reservar.resultado');
 Route::post('/reservar/registrar', RegistrarReservaController::class)->name('reservar.registrar');
 Route::post('/reservar/pago/verificar/{purchaseNumber}', \App\Http\Controllers\VerificarPagoNiubizController::class)
     ->name('reservar.pago.verificar');
@@ -99,6 +101,10 @@ Route::middleware(['auth'])->prefix('portal')->group(function () {
     Route::get('/reservar/pago', [PortalReservarController::class, 'pago'])
         ->middleware('permission:/portal/reservar')
         ->name('portal.reservar.pago');
+
+    Route::get('/reservar/resultado', ResultadoPagoController::class)
+        ->middleware('permission:/portal/reservar')
+        ->name('portal.reservar.resultado');
 
     Route::get('/ver-reservas', VerReservasManager::class)
         ->middleware('permission:/portal/ver-reservas')
