@@ -26,4 +26,11 @@ class OracleService
     public function  getCodContribuyente(string $numero_documento){
         return DB::connection('oracle')->table('smacarnom')->where('mcndni', $numero_documento)->value('mcncontrib');
     }
+    public function  generarNumLiquidacion(string $grupo, string $codigo, string $codcontrib){
+        DB::connection('oracle')->statement("ALTER SESSION SET NLS_DATE_FORMAT = 'DD/MM/YYYY'");
+        return DB::connection('oracle')->select(
+                    "select ds_valores.fu_digito_generar('1312',?,?,?,'ALQUILER CANCHA DEPORTIVA') AS liquidacion FROM DUAL",
+                    [trim($grupo), trim($codigo), trim($codcontrib)]
+                );
+    }
 }
