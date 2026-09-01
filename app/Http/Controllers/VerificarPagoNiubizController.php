@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CatalogoTusne;
 use App\Models\Distrito;
 use App\Models\Pago;
 use App\Models\Reserva;
@@ -9,7 +10,9 @@ use App\Models\Transaccion;
 use App\Services\NiubizService;
 use App\Services\OracleService;
 use App\Services\ReservaCorreoService;
+use App\Support\CatalogoTusneReserva;
 use App\Support\ReservaFlow;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -257,7 +260,7 @@ class VerificarPagoNiubizController extends Controller
             |--------------------------------------------------------------------------
             */
 
-                DB::transaction(
+                $pago = DB::transaction(
                     function () use (
                         $reserva,
                         $response,
@@ -276,7 +279,25 @@ class VerificarPagoNiubizController extends Controller
                                 (string) $reserva->estado
                             ) === 'confirmada'
                         ) {
-                            return;
+
+                            Log::channel('niubiz')->warning(
+                                '[Verify] La reserva ya estaba confirmada dentro de la transacción',
+                                [
+                                    'reserva_id' => $reserva->id,
+                                ]
+                            );
+
+                            return Pago::whereHas(
+                                'transaccion',
+                                function ($query) use ($reserva) {
+                                    $query->where(
+                                        'reserva_id',
+                                        $reserva->id
+                                    );
+                                }
+                            )
+                                ->latest('id')
+                                ->first();
                         }
 
                         $reserva->update([
@@ -285,24 +306,32 @@ class VerificarPagoNiubizController extends Controller
 
                         $transaccion = Transaccion::create([
                             'reserva_id' => $reserva->id,
-                            'transaccion_id' => (string) $transactionId,
+
+                            'transaccion_id' =>
+                            (string) $transactionId,
+
                             'codigo_autorizacion' =>
                             $authCode
                                 ? (string) $authCode
                                 : null,
+
                             'marca_tarjeta' =>
                             $brand
                                 ? (string) $brand
                                 : null,
+
                             'tarjeta_enmascarada' =>
                             $card
                                 ? (string) $card
                                 : null,
+
                             'monto' => round(
                                 (float) $amount,
                                 2
                             ),
+
                             'estado' => 'Authorized',
+
                             'respuesta_bruta' => [
                                 'niubiz' => $response,
                                 'voucher' =>
@@ -311,20 +340,40 @@ class VerificarPagoNiubizController extends Controller
                             ],
                         ]);
 
-                        Pago::create([
+                        $pago = Pago::create([
                             'transaccion_id' =>
                             $transaccion->id,
+
                             'monto' => round(
                                 (float) $amount,
                                 2
                             ),
+
                             'pagado_en' => now('UTC'),
+
                             'acepto_terminos' =>
                             (bool) session(
                                 'pago_acepto_terminos',
                                 true
                             ),
+
+                            'id_catalogos_tusne' =>
+                            CatalogoTusneReserva::idDesdeMeta($meta),
                         ]);
+
+                        Log::channel('niubiz')->info(
+                            '[Verify] Pago creado correctamente',
+                            [
+                                'pago_id' => $pago->id,
+                                'transaccion_id' => $transaccion->id,
+                                'reserva_id' => $reserva->id,
+                                'id_catalogos_tusne' =>
+                                $pago->id_catalogos_tusne,
+                                'monto' => $pago->monto,
+                            ]
+                        );
+
+                        return $pago;
                     }
                 );
 
@@ -353,7 +402,7 @@ class VerificarPagoNiubizController extends Controller
             | Se utiliza el usuario autenticado que realizó la reserva.
             |
             */
-
+                $serviceOracle = app(OracleService::class);
                 $usuario = auth()->user();
 
                 if (! $usuario) {
@@ -402,8 +451,7 @@ class VerificarPagoNiubizController extends Controller
                     |--------------------------------------------------------------------------
                     */
 
-                        $serviceOracle =
-                            app(OracleService::class);
+
 
                         try {
 
@@ -804,11 +852,22 @@ class VerificarPagoNiubizController extends Controller
                         );
                     }
                 }
+                $tusne = CatalogoTusne::find(CatalogoTusneReserva::idDesdeMeta($meta));
 
-                // $numLiquidacion = $serviceOracle->generarNumLiquidacion()
-               
+                $resNumLiquidacion = $serviceOracle->generarNumLiquidacion($tusne->grupo_tusne, $tusne->codigo_tusne, $codContribuyente);
+                $numLiquidacion = null;
+                if (!empty($resNumLiquidacion)) {
+                    $numLiquidacion =  $resNumLiquidacion[0]->liquidacion;
+                }
+                $pago->update([
+                    'num_liquidacion' => $numLiquidacion ?? null
+                ]);
 
-                
+                $serviceOracle->insertarEnOracle($tusne->grupo_tusne, $tusne->codigo_tusne, $codContribuyente, $pago->monto, $purchaseNumber, $pago->transaccion_id, $pago->pagado_en, $numLiquidacion);
+
+
+
+
                 /*
             |--------------------------------------------------------------------------
             | ENVIAR CORREO
