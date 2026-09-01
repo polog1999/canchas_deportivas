@@ -270,9 +270,16 @@
                                 <i
                                     class="fa-solid fa-mobile-screen absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <input type="tel" x-model="form.telefono" :disabled="estado === 'existe'"
-                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta registrada' : '999 999 999'"
-                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
+                               <input
+                                        type="tel"
+                                        x-model="form.telefono"
+                                        maxlength="9"
+                                        inputmode="numeric"
+                                        @input="form.telefono = form.telefono.replace(/\D/g, '').slice(0, 9)"
+                                        :disabled="estado === 'existe'"
+                                        :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta registrada' : '999 999 999'"
+                                        class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                  >
 
                             </div>
 
@@ -718,7 +725,8 @@
                         this.form.nombres.trim().length > 1 &&
                         this.form.apellido_paterno.trim().length > 1 &&
                         this.form.apellido_materno.trim().length > 1 &&
-                        this.form.telefono.trim().length > 6 &&
+                   this.form.telefono.trim().length === 9 &&
+/^\d{9}$/.test(this.form.telefono.trim()) &&                    
                         this.form.email.includes('@') &&
                         String(this.form.distrito_id).length > 0;
 

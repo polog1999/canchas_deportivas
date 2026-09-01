@@ -21,6 +21,7 @@ class Reserva extends Model
         'precio_total',
         'referencia_pago',
         'estado',
+        'cantidad_horas',
     ];
 
     protected function casts(): array
@@ -29,6 +30,7 @@ class Reserva extends Model
             'hora_inicio' => 'datetime',
             'hora_fin' => 'datetime',
             'precio_total' => 'decimal:2',
+            'cantidad_horas' => 'integer',
             'creado_en' => 'datetime',
             'actualizado_en' => 'datetime',
         ];

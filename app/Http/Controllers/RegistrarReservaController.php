@@ -126,6 +126,7 @@ class RegistrarReservaController extends Controller
                 'precio_total' => $precio,
                 'referencia_pago' => $codigoVoucher,
                 'estado' => 'pendiente',
+                'cantidad_horas' => (int) ((int) $data['duracion'] / 60),
             ]);
         }
 
