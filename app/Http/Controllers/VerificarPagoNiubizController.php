@@ -12,7 +12,6 @@ use App\Services\OracleService;
 use App\Services\ReservaCorreoService;
 use App\Support\CatalogoTusneReserva;
 use App\Support\ReservaFlow;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -28,9 +27,30 @@ class VerificarPagoNiubizController extends Controller
     ): RedirectResponse {
 
         Log::channel('niubiz')->info(
-            "[Verify] Callback recibido compra #{$purchaseNumber}",
+            "[Verify] ================================================"
+        );
+
+        Log::channel('niubiz')->info(
+            "[Verify] INICIO PROCESO DE VERIFICACION DE PAGO",
             [
+                'purchase_number' => $purchaseNumber,
+                'method' => $request->method(),
+                'ip' => $request->ip(),
+                'has_transaction_token' => $request->filled('transactionToken'),
                 'keys' => array_keys($request->all()),
+            ]
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | BUSCAR RESERVA
+        |--------------------------------------------------------------------------
+        */
+
+        Log::channel('niubiz')->info(
+            "[Verify] Buscando reserva",
+            [
+                'purchase_number' => $purchaseNumber,
             ]
         );
 
@@ -39,7 +59,10 @@ class VerificarPagoNiubizController extends Controller
         if (! $reserva) {
 
             Log::channel('niubiz')->error(
-                "[Verify] Reserva #{$purchaseNumber} no encontrada"
+                "[Verify] RESERVA NO ENCONTRADA",
+                [
+                    'purchase_number' => $purchaseNumber,
+                ]
             );
 
             return redirect('/')->with(
@@ -48,10 +71,30 @@ class VerificarPagoNiubizController extends Controller
             );
         }
 
+        Log::channel('niubiz')->info(
+            "[Verify] Reserva encontrada",
+            [
+                'reserva_id' => $reserva->id,
+                'estado' => $reserva->estado,
+                'precio_total' => $reserva->precio_total,
+                'referencia_pago' => $reserva->referencia_pago,
+            ]
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | SI YA ESTA CONFIRMADA
+        |--------------------------------------------------------------------------
+        */
+
         if (strtolower((string) $reserva->estado) === 'confirmada') {
 
             Log::channel('niubiz')->warning(
-                "[Verify] Reserva #{$purchaseNumber} ya confirmada"
+                "[Verify] RESERVA YA CONFIRMADA",
+                [
+                    'reserva_id' => $reserva->id,
+                    'purchase_number' => $purchaseNumber,
+                ]
             );
 
             return $this->redirectResultado(
@@ -60,6 +103,21 @@ class VerificarPagoNiubizController extends Controller
             );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | LOCK DE PROCESAMIENTO
+        |--------------------------------------------------------------------------
+        */
+
+        Log::channel('niubiz')->info(
+            "[Verify] Intentando adquirir lock de pago",
+            [
+                'reserva_id' => $reserva->id,
+                'purchase_number' => $purchaseNumber,
+                'lock_key' => 'verify_payment_reserva_' . $purchaseNumber,
+            ]
+        );
+
         $lock = Cache::lock(
             'verify_payment_reserva_' . $purchaseNumber,
             15
@@ -67,16 +125,40 @@ class VerificarPagoNiubizController extends Controller
 
         if (! $lock->get()) {
 
+            Log::channel('niubiz')->warning(
+                "[Verify] No se pudo adquirir lock. Otro proceso está verificando el pago",
+                [
+                    'reserva_id' => $reserva->id,
+                    'purchase_number' => $purchaseNumber,
+                ]
+            );
+
             for ($i = 0; $i < 6; $i++) {
 
                 usleep(500000);
 
                 $reserva->refresh();
 
+                Log::channel('niubiz')->info(
+                    "[Verify] Esperando procesamiento concurrente",
+                    [
+                        'reserva_id' => $reserva->id,
+                        'intento' => $i + 1,
+                        'estado_actual' => $reserva->estado,
+                    ]
+                );
+
                 if (
                     strtolower((string) $reserva->estado)
                     === 'confirmada'
                 ) {
+
+                    Log::channel('niubiz')->info(
+                        "[Verify] Reserva confirmada por el proceso concurrente",
+                        [
+                            'reserva_id' => $reserva->id,
+                        ]
+                    );
 
                     return $this->redirectResultado(
                         'exitoso',
@@ -85,6 +167,14 @@ class VerificarPagoNiubizController extends Controller
                 }
             }
 
+            Log::channel('niubiz')->warning(
+                "[Verify] Tiempo de espera agotado esperando proceso concurrente",
+                [
+                    'reserva_id' => $reserva->id,
+                    'estado_actual' => $reserva->estado,
+                ]
+            );
+
             return $this->redirectResultado(
                 'procesando',
                 $reserva,
@@ -92,7 +182,21 @@ class VerificarPagoNiubizController extends Controller
             );
         }
 
+        Log::channel('niubiz')->info(
+            "[Verify] Lock adquirido correctamente",
+            [
+                'reserva_id' => $reserva->id,
+                'purchase_number' => $purchaseNumber,
+            ]
+        );
+
         try {
+
+            /*
+            |--------------------------------------------------------------------------
+            | TRANSACTION TOKEN
+            |--------------------------------------------------------------------------
+            */
 
             $transactionToken = $request->input(
                 'transactionToken'
@@ -101,7 +205,11 @@ class VerificarPagoNiubizController extends Controller
             if (! $transactionToken) {
 
                 Log::channel('niubiz')->error(
-                    '[Verify] Falta transactionToken'
+                    '[Verify] FALTA TRANSACTION TOKEN',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'purchase_number' => $purchaseNumber,
+                    ]
                 );
 
                 return $this->redirectResultado(
@@ -111,16 +219,46 @@ class VerificarPagoNiubizController extends Controller
                 );
             }
 
+            Log::channel('niubiz')->info(
+                '[Verify] Transaction token recibido correctamente',
+                [
+                    'reserva_id' => $reserva->id,
+                ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | MONTO
+            |--------------------------------------------------------------------------
+            */
+
             $monto = round(
                 (float) $reserva->precio_total,
                 2
             );
 
+            Log::channel('niubiz')->info(
+                '[Verify] Monto de reserva calculado',
+                [
+                    'reserva_id' => $reserva->id,
+                    'monto' => $monto,
+                ]
+            );
+
             /*
-        |--------------------------------------------------------------------------
-        | AUTORIZAR PAGO EN NIUBIZ
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | AUTORIZAR PAGO EN NIUBIZ
+            |--------------------------------------------------------------------------
+            */
+
+            Log::channel('niubiz')->info(
+                '[Verify] Iniciando autorización de transacción en Niubiz',
+                [
+                    'reserva_id' => $reserva->id,
+                    'purchase_number' => $purchaseNumber,
+                    'monto' => $monto,
+                ]
+            );
 
             $response = $niubiz->authorizeTransaction(
                 $transactionToken,
@@ -130,9 +268,24 @@ class VerificarPagoNiubizController extends Controller
 
             if ($response === null) {
 
+                Log::channel('niubiz')->error(
+                    '[Verify] Niubiz devolvió respuesta NULL',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'purchase_number' => $purchaseNumber,
+                    ]
+                );
+
                 $reserva->update([
                     'estado' => 'pago_fallido'
                 ]);
+
+                Log::channel('niubiz')->warning(
+                    '[Verify] Reserva marcada como pago_fallido',
+                    [
+                        'reserva_id' => $reserva->id,
+                    ]
+                );
 
                 return $this->redirectResultado(
                     'error',
@@ -140,6 +293,16 @@ class VerificarPagoNiubizController extends Controller
                     'No se pudo autorizar el pago. Intenta nuevamente.'
                 );
             }
+
+            Log::channel('niubiz')->info(
+                '[Verify] Respuesta recibida de Niubiz',
+                [
+                    'reserva_id' => $reserva->id,
+                    'purchase_number' => $purchaseNumber,
+                    'status' => data_get($response, 'dataMap.STATUS'),
+                    'action_code' => data_get($response, 'dataMap.ACTION_CODE'),
+                ]
+            );
 
             $isAuthorized = data_get(
                 $response,
@@ -217,16 +380,35 @@ class VerificarPagoNiubizController extends Controller
                 )
                 ?? $monto;
 
+            Log::channel('niubiz')->info(
+                '[Verify] Datos de respuesta Niubiz procesados',
+                [
+                    'reserva_id' => $reserva->id,
+                    'purchase_number' => $purchaseNumber,
+                    'status' => $isAuthorized,
+                    'action_code' => $actionCode,
+                    'transaction_id' => $transactionId,
+                    'authorization_code' => $authCode,
+                    'brand' => $brand,
+                    'card' => $card,
+                    'amount' => $amount,
+                ]
+            );
+
             /*
-        |--------------------------------------------------------------------------
-        | PAGO AUTORIZADO
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | PAGO AUTORIZADO
+            |--------------------------------------------------------------------------
+            */
 
             if ($isAuthorized === 'Authorized') {
 
                 Log::channel('niubiz')->info(
-                    "[Verify] Niubiz autorizó el pago",
+                    "[Verify] ================================================"
+                );
+
+                Log::channel('niubiz')->info(
+                    "[Verify] PAGO AUTORIZADO POR NIUBIZ",
                     [
                         'reserva_id' => $reserva->id,
                         'purchase_number' => $purchaseNumber,
@@ -254,11 +436,31 @@ class VerificarPagoNiubizController extends Controller
                     'pago_clave_plana'
                 );
 
+                Log::channel('niubiz')->info(
+                    '[Verify] Metadata de pago obtenida de sesión',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'usuario_nuevo' => $usuarioNuevo,
+                        'usuario_login_presente' => is_string($usuarioLogin),
+                        'clave_presente' => is_string($clavePlana),
+                        'catalogo_tusne_id' => CatalogoTusneReserva::idDesdeMeta($meta),
+                    ]
+                );
+
                 /*
-            |--------------------------------------------------------------------------
-            | GUARDAR RESERVA + TRANSACCION + PAGO
-            |--------------------------------------------------------------------------
-            */
+                |--------------------------------------------------------------------------
+                | GUARDAR RESERVA + TRANSACCION + PAGO
+                |--------------------------------------------------------------------------
+                */
+
+                Log::channel('niubiz')->info(
+                    '[Verify] Iniciando transacción local para reserva, transacción y pago',
+                    [
+                        'reserva_id' => $reserva->id,
+                    ]
+                );
+
+                $pagoRegistrado = null;
 
                 $pago = DB::transaction(
                     function () use (
@@ -272,6 +474,13 @@ class VerificarPagoNiubizController extends Controller
                         $meta,
                         &$pagoRegistrado,
                     ) {
+
+                        Log::channel('niubiz')->info(
+                            '[Verify] Dentro de transacción DB',
+                            [
+                                'reserva_id' => $reserva->id,
+                            ]
+                        );
 
                         $reserva->refresh();
 
@@ -288,7 +497,7 @@ class VerificarPagoNiubizController extends Controller
                                 ]
                             );
 
-                            return Pago::whereHas(
+                            $pagoExistente = Pago::whereHas(
                                 'transaccion',
                                 function ($query) use ($reserva) {
                                     $query->where(
@@ -299,11 +508,59 @@ class VerificarPagoNiubizController extends Controller
                             )
                                 ->latest('id')
                                 ->first();
+
+                            $pagoRegistrado = $pagoExistente;
+
+                            Log::channel('niubiz')->info(
+                                '[Verify] Pago existente recuperado',
+                                [
+                                    'reserva_id' => $reserva->id,
+                                    'pago_id' => $pagoExistente?->id,
+                                ]
+                            );
+
+                            return $pagoExistente;
                         }
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | CONFIRMAR RESERVA
+                        |--------------------------------------------------------------------------
+                        */
+
+                        Log::channel('niubiz')->info(
+                            '[Verify] Actualizando reserva a confirmada',
+                            [
+                                'reserva_id' => $reserva->id,
+                                'estado_anterior' => $reserva->estado,
+                            ]
+                        );
 
                         $reserva->update([
                             'estado' => 'confirmada'
                         ]);
+
+                        Log::channel('niubiz')->info(
+                            '[Verify] Reserva confirmada correctamente',
+                            [
+                                'reserva_id' => $reserva->id,
+                            ]
+                        );
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | CREAR TRANSACCION
+                        |--------------------------------------------------------------------------
+                        */
+
+                        Log::channel('niubiz')->info(
+                            '[Verify] Creando registro de transacción',
+                            [
+                                'reserva_id' => $reserva->id,
+                                'transaction_id' => $transactionId,
+                                'amount' => $amount,
+                            ]
+                        );
 
                         $transaccion = Transaccion::create([
                             'reserva_id' => $reserva->id,
@@ -341,6 +598,31 @@ class VerificarPagoNiubizController extends Controller
                             ],
                         ]);
 
+                        Log::channel('niubiz')->info(
+                            '[Verify] Transacción creada correctamente',
+                            [
+                                'transaccion_id_local' => $transaccion->id,
+                                'transaction_id_niubiz' => $transactionId,
+                                'reserva_id' => $reserva->id,
+                            ]
+                        );
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | CREAR PAGO
+                        |--------------------------------------------------------------------------
+                        */
+
+                        Log::channel('niubiz')->info(
+                            '[Verify] Creando registro de pago',
+                            [
+                                'transaccion_id' => $transaccion->id,
+                                'monto' => $amount,
+                                'catalogo_tusne_id' =>
+                                    CatalogoTusneReserva::idDesdeMeta($meta),
+                            ]
+                        );
+
                         $pago = Pago::create([
                             'transaccion_id' =>
                             $transaccion->id,
@@ -362,6 +644,8 @@ class VerificarPagoNiubizController extends Controller
                             CatalogoTusneReserva::idDesdeMeta($meta),
                         ]);
 
+                        $pagoRegistrado = $pago;
+
                         Log::channel('niubiz')->info(
                             '[Verify] Pago creado correctamente',
                             [
@@ -371,6 +655,7 @@ class VerificarPagoNiubizController extends Controller
                                 'id_catalogos_tusne' =>
                                 $pago->id_catalogos_tusne,
                                 'monto' => $pago->monto,
+                                'pagado_en' => $pago->pagado_en,
                             ]
                         );
 
@@ -378,11 +663,19 @@ class VerificarPagoNiubizController extends Controller
                     }
                 );
 
+                Log::channel('niubiz')->info(
+                    '[Verify] Transacción local completada correctamente',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'pago_id' => $pago?->id,
+                    ]
+                );
+
                 /*
-            |--------------------------------------------------------------------------
-            | RESERVA CONFIRMADA
-            |--------------------------------------------------------------------------
-            */
+                |--------------------------------------------------------------------------
+                | RESERVA CONFIRMADA
+                |--------------------------------------------------------------------------
+                */
 
                 $reserva->refresh();
 
@@ -392,36 +685,53 @@ class VerificarPagoNiubizController extends Controller
                         'reserva_id' => $reserva->id,
                         'purchase_number' => $purchaseNumber,
                         'estado' => $reserva->estado,
+                        'pago_id' => $pago?->id,
                     ]
                 );
 
                 /*
-            |--------------------------------------------------------------------------
-            | OBTENER USUARIO Y PERFIL
-            |--------------------------------------------------------------------------
-            |
-            | Se utiliza el usuario autenticado que realizó la reserva.
-            |
-            */
+                |--------------------------------------------------------------------------
+                | OBTENER USUARIO Y PERFIL
+                |--------------------------------------------------------------------------
+                */
+
+                Log::channel('niubiz')->info(
+                    '[Oracle] Iniciando proceso de contribuyente',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'purchase_number' => $purchaseNumber,
+                    ]
+                );
+
                 $serviceOracle = app(OracleService::class);
+
                 $usuario = auth()->user();
 
                 if (! $usuario) {
 
                     Log::channel('niubiz')->error(
-                        '[Oracle] No se pudo obtener el usuario autenticado',
+                        '[Oracle] NO SE PUDO OBTENER EL USUARIO AUTENTICADO',
                         [
                             'reserva_id' => $reserva->id,
+                            'purchase_number' => $purchaseNumber,
                         ]
                     );
                 } else {
+
+                    Log::channel('niubiz')->info(
+                        '[Oracle] Usuario autenticado obtenido',
+                        [
+                            'usuario_id' => $usuario->id,
+                            'reserva_id' => $reserva->id,
+                        ]
+                    );
 
                     $perfil = $usuario->perfil;
 
                     if (! $perfil) {
 
                         Log::channel('niubiz')->error(
-                            '[Oracle] El usuario no tiene perfil asociado',
+                            '[Oracle] EL USUARIO NO TIENE PERFIL ASOCIADO',
                             [
                                 'usuario_id' => $usuario->id,
                                 'reserva_id' => $reserva->id,
@@ -439,30 +749,24 @@ class VerificarPagoNiubizController extends Controller
                             [
                                 'usuario_id' => $usuario->id,
                                 'perfil_id' => $perfil->id,
-                                'numero_documento' =>
-                                $num_documento,
-                                'cod_contrib_actual' =>
-                                $perfil->cod_contrib,
+                                'numero_documento' => $num_documento,
+                                'cod_contrib_actual' => $perfil->cod_contrib,
                             ]
                         );
 
                         /*
-                    |--------------------------------------------------------------------------
-                    | CONSULTAR CONTRIBUYENTE EN ORACLE
-                    |--------------------------------------------------------------------------
-                    */
-
-
+                        |--------------------------------------------------------------------------
+                        | CONSULTAR CONTRIBUYENTE EN ORACLE
+                        |--------------------------------------------------------------------------
+                        */
 
                         try {
 
                             Log::channel('niubiz')->info(
                                 '[Oracle] Consultando contribuyente',
                                 [
-                                    'numero_documento' =>
-                                    $num_documento,
-                                    'reserva_id' =>
-                                    $reserva->id,
+                                    'numero_documento' => $num_documento,
+                                    'reserva_id' => $reserva->id,
                                 ]
                             );
 
@@ -474,10 +778,8 @@ class VerificarPagoNiubizController extends Controller
                             Log::channel('niubiz')->info(
                                 '[Oracle] Resultado consulta contribuyente',
                                 [
-                                    'numero_documento' =>
-                                    $num_documento,
-                                    'cod_contribuyente' =>
-                                    $codContribuyente,
+                                    'numero_documento' => $num_documento,
+                                    'cod_contribuyente' => $codContribuyente,
                                 ]
                             );
                         } catch (\Throwable $e) {
@@ -485,14 +787,11 @@ class VerificarPagoNiubizController extends Controller
                             Log::channel('niubiz')->error(
                                 '[Oracle] ERROR CONSULTANDO CONTRIBUYENTE',
                                 [
-                                    'numero_documento' =>
-                                    $num_documento,
-                                    'mensaje' =>
-                                    $e->getMessage(),
-                                    'archivo' =>
-                                    $e->getFile(),
-                                    'linea' =>
-                                    $e->getLine(),
+                                    'numero_documento' => $num_documento,
+                                    'reserva_id' => $reserva->id,
+                                    'mensaje' => $e->getMessage(),
+                                    'archivo' => $e->getFile(),
+                                    'linea' => $e->getLine(),
                                 ]
                             );
 
@@ -500,27 +799,20 @@ class VerificarPagoNiubizController extends Controller
                         }
 
                         /*
-                    |--------------------------------------------------------------------------
-                    | SI YA EXISTE
-                    |--------------------------------------------------------------------------
-                    */
+                        |--------------------------------------------------------------------------
+                        | SI YA EXISTE
+                        |--------------------------------------------------------------------------
+                        */
 
                         if ($codContribuyente) {
 
                             Log::channel('niubiz')->info(
                                 '[Oracle] CONTRIBUYENTE YA EXISTE',
                                 [
-                                    'numero_documento' =>
-                                    $num_documento,
-                                    'cod_contribuyente' =>
-                                    $codContribuyente,
+                                    'numero_documento' => $num_documento,
+                                    'cod_contribuyente' => $codContribuyente,
                                 ]
                             );
-
-                            /*
-                        | Guardamos el código Oracle
-                        | también en nuestro perfil local.
-                        */
 
                             $perfil->update([
                                 'cod_contrib' =>
@@ -539,23 +831,25 @@ class VerificarPagoNiubizController extends Controller
                         }
 
                         /*
-                    |--------------------------------------------------------------------------
-                    | NO EXISTE -> CREAR CONTRIBUYENTE
-                    |--------------------------------------------------------------------------
-                    */ else {
+                        |--------------------------------------------------------------------------
+                        | NO EXISTE -> CREAR CONTRIBUYENTE
+                        |--------------------------------------------------------------------------
+                        */
+
+                        else {
 
                             Log::channel('niubiz')->info(
                                 '[Oracle] CONTRIBUYENTE NO EXISTE - CREANDO',
                                 [
-                                    'numero_documento' =>
-                                    $num_documento,
+                                    'numero_documento' => $num_documento,
                                 ]
                             );
 
                             /*
-                        | Generar código usando
-                        | SEQ_MACARNOM.NEXTVAL
-                        */
+                            |--------------------------------------------------------------------------
+                            | GENERAR CODIGO
+                            |--------------------------------------------------------------------------
+                            */
 
                             $codContribuyente =
                                 $this->generarCodigoContribuyente();
@@ -583,13 +877,20 @@ class VerificarPagoNiubizController extends Controller
                             $email =
                                 $usuario->correo_electronico;
 
-                            $tipoDocumento = $perfil->tipoDocumento;
+                            $tipoDocumento =
+                                $perfil->tipoDocumento;
 
-                            if (!$tipoDocumento) {
-                                Log::error('PERFIL SIN TIPO DE DOCUMENTO', [
-                                    'perfil_id' => $perfil->id,
-                                    'tipo_documento_id' => $perfil->tipo_documento_id,
-                                ]);
+                            if (! $tipoDocumento) {
+
+                                Log::channel('niubiz')->error(
+                                    'PERFIL SIN TIPO DE DOCUMENTO',
+                                    [
+                                        'perfil_id' => $perfil->id,
+                                        'tipo_documento_id' =>
+                                        $perfil->tipo_documento_id,
+                                        'reserva_id' => $reserva->id,
+                                    ]
+                                );
 
                                 throw new \Exception(
                                     'El perfil no tiene tipo de documento asociado. tipo_documento_id: '
@@ -597,10 +898,19 @@ class VerificarPagoNiubizController extends Controller
                                 );
                             }
 
-                            $tipo_doi = $tipoDocumento->doi;
+                            $tipo_doi =
+                                $tipoDocumento->doi;
 
                             $distritoId =
                                 $perfil->ubigeo_distrito;
+
+                            Log::channel('niubiz')->info(
+                                '[Oracle] Buscando código de distrito',
+                                [
+                                    'distrito_id' => $distritoId,
+                                    'reserva_id' => $reserva->id,
+                                ]
+                            );
 
                             $codDistrito =
                                 Distrito::where(
@@ -612,10 +922,10 @@ class VerificarPagoNiubizController extends Controller
                                 $perfil->direccion;
 
                             /*
-                        |--------------------------------------------------------------------------
-                        | LOG DATOS PREVIOS INSERT ORACLE
-                        |--------------------------------------------------------------------------
-                        */
+                            |--------------------------------------------------------------------------
+                            | LOG DATOS PREVIOS INSERT ORACLE
+                            |--------------------------------------------------------------------------
+                            */
 
                             Log::channel('niubiz')->info(
                                 '[Oracle] DATOS PREVIOS AL INSERT',
@@ -648,12 +958,24 @@ class VerificarPagoNiubizController extends Controller
                             );
 
                             /*
-                        |--------------------------------------------------------------------------
-                        | INSERTAR CONTRIBUYENTE EN ORACLE
-                        |--------------------------------------------------------------------------
-                        */
+                            |--------------------------------------------------------------------------
+                            | INSERTAR CONTRIBUYENTE EN ORACLE
+                            |--------------------------------------------------------------------------
+                            */
 
                             try {
+
+                                Log::channel('niubiz')->info(
+                                    '[Oracle] Ejecutando INSERT en SMACARNOM',
+                                    [
+                                        'cod_contribuyente' =>
+                                        $codContribuyente,
+                                        'numero_documento' =>
+                                        $num_documento,
+                                        'reserva_id' =>
+                                        $reserva->id,
+                                    ]
+                                );
 
                                 $contribuyente =
                                     DB::connection('oracle')
@@ -791,6 +1113,8 @@ class VerificarPagoNiubizController extends Controller
                                         $codContribuyente,
                                         'numero_documento' =>
                                         $num_documento,
+                                        'reserva_id' =>
+                                        $reserva->id,
                                     ]
                                 );
                             } catch (\Throwable $e) {
@@ -812,6 +1136,8 @@ class VerificarPagoNiubizController extends Controller
                                         $tipo_doi,
                                         'codigo_distrito' =>
                                         $codDistrito,
+                                        'reserva_id' =>
+                                        $reserva->id,
                                     ]
                                 );
 
@@ -819,10 +1145,10 @@ class VerificarPagoNiubizController extends Controller
                             }
 
                             /*
-                        |--------------------------------------------------------------------------
-                        | ACTUALIZAR PERFIL LOCAL
-                        |--------------------------------------------------------------------------
-                        */
+                            |--------------------------------------------------------------------------
+                            | ACTUALIZAR PERFIL LOCAL
+                            |--------------------------------------------------------------------------
+                            */
 
                             $perfil->update([
                                 'cod_contrib' =>
@@ -853,38 +1179,216 @@ class VerificarPagoNiubizController extends Controller
                         );
                     }
                 }
-                $tusne = CatalogoTusne::find(CatalogoTusneReserva::idDesdeMeta($meta));
 
-                $resNumLiquidacion = $serviceOracle->generarNumLiquidacion($tusne->grupo_tusne, $tusne->codigo_tusne, $codContribuyente);
-                $numLiquidacion = null;
+                /*
+                |--------------------------------------------------------------------------
+                | TUSNE
+                |--------------------------------------------------------------------------
+                */
 
-                if (!empty($resNumLiquidacion)) {
-                    $numLiquidacion =  $resNumLiquidacion[0]->liquidacion;
+                $catalogoTusneId =
+                    CatalogoTusneReserva::idDesdeMeta($meta);
+
+                Log::channel('niubiz')->info(
+                    '[Oracle] Buscando catálogo TUSNE',
+                    [
+                        'catalogo_tusne_id' => $catalogoTusneId,
+                        'reserva_id' => $reserva->id,
+                    ]
+                );
+
+                $tusne = CatalogoTusne::find(
+                    $catalogoTusneId
+                );
+
+                if (! $tusne) {
+
+                    Log::channel('niubiz')->error(
+                        '[Oracle] CATALOGO TUSNE NO ENCONTRADO',
+                        [
+                            'catalogo_tusne_id' => $catalogoTusneId,
+                            'reserva_id' => $reserva->id,
+                        ]
+                    );
+
+                    throw new \Exception(
+                        'No se encontró el catálogo TUSNE asociado al pago.'
+                    );
                 }
 
-                //================================================ACTUALIZANDO LA CANTIDAD DE CONCEPTOS TUSNES CON LA CANTIDAD DE HORAS ========================================
-                // $horaInicio = Carbon::parse($reserva->hora_inicio);
-                // $horaFin    = Carbon::parse($reserva->hora_fin);
+                Log::channel('niubiz')->info(
+                    '[Oracle] Catálogo TUSNE encontrado',
+                    [
+                        'catalogo_tusne_id' => $tusne->id,
+                        'grupo_tusne' => $tusne->grupo_tusne,
+                        'codigo_tusne' => $tusne->codigo_tusne,
+                    ]
+                );
 
-                // $cantidadHoras = (int) $horaInicio->diffInHours($horaFin);
+                /*
+                |--------------------------------------------------------------------------
+                | GENERAR NUMERO DE LIQUIDACION
+                |--------------------------------------------------------------------------
+                */
+
+                Log::channel('niubiz')->info(
+                    '[Oracle] Generando número de liquidación',
+                    [
+                        'grupo_tusne' => $tusne->grupo_tusne,
+                        'codigo_tusne' => $tusne->codigo_tusne,
+                        'cod_contribuyente' => $codContribuyente,
+                        'reserva_id' => $reserva->id,
+                    ]
+                );
+
+                $resNumLiquidacion =
+                    $serviceOracle->generarNumLiquidacion(
+                        $tusne->grupo_tusne,
+                        $tusne->codigo_tusne,
+                        $codContribuyente
+                    );
+
+                $numLiquidacion = null;
+
+                if (! empty($resNumLiquidacion)) {
+
+                    $numLiquidacion =
+                        $resNumLiquidacion[0]->liquidacion;
+
+                    Log::channel('niubiz')->info(
+                        '[Oracle] Número de liquidación generado',
+                        [
+                            'num_liquidacion' => $numLiquidacion,
+                            'reserva_id' => $reserva->id,
+                        ]
+                    );
+                } else {
+
+                    Log::channel('niubiz')->warning(
+                        '[Oracle] No se recibió número de liquidación',
+                        [
+                            'reserva_id' => $reserva->id,
+                            'cod_contribuyente' => $codContribuyente,
+                        ]
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | ACTUALIZAR CANTIDAD DE CONCEPTOS TUSNES
+                |--------------------------------------------------------------------------
+                */
+
                 $cantidadHoras = $reserva->cantidad_horas;
-                $serviceOracle->actualizarCantidadConcepto($cantidadHoras, $numLiquidacion);
 
+                Log::channel('niubiz')->info(
+                    '[Oracle] Actualizando cantidad de conceptos TUSNE',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'cantidad_horas' => $cantidadHoras,
+                        'num_liquidacion' => $numLiquidacion,
+                    ]
+                );
+
+                $serviceOracle->actualizarCantidadConcepto(
+                    $cantidadHoras,
+                    $numLiquidacion
+                );
+
+                Log::channel('niubiz')->info(
+                    '[Oracle] Cantidad de conceptos TUSNE actualizada',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'cantidad_horas' => $cantidadHoras,
+                        'num_liquidacion' => $numLiquidacion,
+                    ]
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | ACTUALIZAR PAGO CON LIQUIDACION
+                |--------------------------------------------------------------------------
+                */
 
                 $pago->update([
                     'num_liquidacion' => $numLiquidacion ?? null
                 ]);
 
-                $serviceOracle->insertarEnOracle($tusne->grupo_tusne, $tusne->codigo_tusne, $codContribuyente, $pago->monto, $purchaseNumber, $pago->transaccion_id, $pago->pagado_en, $numLiquidacion, $cantidadHoras);
-
-
-
+                Log::channel('niubiz')->info(
+                    '[Verify] Pago actualizado con número de liquidación',
+                    [
+                        'pago_id' => $pago->id,
+                        'num_liquidacion' => $numLiquidacion,
+                    ]
+                );
 
                 /*
-            |--------------------------------------------------------------------------
-            | ENVIAR CORREO
-            |--------------------------------------------------------------------------
-            */
+                |--------------------------------------------------------------------------
+                | INSERTAR PAGO EN ORACLE
+                |--------------------------------------------------------------------------
+                */
+
+                Log::channel('niubiz')->info(
+                    '[Oracle] Insertando pago/concepto en Oracle',
+                    [
+                        'grupo_tusne' =>
+                        $tusne->grupo_tusne,
+                        'codigo_tusne' =>
+                        $tusne->codigo_tusne,
+                        'cod_contribuyente' =>
+                        $codContribuyente,
+                        'monto' =>
+                        $pago->monto,
+                        'purchase_number' =>
+                        $purchaseNumber,
+                        'transaccion_id' =>
+                        $pago->transaccion_id,
+                        'pagado_en' =>
+                        $pago->pagado_en,
+                        'num_liquidacion' =>
+                        $numLiquidacion,
+                        'cantidad_horas' =>
+                        $cantidadHoras,
+                        'reserva_id' =>
+                        $reserva->id,
+                    ]
+                );
+
+                $serviceOracle->insertarEnOracle(
+                    $tusne->grupo_tusne,
+                    $tusne->codigo_tusne,
+                    $codContribuyente,
+                    $pago->monto,
+                    $purchaseNumber,
+                    $pago->transaccion_id,
+                    $pago->pagado_en,
+                    $numLiquidacion,
+                    $cantidadHoras
+                );
+
+                Log::channel('niubiz')->info(
+                    '[Oracle] INSERTAR PAGO EN ORACLE COMPLETADO',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'pago_id' => $pago->id,
+                        'num_liquidacion' => $numLiquidacion,
+                    ]
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | ENVIAR CORREO
+                |--------------------------------------------------------------------------
+                */
+
+                Log::channel('niubiz')->info(
+                    '[Correo] Iniciando envío de confirmación de pago',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'pago_id' => $pago->id,
+                        'usuario_nuevo' => $usuarioNuevo,
+                    ]
+                );
 
                 app(ReservaCorreoService::class)
                     ->enviarConfirmacionPago(
@@ -900,11 +1404,26 @@ class VerificarPagoNiubizController extends Controller
                         $pagoRegistrado,
                     );
 
+                Log::channel('niubiz')->info(
+                    '[Correo] Confirmación de pago enviada correctamente',
+                    [
+                        'reserva_id' => $reserva->id,
+                        'pago_id' => $pago->id,
+                    ]
+                );
+
                 /*
-            |--------------------------------------------------------------------------
-            | LIMPIAR SESSION
-            |--------------------------------------------------------------------------
-            */
+                |--------------------------------------------------------------------------
+                | LIMPIAR SESSION
+                |--------------------------------------------------------------------------
+                */
+
+                Log::channel('niubiz')->info(
+                    '[Verify] Limpiando variables de sesión del proceso de pago',
+                    [
+                        'reserva_id' => $reserva->id,
+                    ]
+                );
 
                 session()->forget([
                     'pago_reserva_id',
@@ -915,7 +1434,26 @@ class VerificarPagoNiubizController extends Controller
                 ]);
 
                 Log::channel('niubiz')->info(
-                    "[Verify] Pago autorizado reserva #{$reserva->id}"
+                    "[Verify] VARIABLES DE SESION LIMPIADAS"
+                );
+
+                Log::channel('niubiz')->info(
+                    "[Verify] ================================================"
+                );
+
+                Log::channel('niubiz')->info(
+                    "[Verify] PAGO AUTORIZADO Y PROCESADO CORRECTAMENTE",
+                    [
+                        'reserva_id' => $reserva->id,
+                        'purchase_number' => $purchaseNumber,
+                        'pago_id' => $pago->id,
+                        'num_liquidacion' => $numLiquidacion,
+                        'cod_contribuyente' => $codContribuyente,
+                    ]
+                );
+
+                Log::channel('niubiz')->info(
+                    "[Verify] FIN PROCESO EXITOSO"
                 );
 
                 return $this->redirectResultado(
@@ -925,40 +1463,77 @@ class VerificarPagoNiubizController extends Controller
             }
 
             /*
-        |--------------------------------------------------------------------------
-        | PAGO DENEGADO
-        |--------------------------------------------------------------------------
-        */
+            |--------------------------------------------------------------------------
+            | PAGO DENEGADO
+            |--------------------------------------------------------------------------
+            */
+
+            Log::channel('niubiz')->warning(
+                '[Verify] PAGO NO AUTORIZADO POR NIUBIZ',
+                [
+                    'reserva_id' => $reserva->id,
+                    'purchase_number' => $purchaseNumber,
+                    'action_code' => $actionCode,
+                    'status' => $isAuthorized,
+                    'transaction_id' => $transactionId,
+                ]
+            );
 
             Transaccion::create([
                 'reserva_id' => $reserva->id,
-                'transaccion_id' => (string) $transactionId,
+
+                'transaccion_id' =>
+                (string) $transactionId,
+
                 'codigo_autorizacion' =>
                 $authCode
                     ? (string) $authCode
                     : null,
+
                 'marca_tarjeta' =>
                 $brand
                     ? (string) $brand
                     : null,
+
                 'tarjeta_enmascarada' =>
                 $card
                     ? (string) $card
                     : null,
+
                 'monto' => round(
                     (float) $amount,
                     2
                 ),
+
                 'estado' => 'Denied',
+
                 'respuesta_bruta' => [
                     'niubiz' => $response,
                     'action_code' => $actionCode,
                 ],
             ]);
 
+            Log::channel('niubiz')->info(
+                '[Verify] Transacción denegada registrada localmente',
+                [
+                    'reserva_id' => $reserva->id,
+                    'transaction_id' => $transactionId,
+                    'action_code' => $actionCode,
+                    'monto' => $amount,
+                ]
+            );
+
             $reserva->update([
                 'estado' => 'pago_fallido'
             ]);
+
+            Log::channel('niubiz')->warning(
+                '[Verify] Reserva marcada como pago_fallido',
+                [
+                    'reserva_id' => $reserva->id,
+                    'purchase_number' => $purchaseNumber,
+                ]
+            );
 
             $friendly =
                 data_get(
@@ -975,6 +1550,7 @@ class VerificarPagoNiubizController extends Controller
                 "[Verify] Pago denegado #{$reserva->id}",
                 [
                     'action_code' => $actionCode,
+                    'mensaje' => $friendly,
                 ]
             );
 
@@ -983,11 +1559,43 @@ class VerificarPagoNiubizController extends Controller
                 $reserva,
                 $friendly
             );
+        } catch (\Throwable $e) {
+
+            Log::channel('niubiz')->error(
+                '[Verify] ERROR NO CONTROLADO DURANTE LA VERIFICACION DEL PAGO',
+                [
+                    'reserva_id' => $reserva->id ?? null,
+                    'purchase_number' => $purchaseNumber,
+                    'mensaje' => $e->getMessage(),
+                    'archivo' => $e->getFile(),
+                    'linea' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                ]
+            );
+
+            throw $e;
         } finally {
 
+            Log::channel('niubiz')->info(
+                '[Verify] Liberando lock de procesamiento',
+                [
+                    'reserva_id' => $reserva->id ?? null,
+                    'purchase_number' => $purchaseNumber,
+                ]
+            );
+
             optional($lock)->release();
+
+            Log::channel('niubiz')->info(
+                '[Verify] Lock liberado',
+                [
+                    'reserva_id' => $reserva->id ?? null,
+                    'purchase_number' => $purchaseNumber,
+                ]
+            );
         }
     }
+
     public function generarCodigoContribuyente()
     {
         Log::channel('niubiz')->info(
@@ -997,6 +1605,17 @@ class VerificarPagoNiubizController extends Controller
         $resultado = DB::connection('oracle')->selectOne(
             "SELECT 'S' || LPAD(ADMIN.SEQ_MACARNOM.NEXTVAL, 7, '0') MCNCONTRIB FROM DUAL"
         );
+
+        if (! $resultado || empty($resultado->mcncontrib)) {
+
+            Log::channel('niubiz')->error(
+                '[Oracle] NO SE PUDO GENERAR CODIGO DE CONTRIBUYENTE'
+            );
+
+            throw new \Exception(
+                'No se pudo generar el código de contribuyente en Oracle.'
+            );
+        }
 
         $codigo = $resultado->mcncontrib;
 
@@ -1009,21 +1628,46 @@ class VerificarPagoNiubizController extends Controller
 
         return $codigo;
     }
-    private function redirectResultado(string $estado, Reserva $reserva, ?string $mensaje = null): RedirectResponse
-    {
+
+    private function redirectResultado(
+        string $estado,
+        Reserva $reserva,
+        ?string $mensaje = null
+    ): RedirectResponse {
+
+        Log::channel('niubiz')->info(
+            '[Verify] Preparando redirección de resultado',
+            [
+                'reserva_id' => $reserva->id,
+                'estado' => $estado,
+                'tiene_mensaje' => ! empty($mensaje),
+            ]
+        );
+
         $params = [
             'estado' => $estado,
             'reserva' => $reserva->id,
         ];
 
         if ($estado === 'exitoso') {
-            $params['voucher'] = $reserva->referencia_pago;
+
+            $params['voucher'] =
+                $reserva->referencia_pago;
         }
 
         if ($mensaje) {
-            session()->flash('pago_resultado_mensaje', $mensaje);
+
+            session()->flash(
+                'pago_resultado_mensaje',
+                $mensaje
+            );
         }
 
-        return redirect(ReservaFlow::rutaResultado($estado, $params));
+        return redirect(
+            ReservaFlow::rutaResultado(
+                $estado,
+                $params
+            )
+        );
     }
 }
