@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Pago;
 use App\Models\Reserva;
+use App\Support\PagoPdfToken;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -36,6 +37,14 @@ class ConstanciaPagoPdfService
             return null;
         }
 
+        return $this->adjuntoDesdePago($pago);
+    }
+
+    /**
+     * @return array{content: string, filename: string}|null
+     */
+    public function adjuntoDesdePago(Pago $pago): ?array
+    {
         $datos = $this->datosPdf($pago);
         $contenido = $this->generarContenido($datos);
 
@@ -83,9 +92,7 @@ class ConstanciaPagoPdfService
             $medioPago = 'Gratuito';
             $estado = 'Gratuito';
         } else {
-            $medioPago = ($marca !== '' && $tarjeta !== '')
-                ? trim($marca.' '.$tarjeta)
-                : ($marca !== '' ? $marca : 'Tarjeta');
+            $medioPago = $this->formatearMedioPago($marca, $tarjeta);
             $estado = 'Pagado';
         }
 
@@ -100,6 +107,7 @@ class ConstanciaPagoPdfService
 
         return [
             'id' => $pago->id,
+            'pdf_token' => PagoPdfToken::generar($pago->id),
             'nro_pedido' => (string) ($reserva?->id ?? $pago->id),
             'nro_operacion' => (string) ($transaccion?->transaccion_id ?? '—'),
             'codigo_voucher' => $reserva?->referencia_pago,
@@ -156,5 +164,35 @@ class ConstanciaPagoPdfService
         }
 
         return $fecha->format($formato);
+    }
+
+    private function formatearMedioPago(string $marca, string $tarjeta): string
+    {
+        $tarjetaEnmascarada = self::enmascararTarjeta($tarjeta);
+
+        if ($tarjetaEnmascarada === '') {
+            return $marca !== '' ? ucfirst(strtolower($marca)) : 'Tarjeta';
+        }
+
+        $marcaLabel = $marca !== '' ? ucfirst(strtolower($marca)).' ' : '';
+
+        return trim($marcaLabel.$tarjetaEnmascarada);
+    }
+
+    public static function enmascararTarjeta(?string $tarjeta): string
+    {
+        $tarjeta = trim((string) $tarjeta);
+
+        if ($tarjeta === '') {
+            return '';
+        }
+
+        $digitos = preg_replace('/\D+/', '', $tarjeta);
+
+        if ($digitos === null || strlen($digitos) < 4) {
+            return '****';
+        }
+
+        return '**** **** **** '.substr($digitos, -4);
     }
 }

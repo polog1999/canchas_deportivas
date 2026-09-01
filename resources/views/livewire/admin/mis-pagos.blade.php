@@ -235,7 +235,7 @@
 
                                         {{-- DESCARGAR PDF --}}
                                         {{-- <a
-                                            href="{{ route('mis-pagos.pdf', $pago['id']) }}"
+                                            href="{{ route('mis-pagos.pdf', $pago['pdf_token']) }}"
                                             target="_blank"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition"
                                         >
@@ -345,7 +345,7 @@
 
                         {{-- DESCARGAR --}}
                         <a
-                            href="{{ route('mis-pagos.pdf', $pagoSeleccionado['id']) }}"
+                            href="{{ route('mis-pagos.pdf', $pagoSeleccionado['pdf_token']) }}"
                             target="_blank"
                             class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold transition"
                         >
@@ -380,7 +380,7 @@
                 <div class="flex-1 bg-gray-300 overflow-hidden">
 
                     <iframe
-                        src="{{ route('mis-pagos.pdf', $pagoSeleccionado['id']) }}"
+                        src="{{ route('mis-pagos.pdf', $pagoSeleccionado['pdf_token']) }}"
                         class="w-full h-full border-0"
                         title="Constancia de pago PDF"
                     ></iframe>

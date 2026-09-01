@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Pago;
 use App\Models\Reserva;
+use App\Services\ConstanciaPagoPdfService;
+use App\Support\PagoPdfToken;
 use App\Support\ReservaFlow;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -127,7 +129,7 @@ class ResultadoPagoController extends Controller
             ->value('id');
 
         $urlPdf = ($pagoId && Auth::check())
-            ? route('mis-pagos.pdf', $pagoId)
+            ? route('mis-pagos.pdf', PagoPdfToken::generar($pagoId))
             : null;
 
         return [
@@ -143,7 +145,7 @@ class ResultadoPagoController extends Controller
             'descripcion_producto' => $descripcionProducto,
             'descripcion_denegacion' => $descripcionDenegacion,
             'marca_tarjeta' => $transaccion?->marca_tarjeta,
-            'tarjeta_enmascarada' => $transaccion?->tarjeta_enmascarada,
+            'tarjeta_enmascarada' => ConstanciaPagoPdfService::enmascararTarjeta($transaccion?->tarjeta_enmascarada),
             'codigo_autorizacion' => $transaccion?->codigo_autorizacion,
             'pago_id' => $pagoId,
             'url_pdf' => $urlPdf,

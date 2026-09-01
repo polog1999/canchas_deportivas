@@ -257,6 +257,8 @@ class VerificarPagoNiubizController extends Controller
             |--------------------------------------------------------------------------
             */
 
+                $pagoRegistrado = null;
+
                 DB::transaction(
                     function () use (
                         $reserva,
@@ -266,7 +268,8 @@ class VerificarPagoNiubizController extends Controller
                         $brand,
                         $card,
                         $amount,
-                        $meta
+                        $meta,
+                        &$pagoRegistrado,
                     ) {
 
                         $reserva->refresh();
@@ -311,7 +314,7 @@ class VerificarPagoNiubizController extends Controller
                             ],
                         ]);
 
-                        Pago::create([
+                        $pagoRegistrado = Pago::create([
                             'transaccion_id' =>
                             $transaccion->id,
                             'monto' => round(
@@ -826,6 +829,7 @@ class VerificarPagoNiubizController extends Controller
                         is_string($clavePlana)
                             ? $clavePlana
                             : null,
+                        $pagoRegistrado,
                     );
 
                 /*

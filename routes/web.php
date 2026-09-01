@@ -42,7 +42,7 @@ Route::post('/reservar/verificar-clave-sesion', [ReservarController::class, 'ver
 Route::middleware('auth')->group(function () {
 
     Route::get(
-        '/mis-pagos/{id}/pdf',
+        '/mis-pagos/{token}/pdf',
         PagoPdfController::class
     )->name('mis-pagos.pdf');
 

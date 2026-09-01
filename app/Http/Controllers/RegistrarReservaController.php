@@ -261,6 +261,7 @@ class RegistrarReservaController extends Controller
             $usuarioData['es_nuevo'],
             $usuarioData['usuario_login'],
             $usuarioData['clave_plana'],
+            Pago::query()->find($resultado['pago_id']),
         );
 
         session()->forget([
@@ -373,7 +374,7 @@ class RegistrarReservaController extends Controller
         return [
             'usuario' => $usuario->fresh('perfil'),
             'es_nuevo' => true,
-            'usuario_login' => $usuarioLogin,
+            'usuario_login' => trim((string) ($data['email'] ?? '')) ?: $usuarioLogin,
             'clave_plana' => $documento,
         ];
     }

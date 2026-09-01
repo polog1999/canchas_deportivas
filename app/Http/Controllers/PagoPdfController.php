@@ -3,13 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Livewire\Admin\MisPagosManager;
+use App\Support\PagoPdfToken;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 
 class PagoPdfController extends Controller
 {
-    public function __invoke(int $id): Response
+    public function __invoke(string $token): Response
     {
+        $id = PagoPdfToken::resolver($token);
+
+        if (! $id) {
+            abort(404, 'Pago no encontrado.');
+        }
         /*
         |--------------------------------------------------------------------------
         | Obtener los pagos utilizando exactamente la misma lógica

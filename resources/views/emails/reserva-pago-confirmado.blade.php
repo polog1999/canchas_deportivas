@@ -23,20 +23,21 @@
 
                             @if ($usuarioNuevo)
                                 <p style="margin:0 0 16px;font-size:14px;line-height:1.6;">
-                                    Tu pago fue registrado correctamente. Se creó tu cuenta en el sistema y adjuntamos el comprobante en PDF.
+                                    Tu pago fue registrado correctamente. Se creó tu cuenta en el sistema con los siguientes datos de acceso.
+                                    Adjuntamos el comprobante (voucher) en PDF.
                                 </p>
                                 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:16px;">
                                     <tr>
                                         <td style="padding:16px;font-size:14px;line-height:1.8;">
-                                            <strong>Usuario:</strong> {{ $usuarioLogin }}<br>
+                                            <strong>Correo electrónico:</strong> {{ $usuarioLogin }}<br>
                                             <strong>Contraseña temporal:</strong> {{ $clavePlana }}<br>
-                                            <span style="color:#64748b;font-size:12px;">Te recomendamos cambiar tu contraseña al ingresar.</span>
+                                            <span style="color:#64748b;font-size:12px;">Ingresa al portal con tu correo y esta contraseña. Te recomendamos cambiarla al ingresar.</span>
                                         </td>
                                     </tr>
                                 </table>
                             @else
                                 <p style="margin:0 0 16px;font-size:14px;line-height:1.6;">
-                                    Tu pago fue registrado correctamente. Adjuntamos el comprobante en PDF y estos son los datos de tu reserva:
+                                    Tu pago fue registrado correctamente. Adjuntamos el comprobante (voucher) en PDF y estos son los datos de tu reserva:
                                 </p>
                             @endif
 
