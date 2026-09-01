@@ -144,7 +144,7 @@ class ConstanciaPagoPdfService
             return '—';
         }
 
-        return Carbon::parse($raw, 'UTC')
+        return Carbon::parse($raw)
             ->timezone('America/Lima')
             ->format('d/m/Y H:i');
     }

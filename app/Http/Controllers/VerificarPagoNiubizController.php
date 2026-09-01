@@ -349,7 +349,7 @@ class VerificarPagoNiubizController extends Controller
                                 2
                             ),
 
-                            'pagado_en' => now('UTC'),
+                            'pagado_en' => now(),
 
                             'acepto_terminos' =>
                             (bool) session(
