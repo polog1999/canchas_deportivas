@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Reserva;
-use App\Models\Usuario;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -86,12 +84,11 @@ class NiubizService
 
     /**
      * PASO 2: Session token para el botón de pago.
+     *
+     * @param  array{email: string, usuario_id: string, dias_registro: int, es_registrado: bool}  $antifraude
      */
-    public function createSessionToken(Reserva $reserva, float $finalAmount, ?Usuario $usuario = null): ?string
+    public function createSessionToken(string $purchaseNumber, float $finalAmount, array $antifraude = []): ?string
     {
-        $usuario = $usuario ?? $reserva->usuario;
-        $purchaseNumber = (string) $reserva->id;
-
         Log::channel('niubiz')->info("[Session] Iniciando sesión para compra #{$purchaseNumber}");
 
         $securityToken = $this->getSecurityToken();
@@ -101,11 +98,8 @@ class NiubizService
 
         $sessionUrl = $this->apiUrl().'/api.ecommerce/v2/ecommerce/token/session/'.$this->merchantId();
 
-        $email = $usuario?->correo_electronico ?: 'reservas@munilamolina.gob.pe';
-        $diasRegistro = 1;
-        if ($usuario?->creado_en) {
-            $diasRegistro = max(1, (int) $usuario->creado_en->diffInDays(now()));
-        }
+        $email = $antifraude['email'] ?? 'reservas@munilamolina.gob.pe';
+        $diasRegistro = max(1, (int) ($antifraude['dias_registro'] ?? 1));
 
         $requestBody = [
             'channel' => 'web',
@@ -114,8 +108,8 @@ class NiubizService
                 'clientIp' => request()->ip() ?? '127.0.0.1',
                 'merchantDefineData' => [
                     'MDD4' => $email,
-                    'MDD32' => (string) ($usuario?->id ?? '0'),
-                    'MDD75' => $usuario ? 'Registrado' : 'Invitado',
+                    'MDD32' => (string) ($antifraude['usuario_id'] ?? '0'),
+                    'MDD75' => ! empty($antifraude['es_registrado']) ? 'Registrado' : 'Invitado',
                     'MDD77' => $diasRegistro,
                 ],
             ],
@@ -163,10 +157,8 @@ class NiubizService
      *
      * @return array<string, mixed>|null
      */
-    public function authorizeTransaction(string $transactionToken, Reserva $reserva, float $finalAmount): ?array
+    public function authorizeTransaction(string $transactionToken, string $purchaseNumber, float $finalAmount): ?array
     {
-        $purchaseNumber = (string) $reserva->id;
-
         Log::channel('niubiz')->info("[Auth] Autorizando compra #{$purchaseNumber}");
 
         $securityToken = $this->getSecurityToken();
@@ -221,5 +213,37 @@ class NiubizService
         }
 
         return is_array($jsonResponse) ? $jsonResponse : null;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $response
+     */
+    public static function pagoAutorizado(?array $response): bool
+    {
+        if ($response === null) {
+            return false;
+        }
+
+        $status = strtoupper(trim((string) (
+            data_get($response, 'dataMap.STATUS')
+            ?? data_get($response, 'dataMap.status')
+            ?? data_get($response, 'order.status')
+            ?? data_get($response, 'data.STATUS')
+            ?? ''
+        )));
+
+        if (in_array($status, ['AUTHORIZED', 'APPROVED', 'SUCCESS', 'VERIFIED'], true)) {
+            return true;
+        }
+
+        $actionCode = (string) (
+            data_get($response, 'dataMap.ACTION_CODE')
+            ?? data_get($response, 'order.actionCode')
+            ?? data_get($response, 'data.ACTION_CODE')
+            ?? data_get($response, 'ACTION_CODE')
+            ?? ''
+        );
+
+        return in_array($actionCode, ['000', '0'], true);
     }
 }

@@ -133,7 +133,7 @@
                     this.pagando = true; this.error = ''; this.exito = '';
                     const payload = this.leerPayload();
                     payload.acepto_terminos = true;
-                    if (this.reservaId) payload.reserva_id = this.reservaId;
+                    if (this.purchaseNumber) payload.purchase_number = this.purchaseNumber;
                     try {
                         const res = await fetch(urlRegistrar, {
                             method: 'POST',
@@ -156,11 +156,13 @@
                             if (data.redirect) setTimeout(() => { window.location.href = data.redirect; }, 1000);
                             return;
                         }
-                        this.reservaId = data.reserva_id;
                         this.sessionKey = data.sessionKey;
+                        this.purchaseNumber = data.purchaseNumber;
+                        this.verifyUrl = data.verifyUrl;
                         this.monto = Number(data.amount);
                         const stored = this.leerPayload();
-                        stored.reserva_id = data.reserva_id;
+                        stored.purchase_number = data.purchaseNumber;
+                        stored.voucher = data.voucher;
                         sessionStorage.setItem('reserva_pago', JSON.stringify(stored));
                         this.montarBotonNiubiz(data);
                     } catch (e) {

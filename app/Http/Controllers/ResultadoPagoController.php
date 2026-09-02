@@ -37,6 +37,16 @@ class ResultadoPagoController extends Controller
             'descripcion_denegacion' => '',
         ];
 
+        $comprobanteFlash = session('pago_resultado_comprobante');
+        if (is_array($comprobanteFlash)) {
+            $comprobante = array_merge($comprobante, $comprobanteFlash);
+        }
+
+        $mensajeFlash = trim((string) session('pago_resultado_mensaje', ''));
+        if ($mensajeFlash !== '' && ($comprobante['descripcion_denegacion'] ?? '') === '') {
+            $comprobante['descripcion_denegacion'] = $mensajeFlash;
+        }
+
         if ($reservaId > 0) {
             $reserva = Reserva::query()
                 ->with(['cancha.sede', 'cancha.deportes', 'usuario.perfil'])
@@ -57,7 +67,7 @@ class ResultadoPagoController extends Controller
             }
         }
 
-        $mensaje = $comprobante['descripcion_denegacion'] ?? '';
+        $mensaje = $comprobante['descripcion_denegacion'] ?? $mensajeFlash;
         $voucher = $comprobante['voucher'] ?? '';
 
         if (in_array($estado, ['exitoso', 'denegado', 'error'], true)) {

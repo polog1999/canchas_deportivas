@@ -29,10 +29,7 @@ class OcupacionReservasService
             ->whereIn('cancha_id', $canchaIds)
             ->where('hora_inicio', '<', $finDia)
             ->where('hora_fin', '>', $inicioDia)
-            ->where(function ($q) {
-                $q->whereNull('estado')
-                    ->orWhereRaw('UPPER(estado) NOT IN (?, ?)', ['CANCELADA', 'PAGO_FALLIDO']);
-            })
+            ->whereRaw('LOWER(estado) = ?', ['confirmada'])
             ->get(['cancha_id', 'hora_inicio', 'hora_fin']);
 
         $ocupados = [];

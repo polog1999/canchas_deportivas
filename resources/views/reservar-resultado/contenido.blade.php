@@ -16,6 +16,12 @@
 
         $base = $desdePortal ? route('portal.reservar.pago') : route('reservar.pago');
         $urlReintentar = $base.(count($query) ? '?'.http_build_query($query) : '');
+    } elseif (! $reserva && in_array($estado, ['denegado', 'error'], true)) {
+        $returnQuery = trim((string) session('pago_return_query', ''));
+        if ($returnQuery !== '') {
+            $base = $desdePortal ? route('portal.reservar.pago') : route('reservar.pago');
+            $urlReintentar = $base.'?'.ltrim($returnQuery, '?');
+        }
     }
 @endphp
 
