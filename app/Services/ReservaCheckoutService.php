@@ -245,7 +245,7 @@ class ReservaCheckoutService
             $pago = Pago::create([
                 'transaccion_id' => $transaccion->id,
                 'monto' => round((float) $niubiz['amount'], 2),
-                'pagado_en' => now('UTC'),
+                'pagado_en' => now(),
                 'acepto_terminos' => (bool) ($checkout['acepto_terminos'] ?? true),
                 'id_catalogos_tusne' => CatalogoTusneReserva::idDesdeMeta($meta),
             ]);
