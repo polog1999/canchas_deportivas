@@ -48,13 +48,13 @@
                 </p>
             </div>
 
-            <!-- Grilla Horaria -->
+            <!-- Grilla Horaria con Validación de Horas Pasadas y Turno TUSNE -->
             <div class="overflow-x-auto relative" x-show="canchas.length">
                 <div class="min-w-[900px] relative" id="grillaTurnos">
                     <div class="grid border-b border-slate-100"
                         :style="'grid-template-columns: 220px repeat(' + horas.length + ', minmax(48px, 1fr))'">
                         <div class="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 bg-slate-50 sticky left-0 z-10">
-                            Cancha
+                            CANCHA | HORAS
                         </div>
                         <template x-for="h in horas" :key="'h'+h">
                             <div class="py-2 text-center text-[11px] font-bold text-slate-500 bg-slate-50 border-l border-slate-100"
@@ -73,12 +73,28 @@
                                 <button type="button"
                                     class="h-14 border-l border-slate-100 relative transition"
                                     :data-celda="cancha.id + '-' + h"
-                                    :disabled="estaOcupado(cancha, h)"
+                                    :disabled="estaBloqueado(cancha, h)"
                                     :class="claseCelda(cancha, h)"
                                     @click.stop="seleccionar($event, cancha, h)"
-                                    :title="estaOcupado(cancha, h) ? 'No disponible' : ('Reservar ' + String(h).padStart(2,'0') + ':00')">
-                                    <span x-show="estaOcupado(cancha, h)"
+                                    :title="tituloCelda(cancha, h)">
+                                    
+                                    <!-- 1. Hora pasada -->
+                                    <span x-show="esHoraPasada(h)"
+                                        class="absolute inset-1.5 rounded-md bg-slate-200/60 flex items-center justify-center pointer-events-none text-slate-400">
+                                        <i class="fa-solid fa-clock text-[10px]"></i>
+                                    </span>
+
+                                    <!-- 2. Ocupado por otra reserva -->
+                                    <span x-show="!esHoraPasada(h) && estaOcupado(cancha, h)"
                                         class="absolute inset-1.5 rounded-md bg-slate-400/80 pointer-events-none"></span>
+                                    
+                                    <!-- 3. Sin tarifa TUSNE en este horario -->
+                                    <span x-show="!esHoraPasada(h) && !estaOcupado(cancha, h) && !tieneTarifaEnHora(cancha, h)"
+                                        class="absolute inset-1.5 rounded-md bg-slate-100 flex items-center justify-center pointer-events-none text-slate-300">
+                                        <i class="fa-solid fa-ban text-[10px]"></i>
+                                    </span>
+
+                                    <!-- 4. Turno Seleccionado -->
                                     <span x-show="estaSeleccionado(cancha, h)"
                                         class="absolute inset-1.5 rounded-md bg-[#1b5e3b] pointer-events-none"></span>
                                 </button>
@@ -89,24 +105,27 @@
             </div>
 
             <div class="px-6 py-10 text-center text-slate-500" x-show="!canchas.length" x-cloak>
-                <p class="font-semibold text-slate-700">Esta sede aún no tiene canchas activas.</p>
+                <p class="font-semibold text-slate-700">Esta sede aún no tiene canchas activas para este deporte.</p>
                 <p class="text-sm mt-1">Regístralas en el portal de administración para habilitar turnos.</p>
             </div>
 
             <div class="px-4 sm:px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <p class="text-xs text-slate-500 flex items-start gap-2">
                     <i class="fa-solid fa-circle-info text-sky-600 mt-0.5"></i>
-                    Tarifas diferenciadas automáticamente para Público General, Campeonatos Corporativos y Ligas Distritales.
+                    Las horas pasadas y los horarios sin arancel TUSNE habilitado aparecen bloqueados automáticamente.
                 </p>
                 <div class="flex items-center gap-4 text-xs font-semibold text-slate-600">
                     <span class="inline-flex items-center gap-1.5">
-                        <span class="w-4 h-4 rounded bg-slate-400"></span> No disponible
+                        <span class="w-4 h-4 rounded bg-slate-200"></span> Pasado / Sin turno
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded bg-slate-400"></span> Reservado
                     </span>
                     <span class="inline-flex items-center gap-1.5">
                         <span class="w-4 h-4 rounded bg-[#1b5e3b]"></span> Tu reserva
                     </span>
                     <span class="inline-flex items-center gap-1.5">
-                        <span class="w-4 h-4 rounded border border-slate-200 bg-white"></span> Libre
+                        <span class="w-4 h-4 rounded border border-slate-200 bg-white"></span> Disponible
                     </span>
                 </div>
             </div>
@@ -119,6 +138,7 @@
             </a>
         </div>
 
+        <!-- Mapa -->
         @if (!empty($sede['mapa_embed']) || !empty($sede['enlace_mapas']) || !empty($sede['direccion']))
             <section class="mt-8 bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
                 <div class="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -155,7 +175,7 @@
         @endif
     </main>
 
-    <!-- MODAL POPUP: SELECTOR TUSNE COMPLETO -->
+    <!-- MODAL POPUP: SELECTOR TUSNE DINÁMICO -->
     <div x-show="popup.visible" x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
         role="dialog" aria-modal="true">
@@ -168,7 +188,7 @@
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <!-- 1. Cabecera -->
+            <!-- Cabecera -->
             <div class="flex items-center justify-between gap-3 pr-10 mb-4 pb-3 border-b border-slate-100">
                 <div class="inline-flex items-center gap-2.5 min-w-0">
                     <span class="w-10 h-10 rounded-xl bg-emerald-50 text-[#1b5e3b] flex items-center justify-center shrink-0 text-lg">
@@ -176,7 +196,7 @@
                     </span>
                     <div class="min-w-0">
                         <p class="text-base sm:text-lg font-bold text-slate-900 truncate" x-text="seleccion?.cancha"></p>
-                        <p class="text-xs text-slate-500 truncate" x-text="seleccion?.detalle"></p>
+                        <p class="text-xs text-slate-500 truncate" x-text="'Deporte: ' + deporte"></p>
                     </div>
                 </div>
                 <div class="inline-flex items-center gap-1.5 shrink-0 text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
@@ -185,80 +205,49 @@
                 </div>
             </div>
 
-            <!-- 2. SELECTOR DE MODALIDAD TUSNE (Público General, Campeonato, Liga, Entrenamiento) -->
-            <div class="mb-4">
+            <!-- SELECTOR DINÁMICO DE MODALIDAD TUSNE -->
+            <div class="mb-4" x-show="modalidadesCancha.length > 0">
                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     1. ¿Para qué utilizarás la cancha?
                 </label>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    
-                    <!-- Opción 1: Alquiler Regular (Pichanga / Práctica) -->
-                    <button type="button"
-                        @click="cambiarTipoUso('alquiler_regular')"
-                        class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
-                        :class="seleccion?.tipoUso === 'alquiler_regular'
-                            ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
-                        <i class="fa-solid fa-futbol text-emerald-700 mt-0.5 text-sm"></i>
-                        <div class="min-w-0">
-                            <p class="font-bold text-xs">Público General</p>
-                            <p class="text-[10px] text-slate-500 leading-tight">Práctica libre / Pichanga</p>
-                        </div>
-                    </button>
-
-                    <!-- Opción 2: Campeonato Corporativo -->
-                    <button type="button"
-                        @click="cambiarTipoUso('campeonato_corporativo')"
-                        class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
-                        :class="seleccion?.tipoUso === 'campeonato_corporativo'
-                            ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
-                        <i class="fa-solid fa-trophy text-amber-600 mt-0.5 text-sm"></i>
-                        <div class="min-w-0">
-                            <p class="font-bold text-xs">Campeonato / Torneo</p>
-                            <p class="text-[10px] text-slate-500 leading-tight">Eventos corporativos</p>
-                        </div>
-                    </button>
-
-                    <!-- Opción 3: Liga Distrital Oficial -->
-                    <button type="button"
-                        @click="cambiarTipoUso('liga_oficial')"
-                        class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
-                        :class="seleccion?.tipoUso === 'liga_oficial'
-                            ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
-                        <i class="fa-solid fa-shield-halved text-blue-600 mt-0.5 text-sm"></i>
-                        <div class="min-w-0">
-                            <p class="font-bold text-xs">Liga Distrital (Oficial)</p>
-                            <p class="text-[10px] text-slate-500 leading-tight">Partidos de campeonato</p>
-                        </div>
-                    </button>
-
-                    <!-- Opción 4: Liga Distrital Entrenamientos -->
-                    <button type="button"
-                        @click="cambiarTipoUso('liga_entrenamiento')"
-                        class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
-                        :class="seleccion?.tipoUso === 'liga_entrenamiento'
-                            ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'">
-                        <i class="fa-solid fa-person-running text-teal-600 mt-0.5 text-sm"></i>
-                        <div class="min-w-0">
-                            <p class="font-bold text-xs">Liga (Entrenamiento)</p>
-                            <p class="text-[10px] text-slate-500 leading-tight">Prácticas de clubes</p>
-                        </div>
-                    </button>
-
+                    <template x-for="mod in modalidadesCancha" :key="mod.codigo">
+                        <button type="button"
+                            @click="if (modalidadDisponibleEnTurno(mod.codigo)) cambiarTipoUso(mod.codigo)"
+                            :disabled="!modalidadDisponibleEnTurno(mod.codigo)"
+                            class="p-2.5 rounded-xl border text-left transition flex items-start gap-2.5"
+                            :class="!modalidadDisponibleEnTurno(mod.codigo)
+                                ? 'bg-slate-50 border-slate-200 opacity-40 cursor-not-allowed text-slate-400'
+                                : (seleccion?.tipoUso === mod.codigo
+                                    ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20 text-emerald-950'
+                                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')">
+                            
+                            <i class="fa-solid mt-0.5 text-sm" :class="mod.icono || 'fa-futbol'"
+                               :class="seleccion?.tipoUso === mod.codigo ? 'text-emerald-700' : 'text-slate-400'"></i>
+                            
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-bold text-xs" x-text="mod.nombre"></p>
+                                    <span x-show="seleccion?.tipoUso === mod.codigo" class="text-[10px] text-emerald-700 font-bold">
+                                        <i class="fa-solid fa-check"></i>
+                                    </span>
+                                </div>
+                                <p class="text-[10px] text-slate-500 leading-tight mt-0.5" 
+                                   x-text="!modalidadDisponibleEnTurno(mod.codigo) ? (esNoche ? 'No disponible de noche' : 'Solo en horario nocturno') : mod.descripcion"></p>
+                            </div>
+                        </button>
+                    </template>
                 </div>
             </div>
 
-            <!-- 3. DETALLE DEL TUSNE SELECCIONADO Y TURNO AUTOMÁTICO -->
+            <!-- DETALLE DEL TUSNE Y TURNO DETECTADO -->
             <div class="mb-4 bg-slate-50 border border-slate-200/80 rounded-2xl p-3">
                 <div class="flex items-center justify-between text-xs mb-1.5">
-                    <span class="font-semibold text-slate-500">Turno detectado:</span>
+                    <span class="font-semibold text-slate-500">Turno horario:</span>
                     <span class="font-bold px-2 py-0.5 rounded-md text-[11px]"
                         :class="esNoche ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'">
                         <i class="fa-solid mr-1" :class="esNoche ? 'fa-moon' : 'fa-sun'"></i>
-                        <span x-text="esNoche ? 'Nocturno (Con iluminación)' : 'Diurno (Luz solar)'"></span>
+                        <span x-text="esNoche ? 'Nocturno (A partir de 18:00)' : 'Diurno (08:00 a 17:00)'"></span>
                     </span>
                 </div>
                 <div class="text-[11px] text-slate-700 flex items-start gap-1.5 border-t border-slate-200/60 pt-2">
@@ -270,7 +259,7 @@
                 </div>
             </div>
 
-            <!-- 4. DURACIÓN Y MONTO DE ORACLE -->
+            <!-- DURACIÓN Y PRECIO REAL DE ORACLE -->
             <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. Duración de la reserva</p>
             <div class="space-y-2.5 mb-6">
                 <button type="button"
@@ -294,7 +283,7 @@
                 </button>
             </div>
 
-            <!-- 5. BOTÓN CONTINUAR -->
+            <!-- BOTÓN CONTINUAR -->
             <button type="button" @click="continuar()"
                 class="w-full py-3.5 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white text-base font-bold shadow-sm transition">
                 Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60).toFixed(2)"></span>
@@ -331,32 +320,87 @@
                 cargandoOcupacion: false,
                 puede120: false,
 
-                get esNoche() {
-                    if (!this.seleccion) return false;
-                    return this.seleccion.hora >= 18; // 18:00 hs en adelante es turno Noche
+                get canchaSeleccionada() {
+                    if (!this.seleccion) return null;
+                    return this.canchas.find(item => item.id === this.seleccion.canchaId) || null;
                 },
 
-                // BUSCADOR AUTOMÁTICO DE TUSNE SEGÚN CANCHA, TURNO Y MODALIDAD ELEGIDA
+                // VALIDACIÓN DE HORAS PASADAS (Ej: Si son 15:25, bloquea hasta las 14:00; las 15:00 quedan habilitadas)
+                esHoraPasada(h) {
+                    const hoy = new Date();
+                    const year = hoy.getFullYear();
+                    const month = String(hoy.getMonth() + 1).padStart(2, '0');
+                    const day = String(hoy.getDate()).padStart(2, '0');
+                    const hoyStr = `${year}-${month}-${day}`;
+
+                    if (this.fecha < hoyStr) return true;
+
+                    if (this.fecha === hoyStr) {
+                        const horaActual = hoy.getHours();
+                        return h < horaActual;
+                    }
+
+                    return false;
+                },
+
+                // SOLO DÍA Y NOCHE
+                turnoDeHora(h) {
+                    return h >= 18 ? 'noche' : 'dia';
+                },
+
+                get esNoche() {
+                    if (!this.seleccion) return false;
+                    return this.seleccion.hora >= 18;
+                },
+
+                // VALIDADOR TUSNE: Verifica si la cancha tiene al menos un TUSNE para esa hora
+                tieneTarifaEnHora(cancha, h) {
+                    if (!cancha.tusnes || !cancha.tusnes.length) return false;
+                    const turno = this.turnoDeHora(h);
+                    return cancha.tusnes.some(t => t.horario_turno === turno || t.horario_turno === 'todos');
+                },
+
+                // Bloqueado si: pasó la hora, está reservado o no tiene TUSNE
+                estaBloqueado(cancha, h) {
+                    return this.esHoraPasada(h) || this.estaOcupado(cancha, h) || !this.tieneTarifaEnHora(cancha, h);
+                },
+
+                // Modalidades configuradas en la cancha
+                get modalidadesCancha() {
+                    return this.canchaSeleccionada?.modalidades_disponibles || [];
+                },
+
+                // Verifica si una modalidad tiene TUSNE en el turno de la hora seleccionada
+                modalidadDisponibleEnTurno(codigoMod) {
+                    if (!this.canchaSeleccionada) return false;
+                    const turno = this.turnoDeHora(this.seleccion.hora);
+                    return (this.canchaSeleccionada.tusnes || []).some(t => 
+                        (t.tipo_uso === codigoMod || t.tipo_uso === 'todos') &&
+                        (t.horario_turno === turno || t.horario_turno === 'todos')
+                    );
+                },
+
+                // EMPAREJADOR TUSNE EXACTO
                 get tusneActivo() {
-                    if (!this.seleccion) return null;
-                    const c = this.canchas.find(item => item.id === this.seleccion.canchaId);
-                    if (!c || !c.tusnes?.length) return null;
+                    if (!this.canchaSeleccionada || !this.canchaSeleccionada.tusnes?.length) return null;
 
-                    const turno = this.esNoche ? 'noche' : (this.seleccion.hora === 6 ? 'madrugada_especial' : 'dia');
-                    const uso = this.seleccion.tipoUso || 'alquiler_regular';
+                    const turno = this.turnoDeHora(this.seleccion.hora);
+                    const uso = this.seleccion.tipoUso;
 
-                    // 1. Coincidencia por modalidad (Uso) y turno (Día/Noche)
-                    let match = c.tusnes.find(t => 
+                    // 1. Coincidencia exacta por modalidad y turno
+                    let match = this.canchaSeleccionada.tusnes.find(t => 
                         (t.tipo_uso === uso || t.tipo_uso === 'todos') && 
                         (t.horario_turno === turno || t.horario_turno === 'todos')
                     );
 
-                    // 2. Coincidencia solo por turno si no hay específica
+                    // 2. Coincidencia secundaria por turno
                     if (!match) {
-                        match = c.tusnes.find(t => t.horario_turno === turno || t.horario_turno === 'todos');
+                        match = this.canchaSeleccionada.tusnes.find(t => 
+                            t.horario_turno === turno || t.horario_turno === 'todos'
+                        );
                     }
 
-                    return match || c.tusnes[0];
+                    return match || null;
                 },
 
                 get precioHoraActual() {
@@ -453,8 +497,14 @@
                 },
 
                 claseCelda(cancha, h) {
+                    if (this.esHoraPasada(h)) {
+                        return 'bg-slate-100 cursor-not-allowed opacity-40';
+                    }
                     if (this.estaOcupado(cancha, h)) {
                         return 'bg-slate-100 cursor-not-allowed';
+                    }
+                    if (!this.tieneTarifaEnHora(cancha, h)) {
+                        return 'bg-slate-50 cursor-not-allowed opacity-50';
                     }
                     if (this.estaSeleccionado(cancha, h)) {
                         return 'bg-[#1b5e3b]/10';
@@ -462,11 +512,28 @@
                     return 'bg-white hover:bg-[#1b5e3b]/10 cursor-pointer';
                 },
 
-                seleccionar(event, cancha, h) {
-                    if (this.estaOcupado(cancha, h)) return;
+                tituloCelda(cancha, h) {
+                    if (this.esHoraPasada(h)) return 'Horario pasado (No disponible)';
+                    if (this.estaOcupado(cancha, h)) return 'No disponible (Reservado)';
+                    if (!this.tieneTarifaEnHora(cancha, h)) {
+                        const turno = this.turnoDeHora(h);
+                        return turno === 'dia' ? 'Tarifa disponible solo en horario nocturno' : 'Tarifa disponible solo en horario diurno';
+                    }
+                    return 'Reservar ' + this.horaLabel(h);
+                },
 
-                    const puede120 = !this.estaOcupado(cancha, h + 1)
-                        && this.horas.includes(h + 1);
+                seleccionar(event, cancha, h) {
+                    if (this.estaBloqueado(cancha, h)) return;
+
+                    const puede120 = !this.estaBloqueado(cancha, h + 1) && this.horas.includes(h + 1);
+
+                    // Buscar qué modalidades tienen TUSNE válido para ese turno (Día o Noche)
+                    const turno = this.turnoDeHora(h);
+                    const tusnesValidosTurno = (cancha.tusnes || []).filter(t => t.horario_turno === turno || t.horario_turno === 'todos');
+                    
+                    // Si el turno es día y solo hay campeonato, seleccionará campeonato directamente:
+                    const codigosValidos = [...new Set(tusnesValidosTurno.map(t => t.tipo_uso))];
+                    const modalidadSeleccionada = codigosValidos[0] || 'alquiler_regular';
 
                     this.puede120 = puede120;
                     this.seleccion = {
@@ -476,7 +543,7 @@
                         precioBase: Number(cancha.precio) || 0,
                         hora: h,
                         duracion: 60,
-                        tipoUso: 'alquiler_regular', // Inicia en alquiler regular
+                        tipoUso: modalidadSeleccionada, // Selecciona el TUSNE disponible (Ej: campeonato en el día)
                         deporteIds: cancha.deporte_ids || [],
                     };
                     this.popup.visible = true;
@@ -512,7 +579,6 @@
                         duracion: String(this.seleccion.duracion),
                         precio: String(this.precioDuracion(this.seleccion.duracion).toFixed(2)),
                         deporte: this.deporte,
-                        // Datos TUSNE resueltos para la confirmación y pago
                         tusne_id: tusne ? String(tusne.id) : '',
                         codigo_tusne: tusne ? String(tusne.codigo) : '',
                         grupo_tusne: tusne ? String(tusne.grupo) : '23',
