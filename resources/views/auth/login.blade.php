@@ -8,7 +8,7 @@
                     <!-- Contenedor del Logo -->
                     <div class="flex items-center space-x-3 bg-emerald-800/10 px-4 py-2 rounded-full border border-emerald-800/20">
                         <!-- Reemplace 'logo-la-molina.png' con la ruta real de su imagen en public/ -->
-                        <img class="h-15 w-auto object-contain" src="{{ asset('logo_municipal_negro.png') }}" alt="Logo Municipalidad de La Molina" onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='block';">
+                        <img class="h-15 w-auto object-contain" src="{{ asset('logo_municipal_negro2.png') }}" alt="Logo Municipalidad de La Molina" onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='block';">
                         
                         <!-- Logo de respaldo en caso de que no cargue la imagen -->
                         <div id="fallback-logo" style="display: none;" class="bg-emerald-800 text-white p-2 rounded-full">
