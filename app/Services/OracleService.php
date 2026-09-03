@@ -26,9 +26,16 @@ class OracleService
         $tusne = DB::connection('oracle')->table('smaconceptod')->where('congrupo', $grupo)->where('concodigo', $codigo)->first('conmonto');
         return $tusne;
     }
-    public function  getCodContribuyente(string $numero_documento)
-    {
-        return DB::connection('oracle')->table('smacarnom')->where('mcndni', $numero_documento)->value('mcncontrib');
+    public function getCodContribuyente(
+        string $tipo_documento,
+        string $numero_documento
+    ) {
+
+        return DB::connection('oracle')
+            ->table('smacarnom')
+            ->whereRaw('TRIM(mcntipodi) = ?', [trim($tipo_documento)])
+            ->whereRaw('TRIM(mcnnrodi) = ?', [trim($numero_documento)])
+            ->value('mcncontrib');
     }
     public function  generarNumLiquidacion(string $grupo, string $codigo, string $codcontrib)
     {
