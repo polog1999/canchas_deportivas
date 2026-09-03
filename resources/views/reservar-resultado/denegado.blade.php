@@ -4,7 +4,9 @@
             <i class="fa-solid fa-circle-xmark text-3xl text-red-600"></i>
         </div>
         <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Transacción denegada</h1>
-        <p class="text-sm text-slate-600 mt-2">No se pudo autorizar el pago.</p>
+        <p class="text-sm text-slate-600 mt-2">
+            {{ $comprobante['descripcion_denegacion'] ?? ($mensaje ?? 'No se pudo autorizar el pago.') }}
+        </p>
     </div>
 
     <div class="p-6 sm:p-8 space-y-5">

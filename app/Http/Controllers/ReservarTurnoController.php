@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Deporte;
 use App\Models\Sede;
+use App\Models\TipoUsoTusne;
 use App\Services\OcupacionReservasService;
 use App\Services\OracleService;
 use Illuminate\Http\Request;
@@ -20,7 +21,6 @@ class ReservarTurnoController extends Controller
             $fecha = now()->format('Y-m-d');
         }
 
-        // Sin deporte → volver a deportes
         if ($deporteId <= 0) {
             return redirect()->route('reservar.deporte', ['sede' => $sedeId, 'fecha' => $fecha]);
         }
@@ -44,20 +44,16 @@ class ReservarTurnoController extends Controller
             return redirect()->route('reservar');
         }
 
-        if ($deporteId > 0) {
-            $deporteNombre = (string) (Deporte::query()->where('id', $deporteId)->value('nombre') ?? 'Deporte');
-        } else {
-            $deporteNombre = $sede->canchas
-                ->flatMap(fn ($c) => $c->deportes->pluck('nombre'))
-                ->unique()
-                ->values()
-                ->implode(' · ') ?: 'Deporte';
-        }
+        $deporteModel = Deporte::find($deporteId);
+        $deporteNombre = $deporteModel ? $deporteModel->nombre : 'Deporte';
+
+        // 1. Resolver los tipos de espacio permitidos según el deporte elegido
+        $espaciosPermitidos = $this->resolverEspaciosPorDeporte($deporteNombre);
 
         $canchaIds = $sede->canchas->pluck('id');
         $ocupadosPorCancha = $ocupacion->porCancha($canchaIds, $fecha);
 
-        // Servicio Oracle para consultar los montos reales de cada TUSNE
+        $catalogoTiposUso = TipoUsoTusne::where('esta_activo', true)->orderBy('orden')->get()->keyBy('codigo');
         $oracleService = app(OracleService::class);
 
         $sedeData = [
@@ -65,14 +61,23 @@ class ReservarTurnoController extends Controller
             'nombre' => $sede->nombre,
             'direccion' => $sede->direccion,
             'enlace_mapas' => $sede->enlace_mapas,
-            'mapa_embed' => $sede->urlMapaEmbed(),
+            'mapa_embed' => method_exists($sede, 'urlMapaEmbed') ? $sede->urlMapaEmbed() : null,
             'imagen' => method_exists($sede, 'urlImagen') ? $sede->urlImagen() : null,
             'hora_inicio' => $sede->hora_inicio ? substr((string) $sede->hora_inicio, 0, 5) : '08:00',
             'hora_fin' => $sede->hora_fin ? substr((string) $sede->hora_fin, 0, 5) : '22:00',
-            'canchas' => $sede->canchas->map(function ($c) use ($ocupadosPorCancha, $oracleService) {
-                
-                // Mapear todos los TUSNEs asociados a esta cancha con su monto de Oracle
-                $tusnesMapeados = $c->catalogosTusne->map(function ($t) use ($oracleService, $c) {
+            'canchas' => $sede->canchas->map(function ($c) use ($ocupadosPorCancha, $oracleService, $catalogoTiposUso, $espaciosPermitidos) {
+
+                // 2. Filtrar TUSNEs compatibles con el deporte (incluyendo genéricos tipo_espacio = 'todos')
+                $tusnesFiltrados = $c->catalogosTusne->filter(function ($t) use ($espaciosPermitidos) {
+                    return in_array($t->tipo_espacio, $espaciosPermitidos, true) || $t->tipo_espacio === 'todos';
+                });
+
+                if ($tusnesFiltrados->isEmpty()) {
+                    $tusnesFiltrados = $c->catalogosTusne;
+                }
+
+                // 3. Mapear TUSNEs con el monto real de Oracle y sus turnos horarios
+                $tusnesMapeados = $tusnesFiltrados->map(function ($t) use ($oracleService, $c) {
                     $montoOracle = null;
                     if (!empty($t->grupo_tusne) && !empty($t->codigo_tusne)) {
                         try {
@@ -81,9 +86,7 @@ class ReservarTurnoController extends Controller
                             if ($montoVal !== null) {
                                 $montoOracle = (float)$montoVal;
                             }
-                        } catch (\Throwable $th) {
-                            // En caso de caída de conexión
-                        }
+                        } catch (\Throwable $th) {}
                     }
 
                     return [
@@ -92,11 +95,30 @@ class ReservarTurnoController extends Controller
                         'codigo' => $t->codigo_tusne,
                         'descripcion' => $t->descripcion_local,
                         'tipo_espacio' => $t->tipo_espacio,
-                        'tipo_uso' => $t->tipo_uso,             // 'alquiler_regular', 'campeonato_corporativo', 'liga_oficial', etc.
-                        'horario_turno' => $t->horario_turno,   // 'dia', 'noche', 'madrugada_especial', 'todos'
-                        'tipo_cliente' => $t->tipo_cliente,     // 'general', 'vecino', etc.
-                        'tiene_taquilla' => (bool)$t->tiene_taquilla,
+                        'tipo_uso' => $t->tipo_uso,
+                        'horario_turno' => $t->horario_turno, // 'dia', 'noche', 'madrugada_especial', 'todos'
+                        'tipo_cliente' => $t->tipo_cliente,
                         'precio_hora' => $montoOracle !== null ? $montoOracle : (float)$c->precio_por_hora,
+                    ];
+                })->values();
+
+                // 4. Extraer modalidades disponibles
+                $codigosUsoDisponibles = $tusnesMapeados->pluck('tipo_uso')->unique()->values();
+                $modalidadesDisponibles = $codigosUsoDisponibles->map(function ($codigo) use ($catalogoTiposUso) {
+                    if (isset($catalogoTiposUso[$codigo])) {
+                        $item = $catalogoTiposUso[$codigo];
+                        return [
+                            'codigo' => $item->codigo,
+                            'nombre' => $item->nombre,
+                            'descripcion' => $item->descripcion,
+                            'icono' => $item->icono,
+                        ];
+                    }
+                    return [
+                        'codigo' => $codigo,
+                        'nombre' => ucfirst(str_replace('_', ' ', (string) $codigo)),
+                        'descripcion' => 'Uso específico',
+                        'icono' => 'fa-futbol',
                     ];
                 })->values();
 
@@ -107,7 +129,8 @@ class ReservarTurnoController extends Controller
                     'deporte_ids' => $c->deportes->pluck('id')->values(),
                     'precio' => (float) $c->precio_por_hora,
                     'ocupados' => $ocupadosPorCancha[$c->id] ?? [],
-                    'tusnes' => $tusnesMapeados, // Colección completa de TUSNEs asociados
+                    'tusnes' => $tusnesMapeados,
+                    'modalidades_disponibles' => $modalidadesDisponibles,
                 ];
             })->values(),
         ];
@@ -118,5 +141,33 @@ class ReservarTurnoController extends Controller
             'deporte' => $deporteNombre,
             'deporte_id' => $deporteId > 0 ? $deporteId : null,
         ]);
+    }
+
+    private function resolverEspaciosPorDeporte(string $deporteNombre): array
+    {
+        $deporteUpper = mb_strtoupper($deporteNombre);
+
+        if (str_contains($deporteUpper, 'FUTSAL') || str_contains($deporteUpper, 'SALA') || str_contains($deporteUpper, 'FULBITO')) {
+            return ['losa_futsal', 'losa_general', 'todos'];
+        }
+
+        if (str_contains($deporteUpper, 'VOLEY') || str_contains($deporteUpper, 'VÓLEY') || str_contains($deporteUpper, 'VOLEIBOL') ||
+            str_contains($deporteUpper, 'BASQUET') || str_contains($deporteUpper, 'BÁSQUET') || str_contains($deporteUpper, 'BALONCESTO')) {
+            return ['losa_voley_basquet', 'losa_general', 'todos'];
+        }
+
+        if (str_contains($deporteUpper, 'FUTBOL') || str_contains($deporteUpper, 'FÚTBOL') || str_contains($deporteUpper, 'GRASS') || str_contains($deporteUpper, 'SINTETICO') || str_contains($deporteUpper, 'SINTÉTICO')) {
+            return ['grass_sintetico', 'todos'];
+        }
+
+        if (str_contains($deporteUpper, 'FRONTON') || str_contains($deporteUpper, 'FRONTÓN')) {
+            return ['fronton', 'todos'];
+        }
+
+        if (str_contains($deporteUpper, 'TENIS')) {
+            return ['tenis', 'todos'];
+        }
+
+        return ['grass_sintetico', 'losa_voley_basquet', 'losa_futsal', 'fronton', 'tenis', 'losa_general', 'todos'];
     }
 }

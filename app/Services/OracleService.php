@@ -46,16 +46,31 @@ class OracleService
         );
     }
 
-    public function  insertarEnOracle(string $grupo, string $codigo, string $codcontrib, float $monto, int $purchaseNumber, int $idTransaccion, Carbon $fechaYHoraPago, string $numeroLiquidacion, int $cantidadHoras)
-    {
+    public function insertarEnOracle(
+        string $grupo,
+        string $codigo,
+        string $codcontrib,
+        float $monto,
+        int $reservaId,
+        int $idTransaccion,
+        Carbon $fechaYHoraPago,
+        string $numeroLiquidacion,
+        int $cantidadHoras,
+    ) {
         $resContri = DB::connection('oracle')->selectOne(
             'SELECT MCNTIPODI, MCNNRODI, MCNAPEPAT,MCNAPEMAT, MCNNOMBRE FROM SMACARNOM WHERE MCNCONTRIB = :codContri',
             ['codContri' => $codcontrib]
         );
 
         // Mapeo seguro de variables evitando errores de trim(null)
-        $codLote         = TRIM((string) $idTransaccion);
-        $codGestrad      = $purchaseNumber;
+        $codLote = TRIM((string) $idTransaccion);
+        $codGestrad = (string) $reservaId;
+
+        if (strlen($codGestrad) > 8) {
+            throw new \InvalidArgumentException(
+                "COD_GESTRAD admite máximo 8 caracteres; reserva_id={$reservaId}."
+            );
+        }
         $tipoDocumento   = $resContri ? trim($resContri->mcntipodi) : null;
         $numDocumento    = $resContri ? trim($resContri->mcnnrodi) : null;
         $apePat          = $resContri ? trim($resContri->mcnapepat) : null;

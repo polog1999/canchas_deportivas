@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Mail\ReservaPagoConfirmadoMail;
+use App\Models\Pago;
 use App\Models\Reserva;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -23,6 +25,7 @@ class ReservaCorreoService
         bool $usuarioNuevo = false,
         ?string $usuarioLogin = null,
         ?string $clavePlana = null,
+        ?Pago $pago = null,
     ): void {
         $reserva->loadMissing(['usuario.perfil', 'cancha.sede']);
 
@@ -52,14 +55,18 @@ class ReservaCorreoService
             'titular' => $usuario?->nombreCompleto(),
         ];
 
+        $identificadorAcceso = $this->identificadorAcceso($usuario, $usuarioLogin, $correo);
+
         try {
-            $pdfAdjunto = $this->constanciaPagoPdf->adjuntoDesdeReserva($reserva);
+            $pdfAdjunto = $pago
+                ? $this->constanciaPagoPdf->adjuntoDesdePago($pago)
+                : $this->constanciaPagoPdf->adjuntoDesdeReserva($reserva);
 
             Mail::mailer($mailer)->to($correo)->send(new ReservaPagoConfirmadoMail(
                 reserva: $reserva,
                 detalle: $detalle,
                 usuarioNuevo: $usuarioNuevo,
-                usuarioLogin: $usuarioLogin ?? $usuario?->usuario,
+                usuarioLogin: $identificadorAcceso,
                 clavePlana: $clavePlana,
                 pdfAdjunto: $pdfAdjunto,
             ));
@@ -81,5 +88,20 @@ class ReservaCorreoService
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function identificadorAcceso(?Usuario $usuario, ?string $usuarioLogin, string $correoDestino): string
+    {
+        $correoUsuario = trim((string) ($usuario?->correo_electronico ?? ''));
+
+        if ($correoUsuario !== '' && filter_var($correoUsuario, FILTER_VALIDATE_EMAIL)) {
+            return $correoUsuario;
+        }
+
+        if (filter_var($correoDestino, FILTER_VALIDATE_EMAIL)) {
+            return $correoDestino;
+        }
+
+        return trim((string) ($usuarioLogin ?? $usuario?->usuario ?? '—'));
     }
 }

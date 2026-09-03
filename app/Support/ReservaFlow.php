@@ -18,7 +18,7 @@ class ReservaFlow
      */
     public static function ruta(string $name, array $params = []): string
     {
-        if (in_array($name, ['registrar', 'buscar-documento', 'verificar-acceso', 'ocupacion'], true)) {
+        if (in_array($name, ['registrar', 'buscar-documento', 'verificar-acceso', 'ocupacion', 'disponibilidad'], true)) {
             return route('reservar.'.$name, $params);
         }
 

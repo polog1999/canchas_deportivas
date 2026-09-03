@@ -8,9 +8,13 @@ use Illuminate\Support\Collection;
 
 class OcupacionReservasService
 {
+    public function __construct(
+        private readonly ReservaCheckoutService $checkout,
+    ) {}
+
     /**
-     * Horas ocupadas por cancha según reservas (hora_inicio / hora_fin).
-     * Un slot H:00–(H+1):00 está ocupado si solapa con alguna reserva no cancelada.
+     * Horas ocupadas por cancha: reservas confirmadas y turnos retenidos
+     * por un checkout en curso (alguien pagando en este momento).
      *
      * @param  Collection<int, int>|array<int>  $canchaIds
      * @return array<int, list<int>>
@@ -29,10 +33,7 @@ class OcupacionReservasService
             ->whereIn('cancha_id', $canchaIds)
             ->where('hora_inicio', '<', $finDia)
             ->where('hora_fin', '>', $inicioDia)
-            ->where(function ($q) {
-                $q->whereNull('estado')
-                    ->orWhereRaw('UPPER(estado) NOT IN (?, ?)', ['CANCELADA', 'PAGO_FALLIDO']);
-            })
+            ->whereRaw('LOWER(estado) = ?', ['confirmada'])
             ->get(['cancha_id', 'hora_inicio', 'hora_fin']);
 
         $ocupados = [];
@@ -52,6 +53,14 @@ class OcupacionReservasService
                     $ocupados[(int) $reserva->cancha_id][] = $h;
                 }
             }
+        }
+
+        foreach ($this->checkout->horasRetenidasPorCancha($canchaIds, $fecha) as $canchaId => $horas) {
+            if (! isset($ocupados[$canchaId])) {
+                continue;
+            }
+
+            $ocupados[$canchaId] = array_merge($ocupados[$canchaId], $horas);
         }
 
         foreach ($ocupados as $id => $horas) {

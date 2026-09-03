@@ -137,7 +137,7 @@
                                 <i
                                     class="fa-solid fa-id-card-clip absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <select x-model="form.tipo_documento_id" @change="onTipoDocumentoChange()"
+                                <select x-model="form.tipo_documento_id" @change="onTipoDocumentoChange($event)"
                                     :disabled="estado === 'sesion'"
                                     class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white disabled:bg-slate-100 disabled:text-slate-500">
 
@@ -270,9 +270,16 @@
                                 <i
                                     class="fa-solid fa-mobile-screen absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <input type="tel" x-model="form.telefono" :disabled="estado === 'existe'"
-                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta registrada' : '999 999 999'"
-                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
+                               <input
+                                        type="tel"
+                                        x-model="form.telefono"
+                                        maxlength="9"
+                                        inputmode="numeric"
+                                        @input="form.telefono = form.telefono.replace(/\D/g, '').slice(0, 9)"
+                                        :disabled="estado === 'existe'"
+                                        :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta registrada' : '999 999 999'"
+                                        class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                  >
 
                             </div>
 
@@ -705,31 +712,59 @@
                         return this.form.clave.trim().length >= 4;
                     }
 
-                    if (this.estado === 'existe') {
+                    // if (this.estado === 'existe') {
 
-                        return this.form.tipo_documento_id &&
-                            this.form.documento.replace(/\D/g, '').length >= 8 &&
-                            this.form.clave.trim().length >= 4;
+                    //     return this.form.tipo_documento_id &&
+                    //         this.form.documento.replace(/\D/g, '').length >= 8 &&
+                    //         this.form.clave.trim().length >= 4;
 
-                    }
+                    // }
 
                     return this.form.tipo_documento_id &&
-                        this.form.documento.replace(/\D/g, '').length >= 8 &&
-                        this.form.nombres.trim().length > 1 &&
-                        this.form.apellido_paterno.trim().length > 1 &&
-                        this.form.apellido_materno.trim().length > 1 &&
-                        this.form.telefono.trim().length > 6 &&
-                        this.form.email.includes('@') &&
-                        String(this.form.distrito_id).length > 0;
+                    this.validarDocumento() &&  
+                    this.form.nombres.trim().length > 1 &&
+                    this.form.apellido_paterno.trim().length > 1 &&
+                    this.form.apellido_materno.trim().length > 1 &&
+                    this.form.telefono.trim().length === 9 &&
+                    /^\d{9}$/.test(this.form.telefono.trim()) &&
+                    this.form.email.includes('@') &&
+                    String(this.form.distrito_id).length > 0;
 
                 },
 
+                
+                    validarDocumento() {
+                        const doc = this.form.documento.replace(/\D/g, '');
+                        const tipo = (window.tipoDocumentoSeleccionado || '').toLowerCase();
 
-                onTipoDocumentoChange() {
+                        switch (tipo) {
+                            case 'dni':
+                                return doc.length === 8;
+
+                            case 'ce': // Carné de extranjería
+                                return doc.length >= 10 && doc.length <= 11;
+
+                            case 'pasaporte':
+                                return this.form.documento.trim().length >= 6 &&
+                                    this.form.documento.trim().length <= 11;
+
+                            default:
+                                // Fallback si no hay tipo seleccionado o es desconocido
+                                return doc.length >= 8;
+                        }
+                    },
+                
+
+
+                onTipoDocumentoChange(event) {
 
                     if (this.estado === 'sesion') {
                         return;
                     }
+                    
+                    const select = event.target;
+                    const texto = select.options[select.selectedIndex]?.text || '';
+                    window.tipoDocumentoSeleccionado = texto.trim().toLowerCase();
 
                     this.estado = 'pendiente';
 
@@ -758,49 +793,56 @@
                 },
 
 
-                onDocumentoInput() {
+              onDocumentoInput() {
 
-                    if (this.estado === 'sesion') {
-                        return;
+    if (this.estado === 'sesion') {
+        return;
+    }
+
+                    // 🔒 Truncar según tipo de documento
+                    const tipo = (window.tipoDocumentoSeleccionado || '').toLowerCase();
+                    let valor = this.form.documento;
+
+                    if (tipo === 'dni') {
+                        valor = valor.replace(/\D/g, '').slice(0, 8);
+                    } else if (tipo === 'ce') {
+                        valor = valor.replace(/\D/g, '').slice(0, 12);
+                    } else if (tipo === 'pasaporte') {
+                        valor = valor.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
+                    } else {
+                        valor = valor.replace(/\D/g, '').slice(0, 15);
                     }
 
+                    this.form.documento = valor;
+
                     this.estado = 'pendiente';
-
                     this.mensaje = '';
-
                     this.form.nombres = '';
-
                     this.form.apellido_paterno = '';
-
                     this.form.apellido_materno = '';
-
                     this.form.telefono = '';
-
                     this.form.email = '';
-
                     this.form.clave = '';
-
                     this.form.distrito_id = '';
-
                     this.errorConfirmacion = '';
 
                     clearTimeout(debounceTimer);
 
+                    const digits = this.form.documento.replace(/\D/g, '');
 
-                    const digits =
-                        this.form.documento.replace(/\D/g, '');
-
+                    // Ajusta el mínimo de dígitos requerido para disparar la búsqueda según tipo
+                    let minParaBuscar = 8;
+                    if (tipo === 'ce') minParaBuscar = 9;
+                    if (tipo === 'pasaporte') minParaBuscar = 6;
 
                     if (
                         this.form.tipo_documento_id &&
-                        digits.length >= 8
+                        this.form.documento.replace(/[^a-zA-Z0-9]/g, '').length >= minParaBuscar
                     ) {
-
                         debounceTimer = setTimeout(
                             () => this.buscarDocumento(),
                             450
                         );
-
                     }
 
                 },
