@@ -17,7 +17,7 @@
         {{-- Logo --}}
         <div class="flex items-center justify-center shrink-0">
             <img
-                src="{{ asset('logo_municipal_negro.png') }}"
+                src="{{ asset('logo_municipal_negro2.png') }}"
                 alt="Municipalidad de La Molina"
                 class="h-[60px] w-auto rounded-lg object-contain"
                 onerror="this.style.display='none'"

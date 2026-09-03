@@ -262,7 +262,7 @@
         </div>
 
         <div class="web">
-            molicanchas.munimolina.gob.pe
+             {{ request()->getHost() }}
         </div>
 
     </div>
