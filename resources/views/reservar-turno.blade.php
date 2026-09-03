@@ -26,6 +26,16 @@
             </p>
         </div>
 
+        <div x-show="avisoTurno" x-cloak
+            class="mb-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-600"></i>
+            <p class="flex-1" x-text="avisoTurno"></p>
+            <button type="button" @click="avisoTurno = ''"
+                class="text-amber-600 hover:text-amber-800 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <div class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800">
@@ -73,10 +83,16 @@
                                 <button type="button"
                                     class="h-14 border-l border-slate-100 relative transition"
                                     :data-celda="cancha.id + '-' + h"
-                                    :disabled="estaBloqueado(cancha, h)"
+                                    :disabled="estaBloqueado(cancha, h) || validandoSlot"
                                     :class="claseCelda(cancha, h)"
                                     @click.stop="seleccionar($event, cancha, h)"
                                     :title="tituloCelda(cancha, h)">
+
+                                    <!-- 0. Validando disponibilidad -->
+                                    <span x-show="slotValidandose === cancha.id + '-' + h"
+                                        class="absolute inset-1.5 rounded-md bg-white/80 flex items-center justify-center pointer-events-none text-[#1b5e3b]">
+                                        <i class="fa-solid fa-circle-notch fa-spin text-[11px]"></i>
+                                    </span>
                                     
                                     <!-- 1. Hora pasada -->
                                     <span x-show="esHoraPasada(h)"
@@ -284,9 +300,14 @@
             </div>
 
             <!-- BOTÓN CONTINUAR -->
-            <button type="button" @click="continuar()"
-                class="w-full py-3.5 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white text-base font-bold shadow-sm transition">
-                Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60).toFixed(2)"></span>
+            <button type="button" @click="continuar()" :disabled="validandoSlot"
+                class="w-full py-3.5 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white text-base font-bold shadow-sm transition disabled:opacity-60 disabled:cursor-wait">
+                <span x-show="!validandoSlot">
+                    Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60).toFixed(2)"></span>
+                </span>
+                <span x-show="validandoSlot" x-cloak>
+                    <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Validando disponibilidad...
+                </span>
             </button>
         </div>
     </div>
@@ -299,6 +320,7 @@
             const deporteIdParam = @json($deporte_id);
             const fechaParam = @json($fecha);
             const ocupacionUrl = @json(route('reservar.ocupacion'));
+            const disponibilidadUrl = @json(route('reservar.disponibilidad'));
 
             const inicio = parseInt(String(club.hora_inicio || '08:00').split(':')[0], 10);
             const fin = parseInt(String(club.hora_fin || '22:00').split(':')[0], 10);
@@ -319,6 +341,9 @@
                 popup: { visible: false },
                 cargandoOcupacion: false,
                 puede120: false,
+                validandoSlot: false,
+                slotValidandose: null,
+                avisoTurno: '',
 
                 get canchaSeleccionada() {
                     if (!this.seleccion) return null;
@@ -522,8 +547,56 @@
                     return 'Reservar ' + this.horaLabel(h);
                 },
 
-                seleccionar(event, cancha, h) {
-                    if (this.estaBloqueado(cancha, h)) return;
+                // Pregunta al servidor si el turno sigue libre (otra persona pudo tomarlo)
+                async turnoSigueLibre(canchaId, hora, duracion) {
+                    const params = new URLSearchParams({
+                        cancha_id: String(canchaId),
+                        fecha: this.fecha,
+                        hora: this.horaLabel(hora),
+                        duracion: String(duracion),
+                    });
+
+                    const res = await fetch(disponibilidadUrl + '?' + params.toString(), {
+                        headers: { 'Accept': 'application/json' },
+                    });
+
+                    if (!res.ok) throw new Error('No se pudo validar la disponibilidad.');
+
+                    const data = await res.json();
+
+                    // Refresca la grilla con lo que el servidor acaba de ver
+                    const mapa = data.ocupados || {};
+                    if (mapa[canchaId] || mapa[String(canchaId)]) {
+                        this.canchas = this.canchas.map((c) => c.id === canchaId
+                            ? { ...c, ocupados: mapa[c.id] || mapa[String(c.id)] || [] }
+                            : c);
+                    }
+
+                    return data;
+                },
+
+                async seleccionar(event, cancha, h) {
+                    if (this.estaBloqueado(cancha, h) || this.validandoSlot) return;
+
+                    this.avisoTurno = '';
+                    this.validandoSlot = true;
+                    this.slotValidandose = cancha.id + '-' + h;
+
+                    try {
+                        const data = await this.turnoSigueLibre(cancha.id, h, 60);
+
+                        if (!data.disponible) {
+                            this.avisoTurno = data.mensaje
+                                || 'Ese horario ya no está disponible. Elige otro turno.';
+                            return;
+                        }
+                    } catch (e) {
+                        this.avisoTurno = 'No pudimos validar la disponibilidad. Intenta nuevamente.';
+                        return;
+                    } finally {
+                        this.validandoSlot = false;
+                        this.slotValidandose = null;
+                    }
 
                     const puede120 = !this.estaBloqueado(cancha, h + 1) && this.horas.includes(h + 1);
 
@@ -549,9 +622,28 @@
                     this.popup.visible = true;
                 },
 
-                elegirDuracion(minutos) {
-                    if (!this.seleccion) return;
+                async elegirDuracion(minutos) {
+                    if (!this.seleccion || this.validandoSlot) return;
                     if (minutos === 120 && !this.puede120) return;
+
+                    if (minutos === 120) {
+                        this.validandoSlot = true;
+                        try {
+                            const data = await this.turnoSigueLibre(this.seleccion.canchaId, this.seleccion.hora, 120);
+
+                            if (!data.disponible) {
+                                this.puede120 = false;
+                                this.avisoTurno = 'La segunda hora acaba de ser tomada. Solo puedes reservar 60 minutos.';
+                                return;
+                            }
+                        } catch (e) {
+                            this.avisoTurno = 'No pudimos validar la disponibilidad. Intenta nuevamente.';
+                            return;
+                        } finally {
+                            this.validandoSlot = false;
+                        }
+                    }
+
                     this.seleccion.duracion = minutos;
                 },
 
@@ -561,8 +653,30 @@
                     this.puede120 = false;
                 },
 
-                continuar() {
-                    if (!this.seleccion) return;
+                async continuar() {
+                    if (!this.seleccion || this.validandoSlot) return;
+
+                    this.validandoSlot = true;
+                    try {
+                        const data = await this.turnoSigueLibre(
+                            this.seleccion.canchaId,
+                            this.seleccion.hora,
+                            this.seleccion.duracion || 60,
+                        );
+
+                        if (!data.disponible) {
+                            this.avisoTurno = data.mensaje
+                                || 'Ese horario ya no está disponible. Elige otro turno.';
+                            this.cerrarPopup();
+                            return;
+                        }
+                    } catch (e) {
+                        this.avisoTurno = 'No pudimos validar la disponibilidad. Intenta nuevamente.';
+                        return;
+                    } finally {
+                        this.validandoSlot = false;
+                    }
+
                     const horaStr = this.horaLabel(this.seleccion.hora);
                     const tusne = this.tusneActivo;
 

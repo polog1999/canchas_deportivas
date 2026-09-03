@@ -36,9 +36,56 @@ class ReservaCheckoutService
         return $number;
     }
 
-    public function claveBloqueo(int $canchaId, Carbon $horaInicio): string
+    public function claveBloqueo(int $canchaId, Carbon $hora): string
     {
-        return self::SLOT_PREFIX.$canchaId.':'.$horaInicio->format('Y-m-d H:i:s');
+        return self::SLOT_PREFIX.$canchaId.':'.$hora->format('Y-m-d H').':00:00';
+    }
+
+    /**
+     * Una clave por cada hora que abarca el turno.
+     *
+     * @return list<string>
+     */
+    private function clavesBloqueo(int $canchaId, Carbon $horaInicio, Carbon $horaFin): array
+    {
+        $claves = [];
+        $cursor = $horaInicio->copy()->startOfHour();
+
+        while ($cursor->lt($horaFin)) {
+            $claves[] = $this->claveBloqueo($canchaId, $cursor);
+            $cursor->addHour();
+        }
+
+        return $claves;
+    }
+
+    /**
+     * Horas retenidas por checkouts en curso (aún sin pago).
+     *
+     * @param  \Illuminate\Support\Collection<int, int>|array<int>  $canchaIds
+     * @return array<int, list<int>>
+     */
+    public function horasRetenidasPorCancha($canchaIds, string $fecha): array
+    {
+        $retenidas = [];
+        $dia = Carbon::parse($fecha)->startOfDay();
+
+        foreach (collect($canchaIds)->filter()->unique() as $canchaId) {
+            $canchaId = (int) $canchaId;
+            $horas = [];
+
+            for ($h = 0; $h < 24; $h++) {
+                $clave = $this->claveBloqueo($canchaId, $dia->copy()->setTime($h, 0));
+
+                if (Cache::has($clave)) {
+                    $horas[] = $h;
+                }
+            }
+
+            $retenidas[$canchaId] = $horas;
+        }
+
+        return $retenidas;
     }
 
     /**
@@ -101,11 +148,10 @@ class ReservaCheckoutService
         ];
 
         Cache::put(self::CHECKOUT_PREFIX.$purchaseNumber, $checkout, self::TTL_SECONDS);
-        Cache::put(
-            $this->claveBloqueo($canchaId, $horaInicio),
-            $purchaseNumber,
-            self::TTL_SECONDS
-        );
+
+        foreach ($this->clavesBloqueo($canchaId, $horaInicio, $horaFin) as $clave) {
+            Cache::put($clave, $purchaseNumber, self::TTL_SECONDS);
+        }
 
         return $checkout;
     }
@@ -130,9 +176,15 @@ class ReservaCheckoutService
 
         Cache::forget(self::CHECKOUT_PREFIX.$purchaseNumber);
 
-        $horaInicio = Carbon::parse($checkout['hora_inicio']);
+        $claves = $this->clavesBloqueo(
+            (int) $checkout['cancha_id'],
+            Carbon::parse($checkout['hora_inicio']),
+            Carbon::parse($checkout['hora_fin']),
+        );
 
-        Cache::forget($this->claveBloqueo((int) $checkout['cancha_id'], $horaInicio));
+        foreach ($claves as $clave) {
+            Cache::forget($clave);
+        }
     }
 
     public function turnoDisponible(
@@ -155,13 +207,19 @@ class ReservaCheckoutService
             return false;
         }
 
-        $bloqueo = Cache::get($this->claveBloqueo($canchaId, $horaInicio));
+        foreach ($this->clavesBloqueo($canchaId, $horaInicio, $horaFin) as $clave) {
+            $bloqueo = Cache::get($clave);
 
-        if ($bloqueo === null) {
-            return true;
+            if ($bloqueo === null) {
+                continue;
+            }
+
+            if ($purchaseNumberPropio === null || (string) $bloqueo !== $purchaseNumberPropio) {
+                return false;
+            }
         }
 
-        return $purchaseNumberPropio !== null && (string) $bloqueo === $purchaseNumberPropio;
+        return true;
     }
 
     /**

@@ -27,6 +27,7 @@ Route::get('/reservar', [ReservarController::class, 'index'])->name('reservar');
 Route::get('/reservar/deporte', [ReservarController::class, 'deporte'])->name('reservar.deporte');
 Route::get('/reservar/turno', ReservarTurnoController::class)->name('reservar.turno');
 Route::get('/reservar/ocupacion', [ReservarController::class, 'ocupacion'])->name('reservar.ocupacion');
+Route::get('/reservar/disponibilidad', [ReservarController::class, 'disponibilidad'])->name('reservar.disponibilidad');
 Route::get('/reservar/confirmar', [ReservarController::class, 'confirmar'])->name('reservar.confirmar');
 Route::get('/reservar/pago', [ReservarController::class, 'pago'])->name('reservar.pago');
 Route::get('/reservar/resultado', ResultadoPagoController::class)->name('reservar.resultado');

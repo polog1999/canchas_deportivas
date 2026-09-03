@@ -2,6 +2,7 @@
     $urlDeporte = route('portal.reservar.deporte', ['sede' => $sede['id'], 'fecha' => $fecha]);
     $urlConfirmar = route('portal.reservar.confirmar');
     $urlOcupacion = route('reservar.ocupacion');
+    $urlDisponibilidad = route('reservar.disponibilidad');
 @endphp
 
 <x-portal-reserva-shell
@@ -19,6 +20,15 @@
                 <span class="font-semibold text-slate-700" x-text="club.nombre"></span>
                 · <span x-text="club.direccion"></span>
             </p>
+        </div>
+
+        <div x-show="avisoTurno" x-cloak
+            class="mb-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-600"></i>
+            <p class="flex-1" x-text="avisoTurno"></p>
+            <button type="button" @click="avisoTurno = ''" class="text-amber-600 hover:text-amber-800">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
@@ -60,8 +70,12 @@
                             </div>
                             <template x-for="h in horas" :key="cancha.id + '-' + h">
                                 <button type="button" class="h-14 border-l border-slate-100 relative transition"
-                                    :disabled="estaOcupado(cancha, h)" :class="claseCelda(cancha, h)"
+                                    :disabled="estaOcupado(cancha, h) || validandoSlot" :class="claseCelda(cancha, h)"
                                     @click.stop="seleccionar(cancha, h)">
+                                    <span x-show="slotValidandose === cancha.id + '-' + h"
+                                        class="absolute inset-1.5 rounded-md bg-white/80 flex items-center justify-center text-emerald-800">
+                                        <i class="fa-solid fa-circle-notch fa-spin text-[11px]"></i>
+                                    </span>
                                     <span x-show="estaOcupado(cancha, h)" class="absolute inset-1.5 rounded-md bg-slate-400/80"></span>
                                     <span x-show="estaSeleccionado(cancha, h)" class="absolute inset-1.5 rounded-md bg-emerald-700"></span>
                                 </button>
@@ -127,6 +141,7 @@
             const deporteIdParam = @json($deporte_id);
             const fechaParam = @json($fecha);
             const ocupacionUrl = @json($urlOcupacion);
+            const disponibilidadUrl = @json($urlDisponibilidad);
             const urlConfirmar = @json($urlConfirmar);
             const inicio = parseInt(String(club.hora_inicio || '08:00').split(':')[0], 10);
             const fin = parseInt(String(club.hora_fin || '22:00').split(':')[0], 10);
@@ -138,6 +153,7 @@
                 horas: horas.length ? horas : Array.from({length: 14}, (_, i) => i + 8),
                 canchas: club.canchas || [], seleccion: null, popup: { visible: false },
                 cargandoOcupacion: false, puede120: false,
+                validandoSlot: false, slotValidandose: null, avisoTurno: '',
                 get esNoche() { return this.seleccion ? this.seleccion.hora >= 18 : false; },
                 get tusneActivo() {
                     if (!this.seleccion) return null;
@@ -200,18 +216,87 @@
                     if (this.estaSeleccionado(c,h)) return 'bg-emerald-700/10';
                     return 'bg-white hover:bg-emerald-700/10 cursor-pointer';
                 },
-                seleccionar(cancha, h) {
-                    if (this.estaOcupado(cancha, h)) return;
+                // Pregunta al servidor si el turno sigue libre (otra persona pudo tomarlo)
+                async turnoSigueLibre(canchaId, hora, duracion) {
+                    const params = new URLSearchParams({
+                        cancha_id: String(canchaId), fecha: this.fecha,
+                        hora: this.horaLabel(hora), duracion: String(duracion),
+                    });
+                    const res = await fetch(disponibilidadUrl + '?' + params, { headers: { Accept: 'application/json' } });
+                    if (!res.ok) throw new Error('No se pudo validar la disponibilidad.');
+                    const data = await res.json();
+                    const mapa = data.ocupados || {};
+                    if (mapa[canchaId] || mapa[String(canchaId)]) {
+                        this.canchas = this.canchas.map(c => c.id === canchaId
+                            ? { ...c, ocupados: mapa[c.id] || mapa[String(c.id)] || [] } : c);
+                    }
+                    return data;
+                },
+                async seleccionar(cancha, h) {
+                    if (this.estaOcupado(cancha, h) || this.validandoSlot) return;
+
+                    this.avisoTurno = '';
+                    this.validandoSlot = true;
+                    this.slotValidandose = cancha.id + '-' + h;
+                    try {
+                        const data = await this.turnoSigueLibre(cancha.id, h, 60);
+                        if (!data.disponible) {
+                            this.avisoTurno = data.mensaje || 'Ese horario ya no está disponible. Elige otro turno.';
+                            return;
+                        }
+                    } catch (e) {
+                        this.avisoTurno = 'No pudimos validar la disponibilidad. Intenta nuevamente.';
+                        return;
+                    } finally {
+                        this.validandoSlot = false;
+                        this.slotValidandose = null;
+                    }
+
                     this.puede120 = !this.estaOcupado(cancha, h+1) && this.horas.includes(h+1);
                     this.seleccion = { canchaId: cancha.id, cancha: cancha.nombre, detalle: cancha.detalle,
                         precioBase: Number(cancha.precio)||0, hora: h, duracion: 60, tipoUso: 'alquiler_regular',
                         deporteIds: cancha.deporte_ids || [] };
                     this.popup.visible = true;
                 },
-                elegirDuracion(m) { if (this.seleccion && !(m===120 && !this.puede120)) this.seleccion.duracion = m; },
+                async elegirDuracion(m) {
+                    if (!this.seleccion || this.validandoSlot) return;
+                    if (m === 120 && !this.puede120) return;
+
+                    if (m === 120) {
+                        this.validandoSlot = true;
+                        try {
+                            const data = await this.turnoSigueLibre(this.seleccion.canchaId, this.seleccion.hora, 120);
+                            if (!data.disponible) {
+                                this.puede120 = false;
+                                this.avisoTurno = 'La segunda hora acaba de ser tomada. Solo puedes reservar 60 minutos.';
+                                return;
+                            }
+                        } catch (e) {
+                            this.avisoTurno = 'No pudimos validar la disponibilidad. Intenta nuevamente.';
+                            return;
+                        } finally { this.validandoSlot = false; }
+                    }
+
+                    this.seleccion.duracion = m;
+                },
                 cerrarPopup() { this.popup.visible = false; this.seleccion = null; this.puede120 = false; },
-                continuar() {
-                    if (!this.seleccion) return;
+                async continuar() {
+                    if (!this.seleccion || this.validandoSlot) return;
+
+                    this.validandoSlot = true;
+                    try {
+                        const data = await this.turnoSigueLibre(
+                            this.seleccion.canchaId, this.seleccion.hora, this.seleccion.duracion || 60);
+                        if (!data.disponible) {
+                            this.avisoTurno = data.mensaje || 'Ese horario ya no está disponible. Elige otro turno.';
+                            this.cerrarPopup();
+                            return;
+                        }
+                    } catch (e) {
+                        this.avisoTurno = 'No pudimos validar la disponibilidad. Intenta nuevamente.';
+                        return;
+                    } finally { this.validandoSlot = false; }
+
                     const tusne = this.tusneActivo;
                     const params = new URLSearchParams({
                         sede: String(this.club.id), club: this.club.nombre, direccion: this.club.direccion,

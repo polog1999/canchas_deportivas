@@ -45,8 +45,14 @@
                 <span x-text="puede120 ? ('PEN ' + precioDuracion(120).toFixed(2)) : 'No disponible'"></span>
             </button>
         </div>
-        <button type="button" @click="continuar()" class="w-full py-3.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold">
-            Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60).toFixed(2)"></span>
+        <button type="button" @click="continuar()" :disabled="validandoSlot"
+            class="w-full py-3.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold disabled:opacity-60 disabled:cursor-wait">
+            <span x-show="!validandoSlot">
+                Continuar - PEN <span x-text="precioDuracion(seleccion?.duracion || 60).toFixed(2)"></span>
+            </span>
+            <span x-show="validandoSlot" x-cloak>
+                <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Validando disponibilidad...
+            </span>
         </button>
     </div>
 </div>
