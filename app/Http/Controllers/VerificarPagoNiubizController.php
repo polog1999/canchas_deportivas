@@ -135,7 +135,7 @@ class VerificarPagoNiubizController extends Controller
             [
                 'contexto_id' => $contextoId,
                 'purchase_number' => $purchaseNumber,
-                'lock_key' => 'verify_payment_reserva_'.$purchaseNumber,
+                'lock_key' => 'verify_payment_reserva_' . $purchaseNumber,
                 'es_checkout' => $esCheckout,
             ]
         );
@@ -573,197 +573,197 @@ class VerificarPagoNiubizController extends Controller
                             &$pagoRegistrado,
                         ) {
 
-                        Log::channel('niubiz')->info(
-                            '[Verify] Dentro de transacción DB',
-                            [
-                                'reserva_id' => $reserva->id,
-                            ]
-                        );
-
-                        // Bloqueo pesimista a nivel de base de datos para evitar pagos concurrentes
-                        $reserva = Reserva::query()
-                            ->whereKey($reserva->id)
-                            ->lockForUpdate()
-                            ->first();
-
-                        if (
-                            strtolower(
-                                (string) $reserva->estado
-                            ) === 'confirmada'
-                        ) {
-
-                            Log::channel('niubiz')->warning(
-                                '[Verify] La reserva ya estaba confirmada dentro de la transacción',
+                            Log::channel('niubiz')->info(
+                                '[Verify] Dentro de transacción DB',
                                 [
                                     'reserva_id' => $reserva->id,
                                 ]
                             );
 
-                            $pagoExistente = Pago::whereHas(
-                                'transaccion',
-                                function ($query) use ($reserva) {
-                                    $query->where(
-                                        'reserva_id',
-                                        $reserva->id
-                                    );
-                                }
-                            )
-                                ->latest('id')
+                            // Bloqueo pesimista a nivel de base de datos para evitar pagos concurrentes
+                            $reserva = Reserva::query()
+                                ->whereKey($reserva->id)
+                                ->lockForUpdate()
                                 ->first();
 
-                            $pagoRegistrado = $pagoExistente;
+                            if (
+                                strtolower(
+                                    (string) $reserva->estado
+                                ) === 'confirmada'
+                            ) {
 
-                            Log::channel('niubiz')->info(
-                                '[Verify] Pago existente recuperado',
-                                [
-                                    'reserva_id' => $reserva->id,
-                                    'pago_id' => $pagoExistente?->id,
-                                ]
-                            );
+                                Log::channel('niubiz')->warning(
+                                    '[Verify] La reserva ya estaba confirmada dentro de la transacción',
+                                    [
+                                        'reserva_id' => $reserva->id,
+                                    ]
+                                );
 
-                            return $pagoExistente;
-                        }
+                                $pagoExistente = Pago::whereHas(
+                                    'transaccion',
+                                    function ($query) use ($reserva) {
+                                        $query->where(
+                                            'reserva_id',
+                                            $reserva->id
+                                        );
+                                    }
+                                )
+                                    ->latest('id')
+                                    ->first();
 
-                        /*
+                                $pagoRegistrado = $pagoExistente;
+
+                                Log::channel('niubiz')->info(
+                                    '[Verify] Pago existente recuperado',
+                                    [
+                                        'reserva_id' => $reserva->id,
+                                        'pago_id' => $pagoExistente?->id,
+                                    ]
+                                );
+
+                                return $pagoExistente;
+                            }
+
+                            /*
                         |--------------------------------------------------------------------------
                         | CONFIRMAR RESERVA
                         |--------------------------------------------------------------------------
                         */
 
-                        Log::channel('niubiz')->info(
-                            '[Verify] Actualizando reserva a confirmada',
-                            [
-                                'reserva_id' => $reserva->id,
-                                'estado_anterior' => $reserva->estado,
-                            ]
-                        );
+                            Log::channel('niubiz')->info(
+                                '[Verify] Actualizando reserva a confirmada',
+                                [
+                                    'reserva_id' => $reserva->id,
+                                    'estado_anterior' => $reserva->estado,
+                                ]
+                            );
 
-                        $reserva->update([
-                            'estado' => 'confirmada'
-                        ]);
+                            $reserva->update([
+                                'estado' => 'confirmada'
+                            ]);
 
-                        Log::channel('niubiz')->info(
-                            '[Verify] Reserva confirmada correctamente',
-                            [
-                                'reserva_id' => $reserva->id,
-                            ]
-                        );
+                            Log::channel('niubiz')->info(
+                                '[Verify] Reserva confirmada correctamente',
+                                [
+                                    'reserva_id' => $reserva->id,
+                                ]
+                            );
 
-                        /*
+                            /*
                         |--------------------------------------------------------------------------
                         | CREAR TRANSACCION
                         |--------------------------------------------------------------------------
                         */
 
-                        Log::channel('niubiz')->info(
-                            '[Verify] Creando registro de transacción',
-                            [
+                            Log::channel('niubiz')->info(
+                                '[Verify] Creando registro de transacción',
+                                [
+                                    'reserva_id' => $reserva->id,
+                                    'transaction_id' => $transactionId,
+                                    'amount' => $amount,
+                                ]
+                            );
+
+                            $transaccion = Transaccion::create([
                                 'reserva_id' => $reserva->id,
-                                'transaction_id' => $transactionId,
-                                'amount' => $amount,
-                            ]
-                        );
 
-                        $transaccion = Transaccion::create([
-                            'reserva_id' => $reserva->id,
+                                'transaccion_id' =>
+                                (string) $transactionId,
 
-                            'transaccion_id' =>
-                            (string) $transactionId,
+                                'codigo_autorizacion' =>
+                                $authCode
+                                    ? (string) $authCode
+                                    : null,
 
-                            'codigo_autorizacion' =>
-                            $authCode
-                                ? (string) $authCode
-                                : null,
+                                'marca_tarjeta' =>
+                                $brand
+                                    ? (string) $brand
+                                    : null,
 
-                            'marca_tarjeta' =>
-                            $brand
-                                ? (string) $brand
-                                : null,
+                                'tarjeta_enmascarada' =>
+                                $card
+                                    ? (string) $card
+                                    : null,
 
-                            'tarjeta_enmascarada' =>
-                            $card
-                                ? (string) $card
-                                : null,
+                                'monto' => round(
+                                    (float) $amount,
+                                    2
+                                ),
 
-                            'monto' => round(
-                                (float) $amount,
-                                2
-                            ),
+                                'estado' => 'Authorized',
 
-                            'estado' => 'Authorized',
+                                'respuesta_bruta' => [
+                                    'niubiz' => $response,
+                                    'voucher' =>
+                                    $reserva->referencia_pago,
+                                    'meta' => $meta,
+                                ],
+                            ]);
 
-                            'respuesta_bruta' => [
-                                'niubiz' => $response,
-                                'voucher' =>
-                                $reserva->referencia_pago,
-                                'meta' => $meta,
-                            ],
-                        ]);
+                            Log::channel('niubiz')->info(
+                                '[Verify] Transacción creada correctamente',
+                                [
+                                    'transaccion_id_local' => $transaccion->id,
+                                    'transaction_id_niubiz' => $transactionId,
+                                    'reserva_id' => $reserva->id,
+                                ]
+                            );
 
-                        Log::channel('niubiz')->info(
-                            '[Verify] Transacción creada correctamente',
-                            [
-                                'transaccion_id_local' => $transaccion->id,
-                                'transaction_id_niubiz' => $transactionId,
-                                'reserva_id' => $reserva->id,
-                            ]
-                        );
-
-                        /*
+                            /*
                         |--------------------------------------------------------------------------
                         | CREAR PAGO
                         |--------------------------------------------------------------------------
                         */
 
-                        Log::channel('niubiz')->info(
-                            '[Verify] Creando registro de pago',
-                            [
-                                'transaccion_id' => $transaccion->id,
-                                'monto' => $amount,
-                                'catalogo_tusne_id' =>
+                            Log::channel('niubiz')->info(
+                                '[Verify] Creando registro de pago',
+                                [
+                                    'transaccion_id' => $transaccion->id,
+                                    'monto' => $amount,
+                                    'catalogo_tusne_id' =>
                                     CatalogoTusneReserva::idDesdeMeta($meta),
-                            ]
-                        );
+                                ]
+                            );
 
-                        $pago = Pago::create([
-                            'transaccion_id' =>
-                            $transaccion->id,
+                            $pago = Pago::create([
+                                'transaccion_id' =>
+                                $transaccion->id,
 
-                            'monto' => round(
-                                (float) $amount,
-                                2
-                            ),
+                                'monto' => round(
+                                    (float) $amount,
+                                    2
+                                ),
 
-                            'pagado_en' => now(),
+                                'pagado_en' => now(),
 
-                            'acepto_terminos' =>
-                            (bool) session(
-                                'pago_acepto_terminos',
-                                true
-                            ),
+                                'acepto_terminos' =>
+                                (bool) session(
+                                    'pago_acepto_terminos',
+                                    true
+                                ),
 
-                            'id_catalogos_tusne' =>
-                            CatalogoTusneReserva::idDesdeMeta($meta),
-                        ]);
-
-                        $pagoRegistrado = $pago;
-
-                        Log::channel('niubiz')->info(
-                            '[Verify] Pago creado correctamente',
-                            [
-                                'pago_id' => $pago->id,
-                                'transaccion_id' => $transaccion->id,
-                                'reserva_id' => $reserva->id,
                                 'id_catalogos_tusne' =>
-                                $pago->id_catalogos_tusne,
-                                'monto' => $pago->monto,
-                                'pagado_en' => $pago->pagado_en,
-                            ]
-                        );
+                                CatalogoTusneReserva::idDesdeMeta($meta),
+                            ]);
 
-                        return $pago;
-                    }
-                );
+                            $pagoRegistrado = $pago;
+
+                            Log::channel('niubiz')->info(
+                                '[Verify] Pago creado correctamente',
+                                [
+                                    'pago_id' => $pago->id,
+                                    'transaccion_id' => $transaccion->id,
+                                    'reserva_id' => $reserva->id,
+                                    'id_catalogos_tusne' =>
+                                    $pago->id_catalogos_tusne,
+                                    'monto' => $pago->monto,
+                                    'pagado_en' => $pago->pagado_en,
+                                ]
+                            );
+
+                            return $pago;
+                        }
+                    );
                 }
 
                 Log::channel('niubiz')->info(
@@ -842,6 +842,10 @@ class VerificarPagoNiubizController extends Controller
                         );
                     } else {
 
+                        $obj_tipo_documento = $perfil->tipoDocumento;
+                        $tipo_documento_doi = trim(
+                            (string) $obj_tipo_documento->doi
+                        );
                         $num_documento =
                             trim(
                                 (string) $perfil->numero_documento
@@ -868,6 +872,7 @@ class VerificarPagoNiubizController extends Controller
                             Log::channel('niubiz')->info(
                                 '[Oracle] Consultando contribuyente',
                                 [
+                                    'tipo_documento' => $obj_tipo_documento->abreviatura,
                                     'numero_documento' => $num_documento,
                                     'reserva_id' => $reserva->id,
                                 ]
@@ -875,12 +880,14 @@ class VerificarPagoNiubizController extends Controller
 
                             $codContribuyente =
                                 $serviceOracle->getCodContribuyente(
+                                    $tipo_documento_doi,
                                     $num_documento
                                 );
 
                             Log::channel('niubiz')->info(
                                 '[Oracle] Resultado consulta contribuyente',
                                 [
+                                    'tipo_documento' => $obj_tipo_documento->abreviatura,
                                     'numero_documento' => $num_documento,
                                     'cod_contribuyente' => $codContribuyente,
                                 ]
@@ -890,6 +897,7 @@ class VerificarPagoNiubizController extends Controller
                             Log::channel('niubiz')->error(
                                 '[Oracle] ERROR CONSULTANDO CONTRIBUYENTE',
                                 [
+                                    'tipo_documento' => $obj_tipo_documento->abreviatura,
                                     'numero_documento' => $num_documento,
                                     'reserva_id' => $reserva->id,
                                     'mensaje' => $e->getMessage(),
@@ -937,9 +945,7 @@ class VerificarPagoNiubizController extends Controller
                         |--------------------------------------------------------------------------
                         | NO EXISTE -> CREAR CONTRIBUYENTE
                         |--------------------------------------------------------------------------
-                        */
-
-                        else {
+                        */ else {
 
                             Log::channel('niubiz')->info(
                                 '[Oracle] CONTRIBUYENTE NO EXISTE - CREANDO',
@@ -1767,7 +1773,7 @@ class VerificarPagoNiubizController extends Controller
                 'fecha_pedido_label' => now('America/Lima')->format('d/m/Y H:i:s'),
                 'descripcion_denegacion' => $mensaje ?? '',
                 'importe_label' => isset($checkout['precio'])
-                    ? 'S/ '.number_format((float) $checkout['precio'], 2)
+                    ? 'S/ ' . number_format((float) $checkout['precio'], 2)
                     : '—',
             ]);
 
