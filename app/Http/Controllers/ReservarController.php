@@ -120,41 +120,46 @@ class ReservarController extends Controller
      * Revalida un turno puntual antes de abrir el selector de duración,
      * para no dejar avanzar si otra persona lo tomó mientras tanto.
      */
-    public function disponibilidad(
-        Request $request,
-        ReservaCheckoutService $checkout,
-        OcupacionReservasService $ocupacion,
-    ): JsonResponse {
-        $data = $request->validate([
-            'cancha_id' => 'required|integer|exists:canchas,id',
-            'fecha' => 'required|date_format:Y-m-d',
-            'hora' => ['required', 'regex:/^\d{1,2}:\d{2}$/'],
-            'duracion' => 'required|integer|in:60,120',
-        ]);
+   public function disponibilidad(
+    Request $request,
+    ReservaCheckoutService $checkout,
+    OcupacionReservasService $ocupacion,
+): JsonResponse {
+    $data = $request->validate([
+        'cancha_id' => 'required|integer|exists:canchas,id',
+        'fecha' => 'required|date_format:Y-m-d',
+        'hora' => ['required', 'regex:/^\d{1,2}:\d{2}$/'],
+        'duracion' => 'required|integer|in:60,120',
+    ]);
 
-        $horaInicio = Carbon::createFromFormat(
-            'Y-m-d H:i',
-            $data['fecha'].' '.$data['hora'],
-            'America/Lima'
-        );
-        $horaFin = $horaInicio->copy()->addMinutes((int) $data['duracion']);
+    $horaInicio = Carbon::createFromFormat(
+        'Y-m-d H:i',
+        $data['fecha'].' '.$data['hora'],
+        'America/Lima'
+    );
 
-        $canchaId = (int) $data['cancha_id'];
-        $disponible = $checkout->turnoDisponible($canchaId, $horaInicio, $horaFin);
+    $horaFin = $horaInicio->copy()->addMinutes((int) $data['duracion']);
 
-        if ($disponible && $horaInicio->isPast()) {
-            $disponible = false;
-        }
+    $canchaId = (int) $data['cancha_id'];
 
-        return response()->json([
-            'ok' => true,
-            'disponible' => $disponible,
-            'mensaje' => $disponible
-                ? null
-                : 'Ese horario acaba de ser tomado por otra persona. Elige otro turno.',
-            'ocupados' => $ocupacion->porCancha([$canchaId], $data['fecha']),
-        ]);
-    }
+    $disponible = $checkout->turnoDisponible(
+        $canchaId,
+        $horaInicio,
+        $horaFin
+    );
+
+    return response()->json([
+        'ok' => true,
+        'disponible' => $disponible,
+        'mensaje' => $disponible
+            ? null
+            : 'Ese horario acaba de ser tomado por otra persona. Elige otro turno.',
+        'ocupados' => $ocupacion->porCancha(
+            [$canchaId],
+            $data['fecha']
+        ),
+    ]);
+}
 
     public function confirmar(): View
     {

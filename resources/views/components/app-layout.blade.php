@@ -9,11 +9,14 @@
 
     <title>
         Portal
-        {{ auth()->user()->rol?->nombre === 'admin' ? 'Administrador' : (auth()->user()->rol?->nombre ?? 'Usuario') }}
+        {{ auth()->user()->rol?->nombre === 'admin' ? 'Administrador' : auth()->user()->rol?->nombre ?? 'Usuario' }}
         | {{ $title ?? 'Alquiler de Canchas' }}
     </title>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
@@ -23,305 +26,825 @@
 
 <body class="bg-slate-100 text-slate-800 font-sans antialiased overflow-x-hidden">
 
-    <div class="relative min-h-screen flex">
+<div class="relative min-h-screen flex">
 
-        <div id="sidebarOverlay"
-            class="fixed inset-0 bg-slate-900/50 z-40 transition-opacity duration-300 opacity-0 pointer-events-none lg:hidden">
-        </div>
-
-        <aside id="sidebar"
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out border-r border-slate-800">
-
-            <div class="h-20 flex items-center gap-3 px-6 border-b border-slate-800">
-                <img src="{{ asset('favicon.png') }}" class="w-10 h-auto" alt="Logo La Molina">
-                <div>
-                    <h3 class="text-xs font-bold tracking-wider text-emerald-500 uppercase">
-                        Canchas Deportivas
-                    </h3>
-                    <p class="text-[10px] text-slate-500 font-semibold tracking-tight uppercase">La Molina</p>
-                </div>
-            </div>
-
-            <div class="flex-grow overflow-y-auto px-4 py-6 space-y-6">
-                <ul class="space-y-1">
-                    {{--
-                    @activeRole('SUPERADMIN')
-                        <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                            Super Administrador
-                        </div>
-                        <li>
-                            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('admin.dashboard') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-chart-line w-5 text-center text-emerald-500"></i> Control Panel
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('admin.users.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-users-gear w-5 text-center text-emerald-500"></i> Usuarios del Sistema
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-800 hover:text-white">
-                                <i class="fa-solid fa-gears w-5 text-center text-emerald-500"></i> Configuración Global
-                            </a>
-                        </li>
-                    @endactiveRole
-
-                    @activeRole('ADMIN')
-                        <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                            Gestión Municipal
-                        </div>
-                        <li>
-                            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('admin.dashboard') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-house w-5 text-center text-emerald-500"></i> Dashboard
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('admin.talleres.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('admin.talleres.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-futbol w-5 text-center text-emerald-500"></i> Canchas / Espacios
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('admin.matriculas.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('admin.matriculas.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-calendar-check w-5 text-center text-emerald-500"></i> Reservas Activas
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('admin.lugares.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('admin.lugares.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-location-dot w-5 text-center text-emerald-500"></i> Sedes Deportivas
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('admin.pagos.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('admin.pagos.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-money-bill-wave w-5 text-center text-emerald-500"></i> Reporte de Ingresos
-                            </a>
-                        </li>
-                    @endactiveRole
-
-                    @activeRole('CLIENTE')
-                        <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                            Servicios
-                        </div>
-                        <li>
-                            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-800 hover:text-white">
-                                <i class="fa-solid fa-magnifying-glass w-5 text-center text-emerald-500"></i> Buscar Canchas
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('portal.pagos.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ Route::is('portal.pagos.index') ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                <i class="fa-solid fa-clock-history w-5 text-center text-emerald-500"></i> Mis Reservas
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-800 hover:text-white">
-                                <i class="fa-solid fa-wallet w-5 text-center text-emerald-500"></i> Pagos Realizados
-                            </a>
-                        </li>
-                    @endactiveRole
---}}
-                    
-                    {{-- Menús asignados al rol del usuario --}}
-                    @php
-                        $menusUsuario = auth()->user()->menusArbol();
-                    @endphp
-
-                    @if ($menusUsuario->isNotEmpty())
-                        <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                            Gestión Municipal
-                        </div>
-                        @foreach ($menusUsuario as $menu)
-                            @if ($menu->hijos->isNotEmpty())
-                                <div class="px-4 py-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                                    <i class="fa-solid {{ $menu->icono ?: 'fa-folder' }} mr-1 text-emerald-600"></i>
-                                    {{ $menu->nombre }}
-                                </div>
-                                @foreach ($menu->hijos as $hijo)
-                                    @if ($hijo->esEnlace())
-                                        <li>
-                                            <a href="{{ $hijo->url() }}"
-                                                class="flex items-center gap-3 px-4 py-2.5 pl-6 text-sm font-medium rounded-lg transition-colors {{ $hijo->estaActivo() ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                                <i class="fa-solid {{ $hijo->icono ?: 'fa-circle' }} w-5 text-center text-emerald-500"></i>
-                                                {{ $hijo->nombre }}
-                                            </a>
-                                        </li>
-                                    @endif
-                                @endforeach
-                            @elseif ($menu->esEnlace())
-                                <li>
-                                    <a href="{{ $menu->url() }}"
-                                        class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ $menu->estaActivo() ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
-                                        <i class="fa-solid {{ $menu->icono ?: 'fa-circle' }} w-5 text-center text-emerald-500"></i>
-                                        {{ $menu->nombre }}
-                                    </a>
-                                </li>
-                            @else
-                                <div class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                                    {{ $menu->nombre }}
-                                </div>
-                            @endif
-                        @endforeach
-                    @endif
-
-
-                </ul>
-            </div>
-
-            <div class="p-4 border-t border-slate-800 bg-slate-950/40">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit"
-                        class="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white transition-colors duration-150">
-                        <i class="fa-solid fa-power-off"></i> Cerrar sesión
-                    </button>
-                </form>
-            </div>
-        </aside>
-
-        <div id="mainWrapper"
-            class="flex-grow flex flex-col min-w-0 w-full lg:pl-64 transition-all duration-300 ease-in-out">
-
-            <nav
-                class="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-6 lg:px-8 sticky top-0 z-30">
-
-                <div class="flex items-center">
-                    <button id="menuToggleBtn"
-                        class="flex flex-col gap-1.5 justify-center items-center w-8 h-8 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none">
-                        <span class="w-6 h-0.5 bg-slate-600 rounded-full transition-all duration-300"
-                            id="hamburger-1"></span>
-                        <span class="w-6 h-0.5 bg-slate-600 rounded-full transition-all duration-300"
-                            id="hamburger-2"></span>
-                        <span class="w-6 h-0.5 bg-slate-600 rounded-full transition-all duration-300"
-                            id="hamburger-3"></span>
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <span class="text-sm font-medium text-slate-600 hidden sm:block">
-                        Hola, {{ auth()->user()->loadMissing('perfil')->nombreParaMostrar() }}
-                    </span>
-
-                    {{-- <div class="relative">
-                        <a href="{{ route('seleccionar.rol') }}" class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-lg text-xs font-bold text-emerald-800 transition-colors">
-                            <i class="fa-solid fa-user-shield text-emerald-600"></i>
-                            <span>{{ session('active_role', 'CLIENTE') }}</span>
-                        </a>
-                    </div> --}}
-                </div>
-            </nav>
-
-            <main class="flex-grow p-6 lg:p-8">
-                {{ $slot }}
-            </main>
-
-        </div>
+    {{-- =====================================================
+         OVERLAY MÓVIL
+    ====================================================== --}}
+    <div id="sidebarOverlay"
+        class="fixed inset-0 bg-slate-900/50 z-40
+               transition-opacity duration-300
+               opacity-0 pointer-events-none lg:hidden">
     </div>
 
-    @yield('modals')
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {{-- =====================================================
+         SIDEBAR
+         
+         IMPORTANTE:
+         Ya NO usamos -translate-x-full ni lg:translate-x-0
+         aquí. El movimiento será controlado completamente
+         desde JavaScript para evitar conflictos en móvil.
+    ====================================================== --}}
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-[50]
+               w-64
+               bg-slate-900
+               text-slate-300
+               flex flex-col
+               border-r border-slate-800
+               overflow-visible
+               transition-transform duration-300 ease-in-out">
 
-    @if (session('error') || session('success'))
-        <script>
-            Swal.fire({
-                icon: '{{ session('success') ? 'success' : 'error' }}',
-                title: '{{ session('success') ? 'Éxito' : 'Oops...' }}',
-                text: '{{ session('success') ?? session('error') }}',
-                confirmButtonColor: '#047857',
-            });
-        </script>
-    @endif
+        {{-- =================================================
+             CABECERA
+        ================================================== --}}
+        <div class="h-20 flex items-center gap-3 px-6 border-b border-slate-800">
+
+            <img src="{{ asset('favicon.png') }}"
+                class="w-10 h-auto"
+                alt="Logo La Molina">
+
+            <div>
+                <h3 class="text-xs font-bold tracking-wider text-emerald-500 uppercase">
+                    Canchas Deportivas
+                </h3>
+
+                <p class="text-[10px] text-slate-500 font-semibold tracking-tight uppercase">
+                    La Molina
+                </p>
+            </div>
+
+        </div>
+
+
+        {{-- =================================================
+             MENÚ
+        ================================================== --}}
+        <div class="flex-grow overflow-y-auto px-4 py-6 space-y-6">
+
+            <ul class="space-y-1">
+
+                @php
+                    $menusUsuario = auth()->user()->menusArbol();
+                @endphp
+
+                @if ($menusUsuario->isNotEmpty())
+
+                    <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                        Gestión Municipal
+                    </div>
+
+                    @foreach ($menusUsuario as $menu)
+
+                        @if ($menu->hijos->isNotEmpty())
+
+                            <div class="px-4 py-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+
+                                <i class="fa-solid {{ $menu->icono ?: 'fa-folder' }} mr-1 text-emerald-600"></i>
+
+                                {{ $menu->nombre }}
+
+                            </div>
+
+
+                            @foreach ($menu->hijos as $hijo)
+
+                                @if ($hijo->esEnlace())
+
+                                    <li>
+
+                                        <a href="{{ $hijo->url() }}"
+                                            class="flex items-center gap-3 px-4 py-2.5 pl-6 text-sm font-medium rounded-lg transition-colors {{ $hijo->estaActivo() ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+
+                                            <i class="fa-solid {{ $hijo->icono ?: 'fa-circle' }} w-5 text-center text-emerald-500"></i>
+
+                                            {{ $hijo->nombre }}
+
+                                        </a>
+
+                                    </li>
+
+                                @endif
+
+                            @endforeach
+
+
+                        @elseif ($menu->esEnlace())
+
+                            <li>
+
+                                <a href="{{ $menu->url() }}"
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ $menu->estaActivo() ? 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20' : 'hover:bg-slate-800 hover:text-white' }}">
+
+                                    <i class="fa-solid {{ $menu->icono ?: 'fa-circle' }} w-5 text-center text-emerald-500"></i>
+
+                                    {{ $menu->nombre }}
+
+                                </a>
+
+                            </li>
+
+
+                        @else
+
+                            <div class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+
+                                {{ $menu->nombre }}
+
+                            </div>
+
+                        @endif
+
+                    @endforeach
+
+                @endif
+
+            </ul>
+
+        </div>
+
+
+        {{-- =================================================
+             CERRAR SESIÓN
+        ================================================== --}}
+        <div class="p-4 border-t border-slate-800 bg-slate-950/40">
+
+            <form action="{{ route('logout') }}" method="POST">
+
+                @csrf
+
+                <button type="submit"
+                    class="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white transition-colors duration-150">
+
+                    <i class="fa-solid fa-power-off"></i>
+
+                    Cerrar sesión
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </aside>
+
+
+    {{-- =====================================================
+         FLECHA PARA DESPLEGAR / OCULTAR
+         
+         IMPORTANTE:
+         Está COMPLETAMENTE FUERA del sidebar.
+         
+         Esto hace que:
+         - En escritorio quede exactamente en el borde.
+         - En móvil siga visible cuando el sidebar está cerrado.
+         - No desaparezca junto con el sidebar.
+    ====================================================== --}}
+    <button id="sidebarToggleBtn"
+        type="button"
+        aria-label="Ocultar menú"
+        aria-expanded="true"
+        class="fixed top-1/2 -translate-y-1/2
+               z-[9999]
+               w-8 h-14
+               flex items-center justify-center
+               bg-slate-900
+               border border-slate-700
+               rounded-r-xl
+               shadow-xl
+               text-slate-300
+               hover:bg-slate-800
+               hover:text-white
+               transition-all duration-300
+               focus:outline-none">
+
+        <i id="sidebarToggleIcon"
+            class="fa-solid fa-chevron-left text-xs">
+        </i>
+
+    </button>
+
+
+    {{-- =====================================================
+         CONTENIDO PRINCIPAL
+    ====================================================== --}}
+    <div id="mainWrapper"
+        class="flex-grow flex flex-col min-w-0 w-full transition-all duration-300 ease-in-out">
+
+
+        {{-- =================================================
+             NAVBAR
+        ================================================== --}}
+        <nav
+            class="h-20 bg-white border-b border-slate-100
+                   flex items-center justify-end
+                   px-6 lg:px-8
+                   sticky top-0 z-30">
+
+            {{-- HOLA SIEMPRE A LA DERECHA --}}
+            <div class="flex items-center">
+
+                <span class="text-sm font-medium text-slate-600">
+                    Hola, {{ auth()->user()->loadMissing('perfil')->nombreParaMostrar() }}
+                </span>
+
+            </div>
+
+        </nav>
+
+
+        {{-- =================================================
+             CONTENIDO
+        ================================================== --}}
+        <main class="flex-grow p-6 lg:p-8">
+
+            {{ $slot }}
+
+        </main>
+
+    </div>
+
+</div>
+
+
+@yield('modals')
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+{{-- =========================================================
+     ALERTAS
+========================================================== --}}
+@if (session('error') || session('success'))
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuBtn = document.getElementById('menuToggleBtn');
-            const sidebar = document.getElementById('sidebar');
-            const mainWrapper = document.getElementById('mainWrapper');
-            const overlay = document.getElementById('sidebarOverlay');
 
-            // Elementos del icono de hamburguesa
-            const h1 = document.getElementById('hamburger-1');
-            const h2 = document.getElementById('hamburger-2');
-            const h3 = document.getElementById('hamburger-3');
-
-            function toggleMenu() {
-                const isMobile = window.innerWidth <= 1024;
-
-                if (isMobile) {
-                    // Control de Sidebar en Móvil
-                    sidebar.classList.toggle('translate-x-0');
-                    overlay.classList.toggle('opacity-100');
-                    overlay.classList.toggle('pointer-events-auto');
-
-                    if (sidebar.classList.contains('translate-x-0')) {
-                        document.body.style.overflow = 'hidden';
-                        transformHamburger(true);
-                    } else {
-                        document.body.style.overflow = '';
-                        transformHamburger(false);
-                    }
-                } else {
-                    // Control de Sidebar en Escritorio
-                    sidebar.classList.toggle('lg:-translate-x-full');
-                    mainWrapper.classList.toggle('lg:pl-0');
-
-                    const isCollapsed = sidebar.classList.contains('lg:-translate-x-full');
-                    transformHamburger(isCollapsed);
-                }
-            }
-
-            function transformHamburger(active) {
-                if (active) {
-                    h1.style.transform = 'translateY(8px) rotate(45deg)';
-                    h2.style.opacity = '0';
-                    h3.style.transform = 'translateY(-8px) rotate(-45deg)';
-                } else {
-                    h1.style.transform = '';
-                    h2.style.opacity = '';
-                    h3.style.transform = '';
-                }
-            }
-
-            menuBtn.addEventListener('click', toggleMenu);
-            overlay.addEventListener('click', toggleMenu);
-
-            // Ajuste automático si se redimensiona la ventana
-            window.addEventListener('resize', () => {
-                if (window.innerWidth > 1024) {
-                    sidebar.classList.remove('translate-x-0');
-                    overlay.classList.remove('opacity-100', 'pointer-events-auto');
-                    document.body.style.overflow = '';
-                    transformHamburger(sidebar.classList.contains('lg:-translate-x-full'));
-                } else {
-                    transformHamburger(sidebar.classList.contains('translate-x-0'));
-                }
-            });
-
-            // Confirmación de eliminación global para formularios con clase delete-form
-            const deleteForms = document.querySelectorAll('.delete-form');
-            deleteForms.forEach(form => {
-                form.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    Swal.fire({
-                        title: '¿Está seguro de continuar?',
-                        text: 'Esta acción eliminará el registro de manera permanente.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#ef4444',
-                        cancelButtonColor: '#64748b',
-                        confirmButtonText: 'Sí, eliminar',
-                        cancelButtonText: 'Cancelar'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
-                    });
-                });
-            });
+        Swal.fire({
+            icon: '{{ session('success') ? 'success' : 'error' }}',
+            title: '{{ session('success') ? 'Éxito' : 'Oops...' }}',
+            text: '{{ session('success') ?? session('error') }}',
+            confirmButtonColor: '#047857',
         });
+
     </script>
 
-    @livewireScripts
-    @stack('scripts')
+@endif
+
+
+{{-- =========================================================
+     SIDEBAR JAVASCRIPT
+========================================================== --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const sidebar = document.getElementById('sidebar');
+    const mainWrapper = document.getElementById('mainWrapper');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    const toggleBtn = document.getElementById('sidebarToggleBtn');
+    const toggleIcon = document.getElementById('sidebarToggleIcon');
+
+    const MOBILE_BREAKPOINT = 1024;
+    const SIDEBAR_WIDTH = 256;
+
+    let menuOpen = false;
+
+
+    // =====================================================
+    // DETECTAR MÓVIL
+    // =====================================================
+
+    function isMobile() {
+        return window.innerWidth < MOBILE_BREAKPOINT;
+    }
+
+
+    // =====================================================
+    // MOSTRAR OVERLAY
+    // =====================================================
+
+    function showOverlay() {
+
+        if (!overlay) {
+            return;
+        }
+
+        overlay.classList.remove(
+            'opacity-0',
+            'pointer-events-none'
+        );
+
+        overlay.classList.add(
+            'opacity-100',
+            'pointer-events-auto'
+        );
+    }
+
+
+    // =====================================================
+    // OCULTAR OVERLAY
+    // =====================================================
+
+    function hideOverlay() {
+
+        if (!overlay) {
+            return;
+        }
+
+        overlay.classList.remove(
+            'opacity-100',
+            'pointer-events-auto'
+        );
+
+        overlay.classList.add(
+            'opacity-0',
+            'pointer-events-none'
+        );
+    }
+
+
+    // =====================================================
+    // POSICIÓN SIDEBAR
+    //
+    // Usamos transform directamente.
+    //
+    // Esto evita cualquier conflicto entre:
+    // -translate-x-full
+    // lg:translate-x-0
+    // y JavaScript.
+    // =====================================================
+
+    function setSidebarPosition(open) {
+
+        if (open) {
+
+            sidebar.style.setProperty(
+                'transform',
+                'translate3d(0, 0, 0)',
+                'important'
+            );
+
+            sidebar.style.setProperty(
+                'visibility',
+                'visible',
+                'important'
+            );
+
+            sidebar.style.setProperty(
+                'opacity',
+                '1',
+                'important'
+            );
+
+            sidebar.style.setProperty(
+                'z-index',
+                '50',
+                'important'
+            );
+
+        } else {
+
+            sidebar.style.setProperty(
+                'transform',
+                'translate3d(-100%, 0, 0)',
+                'important'
+            );
+
+            sidebar.style.setProperty(
+                'visibility',
+                'visible',
+                'important'
+            );
+
+            sidebar.style.setProperty(
+                'opacity',
+                '1',
+                'important'
+            );
+
+            sidebar.style.setProperty(
+                'z-index',
+                '50',
+                'important'
+            );
+
+        }
+    }
+
+
+    // =====================================================
+    // POSICIÓN DE LA FLECHA
+    // =====================================================
+
+    function updateButtonPosition() {
+
+        if (isMobile()) {
+
+            /*
+             * MÓVIL
+             *
+             * Cerrado:
+             * flecha pegada al borde izquierdo.
+             *
+             * Abierto:
+             * flecha queda justo al borde derecho
+             * del sidebar.
+             */
+
+            if (menuOpen) {
+
+                toggleBtn.style.setProperty(
+                    'left',
+                    SIDEBAR_WIDTH + 'px',
+                    'important'
+                );
+
+            } else {
+
+                toggleBtn.style.setProperty(
+                    'left',
+                    '0px',
+                    'important'
+                );
+
+            }
+
+        } else {
+
+            /*
+             * ESCRITORIO
+             *
+             * Abierto:
+             * flecha exactamente en el borde derecho
+             * del sidebar.
+             *
+             * Cerrado:
+             * flecha queda en el borde izquierdo.
+             */
+
+            if (menuOpen) {
+
+                toggleBtn.style.setProperty(
+                    'left',
+                    SIDEBAR_WIDTH + 'px',
+                    'important'
+                );
+
+            } else {
+
+                toggleBtn.style.setProperty(
+                    'left',
+                    '0px',
+                    'important'
+                );
+
+            }
+
+        }
+    }
+
+
+    // =====================================================
+    // ACTUALIZAR ICONO
+    // =====================================================
+
+    function updateIcon() {
+
+        if (menuOpen) {
+
+            toggleIcon.classList.remove(
+                'fa-chevron-right'
+            );
+
+            toggleIcon.classList.add(
+                'fa-chevron-left'
+            );
+
+            toggleBtn.setAttribute(
+                'aria-label',
+                'Ocultar menú'
+            );
+
+            toggleBtn.setAttribute(
+                'aria-expanded',
+                'true'
+            );
+
+        } else {
+
+            toggleIcon.classList.remove(
+                'fa-chevron-left'
+            );
+
+            toggleIcon.classList.add(
+                'fa-chevron-right'
+            );
+
+            toggleBtn.setAttribute(
+                'aria-label',
+                'Mostrar menú'
+            );
+
+            toggleBtn.setAttribute(
+                'aria-expanded',
+                'false'
+            );
+
+        }
+    }
+
+
+    // =====================================================
+    // ACTUALIZAR TODO
+    // =====================================================
+
+    function updateLayout() {
+
+        setSidebarPosition(menuOpen);
+
+        updateButtonPosition();
+
+        updateIcon();
+
+
+        if (isMobile()) {
+
+            /*
+             * =========================================
+             * MÓVIL
+             * =========================================
+             */
+
+            mainWrapper.style.paddingLeft = '0';
+
+
+            if (menuOpen) {
+
+                showOverlay();
+
+                document.body.style.overflow = 'hidden';
+
+            } else {
+
+                hideOverlay();
+
+                document.body.style.overflow = '';
+
+            }
+
+        } else {
+
+            /*
+             * =========================================
+             * ESCRITORIO
+             * =========================================
+             */
+
+            hideOverlay();
+
+            document.body.style.overflow = '';
+
+
+            if (menuOpen) {
+
+                mainWrapper.style.paddingLeft = '16rem';
+
+            } else {
+
+                mainWrapper.style.paddingLeft = '0';
+
+            }
+
+        }
+    }
+
+
+    // =====================================================
+    // ABRIR MENÚ
+    // =====================================================
+
+    function openMenu() {
+
+        menuOpen = true;
+
+        updateLayout();
+    }
+
+
+    // =====================================================
+    // CERRAR MENÚ
+    // =====================================================
+
+    function closeMenu() {
+
+        menuOpen = false;
+
+        updateLayout();
+    }
+
+
+    // =====================================================
+    // TOGGLE
+    // =====================================================
+
+    function toggleMenu() {
+
+        if (menuOpen) {
+
+            closeMenu();
+
+        } else {
+
+            openMenu();
+
+        }
+    }
+
+
+    // =====================================================
+    // BOTÓN
+    // =====================================================
+
+    toggleBtn.addEventListener('click', function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        toggleMenu();
+
+    });
+
+
+    // =====================================================
+    // OVERLAY
+    // =====================================================
+
+    overlay.addEventListener('click', function () {
+
+        if (isMobile() && menuOpen) {
+
+            closeMenu();
+
+        }
+
+    });
+
+
+    // =====================================================
+    // CERRAR AL HACER CLICK EN UN ENLACE - MÓVIL
+    // =====================================================
+
+    sidebar.querySelectorAll('a').forEach(function (link) {
+
+        link.addEventListener('click', function () {
+
+            if (isMobile()) {
+
+                closeMenu();
+
+            }
+
+        });
+
+    });
+
+
+    // =====================================================
+    // REDIMENSIONAR
+    // =====================================================
+
+    let previousMobileState = isMobile();
+
+
+    window.addEventListener('resize', function () {
+
+        const currentMobileState = isMobile();
+
+
+        if (currentMobileState !== previousMobileState) {
+
+            if (currentMobileState) {
+
+                /*
+                 * =========================================
+                 * DESKTOP -> MÓVIL
+                 * =========================================
+                 *
+                 * En móvil comienza cerrado.
+                 */
+
+                menuOpen = false;
+
+            } else {
+
+                /*
+                 * =========================================
+                 * MÓVIL -> DESKTOP
+                 * =========================================
+                 *
+                 * En escritorio comienza abierto.
+                 */
+
+                menuOpen = true;
+
+            }
+
+            previousMobileState = currentMobileState;
+
+        }
+
+
+        updateLayout();
+
+    });
+
+
+    // =====================================================
+    // ESTADO INICIAL
+    // =====================================================
+
+    if (isMobile()) {
+
+        /*
+         * MÓVIL:
+         * sidebar cerrado.
+         */
+
+        menuOpen = false;
+
+    } else {
+
+        /*
+         * ESCRITORIO:
+         * sidebar abierto.
+         */
+
+        menuOpen = true;
+
+    }
+
+
+    updateLayout();
+
+
+    // =====================================================
+    // CONFIRMACIÓN DE ELIMINACIÓN
+    // =====================================================
+
+    const deleteForms =
+        document.querySelectorAll('.delete-form');
+
+
+    deleteForms.forEach(function (form) {
+
+        form.addEventListener('submit', function (event) {
+
+            event.preventDefault();
+
+
+            Swal.fire({
+
+                title: '¿Está seguro de continuar?',
+
+                text: 'Esta acción eliminará el registro de manera permanente.',
+
+                icon: 'warning',
+
+                showCancelButton: true,
+
+                confirmButtonColor: '#ef4444',
+
+                cancelButtonColor: '#64748b',
+
+                confirmButtonText: 'Sí, eliminar',
+
+                cancelButtonText: 'Cancelar'
+
+            }).then(function (result) {
+
+                if (result.isConfirmed) {
+
+                    form.submit();
+
+                }
+
+            });
+
+        });
+
+    });
+
+});
+</script>
+
+
+@livewireScripts
+@stack('scripts')
+
 </body>
 
 </html>
