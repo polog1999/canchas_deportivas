@@ -580,7 +580,11 @@ class VerificarPagoNiubizController extends Controller
                             ]
                         );
 
-                        $reserva->refresh();
+                        // Bloqueo pesimista a nivel de base de datos para evitar pagos concurrentes
+                        $reserva = Reserva::query()
+                            ->whereKey($reserva->id)
+                            ->lockForUpdate()
+                            ->first();
 
                         if (
                             strtolower(
