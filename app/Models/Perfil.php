@@ -30,7 +30,6 @@ class Perfil extends Model
     protected function casts(): array
     {
         return [
-            'tipo_documento' => \App\Enums\DocumentType::class,
             'creado_en' => 'datetime',
             'actualizado_en' => 'datetime',
         ];
