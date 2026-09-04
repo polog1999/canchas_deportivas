@@ -155,6 +155,11 @@
                                         <div class="min-w-0">
                                             <p class="text-sm font-semibold text-gray-900 truncate">
                                                 {{ $reserva['horario'] }} · {{ $reserva['cancha'] }}
+                                                @if ($reserva['reprogramada'] ?? false)
+                                                    <span class="ml-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 align-middle">
+                                                        reprogramada
+                                                    </span>
+                                                @endif
                                             </p>
                                             <p class="text-xs text-gray-500 truncate mt-0.5">
                                                 {{ $reserva['sede'] }} · {{ $reserva['deporte'] }}

@@ -7,6 +7,7 @@ use App\Models\Reserva;
 use App\Models\Transaccion;
 use App\Models\Usuario;
 use App\Support\CatalogoTusneReserva;
+use App\Support\TurnosOcupados;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -192,16 +193,15 @@ class ReservaCheckoutService
         Carbon $horaInicio,
         Carbon $horaFin,
         ?string $purchaseNumberPropio = null,
+        ?int $reservaIdPropia = null,
     ): bool {
-        $ocupada = Reserva::query()
-            ->where('cancha_id', $canchaId)
-            ->where('hora_inicio', '<', $horaFin)
-            ->where('hora_fin', '>', $horaInicio)
-            ->where(function ($q) {
-                $q->whereRaw('LOWER(estado) = ?', ['confirmada'])
-                    ->orWhereRaw('LOWER(estado) = ?', ['pendiente']);
-            })
-            ->exists();
+        $ocupada = TurnosOcupados::hayChoque(
+            $canchaId,
+            $horaInicio,
+            $horaFin,
+            ['confirmada', 'pendiente'],
+            $reservaIdPropia,
+        );
 
         if ($ocupada) {
             return false;

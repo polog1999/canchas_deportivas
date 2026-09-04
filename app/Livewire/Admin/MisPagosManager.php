@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Pago;
+use App\Models\Reprogramacion;
 use App\Models\Usuario;
 use App\Services\ConstanciaPagoPdfService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -21,6 +22,9 @@ class MisPagosManager extends Component
     public ?array $pagoSeleccionado = null;
 
     /**
+     * Constancias de pago y de reprogramación, ordenadas de la más reciente
+     * a la más antigua. Una reserva reprogramada tiene ambas.
+     *
      * @return Collection<int, array<string, mixed>>
      */
     private function pagosReales(): Collection
@@ -33,37 +37,45 @@ class MisPagosManager extends Component
         }
 
         $esAdmin = $usuario->tieneRol('admin', 'ADMIN', 'SUPERADMIN');
+        $pdf = app(ConstanciaPagoPdfService::class);
 
-        return Pago::query()
+        $alcance = function ($q) use ($usuario, $esAdmin) {
+            $q->whereRaw('LOWER(estado) = ?', ['confirmada']);
+
+            if (! $esAdmin) {
+                $q->where('usuario_id', $usuario->id);
+            }
+        };
+
+        $pagos = Pago::query()
             ->with([
                 'transaccion.reserva.usuario.perfil',
                 'transaccion.reserva.cancha.sede',
                 'transaccion.reserva.cancha.deportes',
             ])
-            ->whereHas('transaccion.reserva', function ($q) use ($usuario, $esAdmin) {
-                $q->whereRaw('LOWER(estado) = ?', ['confirmada']);
-
-                if (! $esAdmin) {
-                    $q->where('usuario_id', $usuario->id);
-                }
-            })
-            ->orderByDesc('pagado_en')
+            ->whereHas('transaccion.reserva', $alcance)
             ->get()
-            ->map(fn (Pago $pago) => $this->mapearPago($pago))
+            ->map(fn (Pago $pago) => $pdf->datosPdf($pago));
+
+        $reprogramaciones = Reprogramacion::query()
+            ->with([
+                'reserva.usuario.perfil',
+                'canchaAnterior',
+                'canchaNueva.sede',
+                'canchaNueva.deportes',
+            ])
+            ->whereHas('reserva', $alcance)
+            ->get()
+            ->map(fn (Reprogramacion $r) => $pdf->datosPdfReprogramacion($r));
+
+        return $pagos->concat($reprogramaciones)
+            ->sortByDesc('orden')
             ->values();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function mapearPago(Pago $pago): array
+    public function verVoucher(string $clave): void
     {
-        return app(ConstanciaPagoPdfService::class)->datosPdf($pago);
-    }
-
-    public function verVoucher(int $id): void
-    {
-        $pago = $this->pagosReales()->firstWhere('id', $id);
+        $pago = $this->pagosReales()->firstWhere('clave', $clave);
 
         if (! $pago) {
             return;
@@ -92,12 +104,12 @@ class MisPagosManager extends Component
     /**
      * Descarga directa del PDF.
      */
-    public function descargarPdf(int $id)
+    public function descargarPdf(string $clave)
     {
-        $pago = $this->pagosReales()->firstWhere('id', $id);
+        $pago = $this->pagosReales()->firstWhere('clave', $clave);
 
         if (! $pago) {
-            abort(404, 'Pago no encontrado.');
+            abort(404, 'Comprobante no encontrado.');
         }
 
         $customPaper = [0, 0, 226.772, 841.89];
@@ -108,9 +120,13 @@ class MisPagosManager extends Component
             ->setPaper($customPaper, 'portrait')
             ->setOption('isRemoteEnabled', true);
 
+        $nombre = ($pago['tipo'] ?? 'pago') === 'reprogramacion'
+            ? 'constancia-reprogramacion-'.$pago['nro_reprogramacion']
+            : 'constancia-pago-'.$pago['nro_pedido'];
+
         return response()->streamDownload(
             fn () => print($pdf->output()),
-            'constancia-pago-' . $pago['nro_pedido'] . '.pdf'
+            $nombre.'.pdf'
         );
     }
 
@@ -138,6 +154,7 @@ class MisPagosManager extends Component
                                 $p['deporte'],
                                 $p['concepto'],
                                 $p['estado'],
+                                $p['nro_reprogramacion'] ?? '',
                             ])
                         )
                     );

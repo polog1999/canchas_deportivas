@@ -11,10 +11,10 @@ class PagoPdfController extends Controller
 {
     public function __invoke(string $token): Response
     {
-        $id = PagoPdfToken::resolver($token);
+        $clave = PagoPdfToken::resolver($token);
 
-        if (! $id) {
-            abort(404, 'Pago no encontrado.');
+        if (! $clave) {
+            abort(404, 'Comprobante no encontrado.');
         }
         /*
         |--------------------------------------------------------------------------
@@ -27,17 +27,17 @@ class PagoPdfController extends Controller
 
         $pagos = $manager->pagosParaPdf();
 
-        $pago = $pagos->firstWhere('id', $id);
+        $pago = $pagos->firstWhere('clave', $clave);
 
         /*
         |--------------------------------------------------------------------------
-        | Si el pago no pertenece al usuario autenticado,
+        | Si el comprobante no pertenece al usuario autenticado,
         | no se permite generar el PDF.
         |--------------------------------------------------------------------------
         */
 
         if (! $pago) {
-            abort(404, 'Pago no encontrado.');
+            abort(404, 'Comprobante no encontrado.');
         }
 
         /*
@@ -80,8 +80,10 @@ class PagoPdfController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        return $pdf->stream(
-            'constancia-pago-' . $pago['nro_pedido'] . '.pdf'
-        );
+        $nombre = ($pago['tipo'] ?? 'pago') === 'reprogramacion'
+            ? 'constancia-reprogramacion-' . $pago['nro_reprogramacion']
+            : 'constancia-pago-' . $pago['nro_pedido'];
+
+        return $pdf->stream($nombre . '.pdf');
     }
 }

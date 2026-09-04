@@ -5,7 +5,7 @@
 
     <meta charset="UTF-8">
 
-    <title>Constancia de Pago</title>
+    <title>Constancia</title>
 
     <style>
 
@@ -165,6 +165,29 @@
             color: #075985;
         }
 
+        .badge-repro {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .aviso-repro {
+            margin-top: 10px;
+            border: 1.5px solid #b45309;
+            background: #fffbeb;
+            color: #92400e;
+            padding: 6px 8px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .anulado {
+            color: #92400e;
+            text-decoration: line-through;
+        }
+
         /*
         |--------------------------------------------------------------------------
         | TOTAL
@@ -223,6 +246,10 @@
 
 <body>
 
+@php
+    $esRepro = ($pagoSeleccionado['tipo'] ?? 'pago') === 'reprogramacion';
+@endphp
+
 <div class="container">
 
     {{-- ==========================================================
@@ -258,7 +285,11 @@
         </div>
 
         <div class="titulo">
-            Reserva de canchas deportivas
+            @if ($esRepro)
+                Constancia de reprogramación
+            @else
+                Reserva de canchas deportivas
+            @endif
         </div>
 
         <div class="web">
@@ -268,6 +299,15 @@
     </div>
 
 
+    @if ($esRepro)
+
+        <div class="aviso-repro">
+            Reserva reprogramada
+        </div>
+
+    @endif
+
+
     {{-- ==========================================================
          INFORMACIÓN DEL PAGO
          ========================================================== --}}
@@ -275,7 +315,11 @@
     <div class="section">
 
         <div class="section-title">
-            Información del pago
+            @if ($esRepro)
+                Información de la reprogramación
+            @else
+                Información del pago
+            @endif
         </div>
 
         <table>
@@ -293,6 +337,24 @@
                 </td>
 
             </tr>
+
+            @if ($esRepro)
+
+                <tr>
+
+                    <td class="label">
+                        N° REPROGRAMACIÓN
+                    </td>
+
+                    <td class="value">
+                        <strong>
+                            {{ $pagoSeleccionado['nro_reprogramacion'] }}
+                        </strong>
+                    </td>
+
+                </tr>
+
+            @endif
 
             <tr>
 
@@ -321,7 +383,11 @@
             <tr>
 
                 <td class="label">
-                    FECHA Y HORA
+                    @if ($esRepro)
+                        FECHA DEL CAMBIO
+                    @else
+                        FECHA Y HORA
+                    @endif
                 </td>
 
                 <td class="value">
@@ -338,7 +404,13 @@
 
                 <td class="value">
 
-                    @if ($pagoSeleccionado['estado'] === 'Pagado')
+                    @if ($esRepro)
+
+                        <span class="badge badge-repro">
+                            REPROGRAMADO
+                        </span>
+
+                    @elseif ($pagoSeleccionado['estado'] === 'Pagado')
 
                         <span class="badge badge-paid">
                             PAGADO
@@ -423,7 +495,11 @@
     <div class="section">
 
         <div class="section-title">
-            Detalle de la reserva
+            @if ($esRepro)
+                Nuevo turno
+            @else
+                Detalle de la reserva
+            @endif
         </div>
 
         <table>
@@ -500,6 +576,39 @@
 
             </tr>
 
+            @if ($esRepro)
+
+                <tr>
+
+                    <td class="label">
+                        TURNO ANTERIOR
+                    </td>
+
+                    <td class="value anulado">
+                        {{ $pagoSeleccionado['cancha_anterior'] }} ·
+                        {{ $pagoSeleccionado['turno_anterior'] }}
+                    </td>
+
+                </tr>
+
+                @if (! empty($pagoSeleccionado['motivo']))
+
+                    <tr>
+
+                        <td class="label">
+                            MOTIVO
+                        </td>
+
+                        <td class="value">
+                            {{ $pagoSeleccionado['motivo'] }}
+                        </td>
+
+                    </tr>
+
+                @endif
+
+            @endif
+
             <tr>
 
                 <td class="label">
@@ -526,7 +635,11 @@
         <tr>
 
             <td class="total-label">
-                TOTAL PAGADO
+                @if ($esRepro)
+                    YA PAGADO (SIN COSTO ADICIONAL)
+                @else
+                    TOTAL PAGADO
+                @endif
             </td>
 
             <td class="total-value">
@@ -545,13 +658,28 @@
 
     <div class="footer">
 
-        <div class="thanks">
-            ¡Gracias por tu reserva!
-        </div>
+        @if ($esRepro)
 
-        <div>
-            Conserve este documento como constancia de pago.
-        </div>
+            <div class="thanks">
+                Tu reserva fue reprogramada
+            </div>
+
+            <div>
+                Presenta este documento el día de tu nuevo turno.
+                Reemplaza al horario de la constancia de pago original.
+            </div>
+
+        @else
+
+            <div class="thanks">
+                ¡Gracias por tu reserva!
+            </div>
+
+            <div>
+                Conserve este documento como constancia de pago.
+            </div>
+
+        @endif
 
         <div style="margin-top: 4px;">
             Canchas Deportivas — La Molina

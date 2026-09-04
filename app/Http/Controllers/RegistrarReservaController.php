@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cancha;
+use App\Models\CatalogoTusne;
 use App\Models\Pago;
 use App\Models\Reserva;
 use App\Models\Transaccion;
@@ -11,6 +12,7 @@ use App\Services\NiubizService;
 use App\Services\ReservaCheckoutService;
 use App\Services\ReservaCorreoService;
 use App\Services\ReservaTitularService;
+use App\Services\TarifaTusneService;
 use App\Support\CatalogoTusneReserva;
 use App\Support\ReservaFlow;
 use Carbon\Carbon;
@@ -28,6 +30,7 @@ class RegistrarReservaController extends Controller
         NiubizService $niubiz,
         ReservaTitularService $titularService,
         ReservaCheckoutService $checkoutService,
+        TarifaTusneService $tarifas,
     ): JsonResponse {
         $data = $request->validate([
             'acepto_terminos' => 'accepted',
@@ -67,7 +70,6 @@ class RegistrarReservaController extends Controller
 
         $horaInicio = Carbon::createFromFormat('Y-m-d H:i', $data['fecha'].' '.$hora, 'America/Lima');
         $horaFin = $horaInicio->copy()->addMinutes((int) $data['duracion']);
-        $precio = round((float) ($data['precio'] ?? 0), 2);
 
         $cancha = Cancha::query()->whereKey($data['cancha_id'])->where('esta_activo', true)->first();
         if (! $cancha) {
@@ -75,6 +77,10 @@ class RegistrarReservaController extends Controller
         }
 
         $data['tusne_id'] = CatalogoTusneReserva::idDesdeDatos($data, $cancha);
+
+        // El monto se recalcula en el servidor: el que llega del navegador solo se contrasta.
+        $precio = $this->precioValidado($tarifas, $cancha, $data, $horaInicio, $horaFin);
+
         $returnQuery = $request->header('X-Pago-Query') ?: $request->getQueryString();
 
         if ($precio <= 0) {
@@ -128,6 +134,62 @@ class RegistrarReservaController extends Controller
             'timeoutUrl' => $timeoutUrl,
             'buttonUrl' => config('niubiz.button_url'),
         ]);
+    }
+
+    /**
+     * Monto real del turno según la tarifa vigente.
+     *
+     * El navegador manda el precio que mostró en pantalla, pero no se usa para
+     * cobrar: sirve solo para detectar que lo que vio el usuario sigue siendo
+     * lo que corresponde.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function precioValidado(
+        TarifaTusneService $tarifas,
+        Cancha $cancha,
+        array $data,
+        Carbon $horaInicio,
+        Carbon $horaFin,
+    ): float {
+        $tusne = $data['tusne_id'] ? CatalogoTusne::find($data['tusne_id']) : null;
+
+        if ($tusne && ! $tarifas->tusneCubreRango($tusne, $horaInicio, $horaFin)) {
+            throw ValidationException::withMessages([
+                'hora' => 'La tarifa elegida no corresponde al turno seleccionado.',
+            ]);
+        }
+
+        // Si la cancha tiene tarifa para ese turno, no se puede reservar sin ella.
+        if (! $tusne && $this->canchaTieneTarifa($tarifas, $cancha, $horaInicio, $horaFin)) {
+            throw ValidationException::withMessages([
+                'tusne_id' => 'Falta la tarifa del turno. Vuelve a cargar la página e intenta de nuevo.',
+            ]);
+        }
+
+        $precioServidor = $tarifas->precioTotal($cancha, $tusne, ((int) $data['duracion']) / 60);
+        $precioCliente = round((float) ($data['precio'] ?? 0), 2);
+
+        if (abs($precioServidor - $precioCliente) > 0.01) {
+            throw ValidationException::withMessages([
+                'precio' => 'El precio de este turno es S/ '.number_format($precioServidor, 2)
+                    .'. Vuelve a cargar la página para continuar con el monto correcto.',
+            ]);
+        }
+
+        return $precioServidor;
+    }
+
+    private function canchaTieneTarifa(
+        TarifaTusneService $tarifas,
+        Cancha $cancha,
+        Carbon $horaInicio,
+        Carbon $horaFin,
+    ): bool {
+        return $cancha->catalogosTusne()
+            ->where('esta_activo', true)
+            ->get()
+            ->contains(fn (CatalogoTusne $t) => $tarifas->tusneCubreRango($t, $horaInicio, $horaFin));
     }
 
     /**

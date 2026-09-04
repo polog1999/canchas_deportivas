@@ -48,13 +48,13 @@ class RolesAndPermissionsSeeder extends Seeder
                 'nombre' => 'Cambiar contraseña',
                 'ruta' => '/portal/cambiar-contrasena',
                 'icono' => 'fa-key',
-                'orden' => 11,
+                'orden' => 12,
             ],
             [
                 'nombre' => 'Reservar más',
                 'ruta' => '/portal/reservar',
                 'icono' => 'fa-calendar-plus',
-                'orden' => 12,
+                'orden' => 13,
             ],
             [
                 'nombre' => 'Ver Reservas',
@@ -63,34 +63,40 @@ class RolesAndPermissionsSeeder extends Seeder
                 'orden' => 5,
             ],
             [
+                'nombre' => 'Reprogramación',
+                'ruta' => '/portal/reprogramacion',
+                'icono' => 'fa-calendar-day',
+                'orden' => 6,
+            ],
+            [
                 'nombre' => 'Slider',
                 'ruta' => '/portal/slider',
                 'icono' => 'fa-images',
-                'orden' => 6,
+                'orden' => 7,
             ],
             [
                 'nombre' => 'Tusne',
                 'ruta' => '/portal/tusne-catalog',
                 'icono' => 'fa-list',
-                'orden' => 7,
+                'orden' => 8,
             ],
             [
                 'nombre' => 'Usuarios',
                 'ruta' => '/portal/users',
                 'icono' => 'fa-users',
-                'orden' => 8,
+                'orden' => 9,
             ],
             [
                 'nombre' => 'Roles y Menús',
                 'ruta' => '/portal/roles-menus',
                 'icono' => 'fa-shield',
-                'orden' => 9,
+                'orden' => 10,
             ],
             [
                 'nombre' => 'Estructura de Menús',
                 'ruta' => '/portal/menus',
                 'icono' => 'fa-sitemap',
-                'orden' => 10,
+                'orden' => 11,
             ],
         ];
 

@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Mail\ReservaPagoConfirmadoMail;
+use App\Mail\ReservaReprogramadaMail;
 use App\Models\Pago;
+use App\Models\Reprogramacion;
 use App\Models\Reserva;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Log;
@@ -85,6 +87,72 @@ class ReservaCorreoService
                 'destino' => $correo,
                 'mailer' => $mailer,
                 'smtp_host' => $smtpHost,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Avisa al cliente del cambio de horario con la nueva constancia adjunta.
+     */
+    public function enviarReprogramacion(Reprogramacion $reprogramacion): void
+    {
+        $reprogramacion->loadMissing([
+            'reserva.usuario.perfil',
+            'canchaAnterior',
+            'canchaNueva.sede',
+        ]);
+
+        $reserva = $reprogramacion->reserva;
+        $usuario = $reserva?->usuario;
+        $correo = trim((string) ($usuario?->correo_electronico ?? ''));
+
+        if ($correo === '' || ! filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+            Log::warning('ReservaCorreo: sin correo válido para avisar la reprogramación', [
+                'reprogramacion_id' => $reprogramacion->id,
+                'reserva_id' => $reserva?->id,
+            ]);
+
+            return;
+        }
+
+        $mailer = $this->mailConfig->mailerActivo();
+
+        $detalle = [
+            'titular' => $usuario?->nombreCompleto(),
+            'voucher' => $reserva?->referencia_pago,
+            'sede' => $reprogramacion->canchaNueva?->sede?->nombre,
+            'cancha' => $reprogramacion->canchaNueva?->nombre ?? '—',
+            'fecha' => $reprogramacion->hora_inicio_nueva->format('d/m/Y'),
+            'hora_inicio' => $reprogramacion->hora_inicio_nueva->format('H:i'),
+            'hora_fin' => $reprogramacion->hora_fin_nueva->format('H:i'),
+            'cancha_anterior' => $reprogramacion->canchaAnterior?->nombre ?? '—',
+            'turno_anterior' => $reprogramacion->hora_inicio_anterior->format('d/m/Y H:i')
+                .' a '.$reprogramacion->hora_fin_anterior->format('H:i').' hs',
+            'motivo' => $reprogramacion->motivo,
+            'monto' => (float) $reprogramacion->monto_validado,
+        ];
+
+        try {
+            $pdfAdjunto = $this->constanciaPagoPdf->adjuntoDesdeReprogramacion($reprogramacion);
+
+            Mail::mailer($mailer)->to($correo)->send(new ReservaReprogramadaMail(
+                reprogramacion: $reprogramacion,
+                detalle: $detalle,
+                pdfAdjunto: $pdfAdjunto,
+            ));
+
+            Log::info('ReservaCorreo: aviso de reprogramación enviado', [
+                'reprogramacion_id' => $reprogramacion->id,
+                'reserva_id' => $reserva?->id,
+                'destino' => $correo,
+                'mailer' => $mailer,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('ReservaCorreo: error al avisar la reprogramación', [
+                'reprogramacion_id' => $reprogramacion->id,
+                'destino' => $correo,
+                'mailer' => $mailer,
                 'error' => $e->getMessage(),
             ]);
         }

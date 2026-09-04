@@ -14,6 +14,7 @@ use App\Livewire\Admin\DeporteManager;
 use App\Livewire\Admin\LocationManager;
 use App\Livewire\Admin\MenuStructureManager;
 use App\Livewire\Admin\MisPagosManager;
+use App\Livewire\Admin\ReprogramacionManager;
 use App\Livewire\Admin\RoleMenuManager;
 use App\Livewire\Admin\SliderManager;
 use App\Livewire\Admin\TusneCatalogManager;
@@ -110,6 +111,10 @@ Route::middleware(['auth'])->prefix('portal')->group(function () {
     Route::get('/ver-reservas', VerReservasManager::class)
         ->middleware('permission:/portal/ver-reservas')
         ->name('ver-reservas.index');
+
+    Route::get('/reprogramacion', ReprogramacionManager::class)
+        ->middleware('permission:/portal/reprogramacion')
+        ->name('reprogramacion.index');
 
     Route::get('/slider', SliderManager::class)
         ->middleware('permission:/portal/slider')

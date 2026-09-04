@@ -20,7 +20,7 @@
                 </h2>
 
                 <p class="text-sm text-gray-600">
-                    Constancia de pagos por reservas de canchas.
+                    Constancias de pago y de reprogramación de tus reservas.
                 </p>
 
             </div>
@@ -114,6 +114,12 @@
 
                                         #{{ $pago['nro_pedido'] }}
 
+                                        @if (($pago['tipo'] ?? 'pago') === 'reprogramacion')
+                                            <span class="ml-1 text-[10px] font-semibold text-amber-700">
+                                                {{ $pago['nro_reprogramacion'] }}
+                                            </span>
+                                        @endif
+
                                     </div>
 
                                     <div class="text-[11px] text-gray-400">
@@ -185,7 +191,15 @@
                                 {{-- ESTADO --}}
                                 <td class="py-4 px-6">
 
-                                    @if ($pago['estado'] === 'Pagado')
+                                    @if ($pago['estado'] === 'Reprogramado')
+
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800">
+
+                                            Reprogramado
+
+                                        </span>
+
+                                    @elseif ($pago['estado'] === 'Pagado')
 
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-800">
 
@@ -222,7 +236,7 @@
                                         {{-- VER PDF --}}
                                         <button
                                             type="button"
-                                            wire:click="verVoucher({{ $pago['id'] }})"
+                                            wire:click="verVoucher('{{ $pago['clave'] }}')"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold transition"
                                         >
 
@@ -326,13 +340,21 @@
 
                             <h3 class="text-sm font-bold text-gray-800">
 
-                                Constancia de pago
+                                @if (($pagoSeleccionado['tipo'] ?? 'pago') === 'reprogramacion')
+                                    Constancia de reprogramación
+                                @else
+                                    Constancia de pago
+                                @endif
 
                             </h3>
 
                             <p class="text-xs text-gray-500">
 
                                 Pedido #{{ $pagoSeleccionado['nro_pedido'] }}
+
+                                @if (($pagoSeleccionado['tipo'] ?? 'pago') === 'reprogramacion')
+                                    · {{ $pagoSeleccionado['nro_reprogramacion'] }}
+                                @endif
 
                             </p>
 

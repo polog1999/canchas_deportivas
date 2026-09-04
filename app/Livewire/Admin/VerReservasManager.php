@@ -106,6 +106,8 @@ class VerReservasManager extends Component
                 'cancha.sede',
                 'cancha.deportes',
                 'transacciones' => fn ($q) => $q->orderByDesc('id'),
+                'reprogramacionVigente.canchaNueva.sede',
+                'reprogramacionVigente.canchaNueva.deportes',
             ])
             ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuario->id))
             ->orderByDesc('hora_inicio')
@@ -121,12 +123,15 @@ class VerReservasManager extends Component
     {
         $titular = $reserva->usuario;
         $perfil = $titular?->perfil;
-        $cancha = $reserva->cancha;
+
+        // La reserva conserva el turno original; el vigente puede venir de una
+        // reprogramación, y es el que debe verse en el calendario.
+        $cancha = $reserva->canchaVigente();
         $sede = $cancha?->sede;
         $transaccion = $reserva->transacciones->first();
 
-        $horaInicio = $reserva->hora_inicio;
-        $horaFin = $reserva->hora_fin;
+        $horaInicio = $reserva->horaInicioVigente();
+        $horaFin = $reserva->horaFinVigente();
 
         $fecha = $horaInicio
             ? $horaInicio->format('Y-m-d')
@@ -187,6 +192,7 @@ class VerReservasManager extends Component
             'pago' => $pago,
             'referencia' => $transaccion?->transaccion_id ?? '—',
             'codigo_voucher' => $reserva->referencia_pago,
+            'reprogramada' => $reserva->fueReprogramada(),
             'imagen' => $imagen ?? asset('favicon.png'),
         ];
     }

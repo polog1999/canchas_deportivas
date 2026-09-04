@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Reserva;
+use App\Support\TurnosOcupados;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -13,8 +13,9 @@ class OcupacionReservasService
     ) {}
 
     /**
-     * Horas ocupadas por cancha: reservas confirmadas y turnos retenidos
-     * por un checkout en curso (alguien pagando en este momento).
+     * Horas ocupadas por cancha: reservas confirmadas (en su turno vigente,
+     * que puede venir de una reprogramación) y turnos retenidos por un
+     * checkout en curso (alguien pagando en este momento).
      *
      * @param  Collection<int, int>|array<int>  $canchaIds
      * @return array<int, list<int>>
@@ -29,28 +30,22 @@ class OcupacionReservasService
         $inicioDia = Carbon::parse($fecha)->startOfDay();
         $finDia = $inicioDia->copy()->endOfDay();
 
-        $reservas = Reserva::query()
-            ->whereIn('cancha_id', $canchaIds)
-            ->where('hora_inicio', '<', $finDia)
-            ->where('hora_fin', '>', $inicioDia)
-            ->whereRaw('LOWER(estado) = ?', ['confirmada'])
-            ->get(['cancha_id', 'hora_inicio', 'hora_fin']);
-
         $ocupados = [];
         foreach ($canchaIds as $id) {
             $ocupados[(int) $id] = [];
         }
 
-        foreach ($reservas as $reserva) {
-            $inicio = Carbon::parse($reserva->hora_inicio);
-            $fin = Carbon::parse($reserva->hora_fin);
+        foreach (TurnosOcupados::enRango($inicioDia, $finDia, $canchaIds) as $turno) {
+            if (! isset($ocupados[$turno->cancha_id])) {
+                continue;
+            }
 
             for ($h = 0; $h < 24; $h++) {
                 $slotInicio = $inicioDia->copy()->setTime($h, 0, 0);
                 $slotFin = $slotInicio->copy()->addHour();
 
-                if ($inicio->lt($slotFin) && $fin->gt($slotInicio)) {
-                    $ocupados[(int) $reserva->cancha_id][] = $h;
+                if ($turno->hora_inicio->lt($slotFin) && $turno->hora_fin->gt($slotInicio)) {
+                    $ocupados[$turno->cancha_id][] = $h;
                 }
             }
         }

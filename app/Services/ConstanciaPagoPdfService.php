@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Pago;
+use App\Models\Reprogramacion;
 use App\Models\Reserva;
 use App\Support\PagoPdfToken;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -107,7 +108,10 @@ class ConstanciaPagoPdfService
 
         return [
             'id' => $pago->id,
-            'pdf_token' => PagoPdfToken::generar($pago->id),
+            'tipo' => 'pago',
+            'clave' => PagoPdfToken::claveDePago($pago->id),
+            'orden' => $this->marcaDeTiempo($pago->getRawOriginal('pagado_en')),
+            'pdf_token' => PagoPdfToken::generar(PagoPdfToken::claveDePago($pago->id)),
             'nro_pedido' => (string) ($reserva?->id ?? $pago->id),
             'nro_operacion' => (string) ($transaccion?->transaccion_id ?? '—'),
             'codigo_voucher' => $reserva?->referencia_pago,
@@ -132,6 +136,80 @@ class ConstanciaPagoPdfService
     }
 
     /**
+     * Constancia de un cambio de horario.
+     *
+     * Reutiliza los datos del pago original (es el mismo dinero) y reemplaza
+     * el turno por el nuevo, marcando el comprobante como reprogramado.
+     *
+     * @return array<string, mixed>
+     */
+    public function datosPdfReprogramacion(Reprogramacion $reprogramacion): array
+    {
+        $reprogramacion->loadMissing([
+            'reserva.usuario.perfil',
+            'canchaAnterior',
+            'canchaNueva.sede',
+            'canchaNueva.deportes',
+        ]);
+
+        $reserva = $reprogramacion->reserva;
+        $pago = $reserva ? $this->pagoPorReserva($reserva->id) : null;
+        $base = $pago ? $this->datosPdf($pago) : [];
+
+        $canchaNueva = $reprogramacion->canchaNueva;
+        $inicio = $reprogramacion->hora_inicio_nueva;
+        $fin = $reprogramacion->hora_fin_nueva;
+        $duracionMin = (int) $inicio->diffInMinutes($fin);
+
+        $deporte = $base['deporte']
+            ?? $canchaNueva?->deportes?->first()?->nombre
+            ?? '—';
+
+        $concepto = 'Reserva de cancha';
+        if ($deporte !== '—') {
+            $concepto .= ' · '.$deporte;
+        }
+        $concepto .= ' · '.$duracionMin.' min (reprogramada)';
+
+        return array_merge($base, [
+            'id' => $reprogramacion->id,
+            'tipo' => 'reprogramacion',
+            'clave' => PagoPdfToken::claveDeReprogramacion($reprogramacion->id),
+            'orden' => $this->marcaDeTiempo($reprogramacion->getRawOriginal('creado_en')),
+            'pdf_token' => PagoPdfToken::generar(
+                PagoPdfToken::claveDeReprogramacion($reprogramacion->id)
+            ),
+            'estado' => 'Reprogramado',
+            'nro_reprogramacion' => 'REP-'.str_pad((string) $reprogramacion->id, 4, '0', STR_PAD_LEFT),
+            'fecha_pago' => $reprogramacion->creado_en?->format('d/m/Y H:i') ?? '—',
+            'sede' => $canchaNueva?->sede?->nombre ?? ($base['sede'] ?? '—'),
+            'cancha' => $canchaNueva?->nombre ?? '—',
+            'deporte' => $deporte,
+            'fecha_turno' => $inicio->format('d/m/Y'),
+            'horario' => $inicio->format('H:i').' a '.$fin->format('H:i').' hs',
+            'concepto' => $concepto,
+            'monto' => round((float) $reprogramacion->monto_validado, 2),
+            'motivo' => $reprogramacion->motivo,
+            'cancha_anterior' => $reprogramacion->canchaAnterior?->nombre ?? '—',
+            'turno_anterior' => $reprogramacion->hora_inicio_anterior->format('d/m/Y H:i')
+                .' a '.$reprogramacion->hora_fin_anterior->format('H:i').' hs',
+        ]);
+    }
+
+    /**
+     * @return array{content: string, filename: string}
+     */
+    public function adjuntoDesdeReprogramacion(Reprogramacion $reprogramacion): array
+    {
+        $datos = $this->datosPdfReprogramacion($reprogramacion);
+
+        return [
+            'content' => $this->generarContenido($datos),
+            'filename' => 'constancia-reprogramacion-'.$datos['nro_reprogramacion'].'.pdf',
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>  $datos
      */
     public function generarContenido(array $datos): string
@@ -142,6 +220,14 @@ class ConstanciaPagoPdfService
             ->setPaper(self::PAPEL_TICKET, 'portrait')
             ->setOption('isRemoteEnabled', true)
             ->output();
+    }
+
+    /**
+     * Marca usada solo para ordenar comprobantes de distinto tipo.
+     */
+    private function marcaDeTiempo(mixed $raw): int
+    {
+        return $raw ? Carbon::parse($raw)->timestamp : 0;
     }
 
     private function formatearFechaPago(Pago $pago): string
