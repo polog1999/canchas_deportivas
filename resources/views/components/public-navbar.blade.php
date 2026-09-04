@@ -46,32 +46,32 @@
             <div class="hidden md:flex items-center gap-3 text-white/90">
 
                 <a
-                    href="#"
-                    class="hover:text-white transition"
+                    href="https://www.tiktok.com/@munilamolina"
+                    class="hover:text-white transition" target="_blank"
                     aria-label="TikTok"
                 >
                     <i class="fa-brands fa-tiktok"></i>
                 </a>
 
                 <a
-                    href="#"
-                    class="hover:text-white transition"
+                    href="https://www.facebook.com/MunicipalidadDeLaMolina/"
+                    class="hover:text-white transition" target="_blank"
                     aria-label="Facebook"
                 >
                     <i class="fa-brands fa-facebook-f"></i>
                 </a>
 
                 <a
-                    href="#"
-                    class="hover:text-white transition"
+                    href="https://www.instagram.com/munilamolina/"
+                    class="hover:text-white transition" target="_blank"
                     aria-label="Instagram"
                 >
                     <i class="fa-brands fa-instagram"></i>
                 </a>
 
                 <a
-                    href="#"
-                    class="hover:text-white transition"
+                    href="https://www.youtube.com/@munidelamolina"
+                    class="hover:text-white transition" target="_blank"
                     aria-label="YouTube"
                 >
                     <i class="fa-brands fa-youtube"></i>

@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Deporte;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -91,36 +92,53 @@ class DeporteManager extends Component
         $this->imagenNueva = null;
     }
 
-    public function saveDeporte()
-    {
-        $this->validate();
+public function saveDeporte()
+{
+    $this->validate();
 
-        $deporte = Deporte::updateOrCreate(
-            ['id' => $this->deporteId],
-            ['nombre' => $this->nombre]
+    $deporte = Deporte::updateOrCreate(
+        ['id' => $this->deporteId],
+        ['nombre' => $this->nombre]
+    );
+
+    if ($this->imagenNueva) {
+
+        $extension = strtolower(
+            $this->imagenNueva->getClientOriginalExtension() ?: 'jpg'
         );
 
-        if ($this->imagenNueva) {
-            File::ensureDirectoryExists(public_path('imagenes/deportes'));
+        $filename = 'deporte_' . $deporte->id . '_' . Str::lower(Str::random(8)) . '.' . $extension;
 
-            $extension = strtolower($this->imagenNueva->getClientOriginalExtension() ?: 'jpg');
-            $filename = 'deporte_' . $deporte->id . '_' . Str::lower(Str::random(8)) . '.' . $extension;
-
-            $this->eliminarArchivoLocal($deporte->imagen);
-            $this->imagenNueva->storeAs('', $filename, 'deportes');
-
-            $deporte->imagen = $filename;
-            $deporte->save();
+        // Eliminar imagen anterior
+        if ($deporte->imagen) {
+            Storage::disk('public')->delete(
+                'imagenes/deportes/' . basename($deporte->imagen)
+            );
         }
 
-        $this->dispatch('swal', [
-            'icon' => 'success',
-            'title' => $this->isEditMode ? 'Deporte Actualizado' : 'Deporte Registrado',
-            'text' => 'La información del deporte se ha guardado correctamente.',
-        ]);
+        // Guardar en:
+        // storage/app/public/imagenes/deportes/
+        Storage::disk('public')->putFileAs(
+            'imagenes/deportes',
+            $this->imagenNueva,
+            $filename
+        );
 
-        $this->closeModal();
+        // Guardar solamente el nombre en la BD
+        $deporte->imagen = $filename;
+        $deporte->save();
     }
+
+    $this->dispatch('swal', [
+        'icon' => 'success',
+        'title' => $this->isEditMode
+            ? 'Deporte Actualizado'
+            : 'Deporte Registrado',
+        'text' => 'La información del deporte se ha guardado correctamente.',
+    ]);
+
+    $this->closeModal();
+}
 
     public function editDeporte($id)
     {
@@ -159,16 +177,18 @@ class DeporteManager extends Component
         ]);
     }
 
-    private function eliminarArchivoLocal(?string $imagen): void
-    {
-        $imagen = trim((string) $imagen);
-        if ($imagen === '' || preg_match('#^(https?:)?//#i', $imagen)) {
-            return;
-        }
+private function eliminarArchivoLocal(?string $imagen): void
+{
+    $imagen = trim((string) $imagen);
 
-        $path = public_path('imagenes/deportes/' . basename($imagen));
-        if (is_file($path)) {
-            @unlink($path);
-        }
+    if ($imagen === '' || preg_match('#^(https?:)?//#i', $imagen)) {
+        return;
     }
+
+    $path = 'imagenes/deportes/' . basename($imagen);
+    
+    if (Storage::disk('public')->exists($path)) {
+        Storage::disk('public')->delete($path);
+    }
+}
 }

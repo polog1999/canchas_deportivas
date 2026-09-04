@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Slider;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -123,14 +124,19 @@ class SliderManager extends Component
         );
 
         if ($this->imagenNueva) {
-            File::ensureDirectoryExists(public_path('imagenes/slider'));
-
+            // 1. Generar nombre único para la imagen
             $extension = strtolower($this->imagenNueva->getClientOriginalExtension() ?: 'jpg');
             $filename = 'slider_' . $slider->id . '_' . Str::lower(Str::random(8)) . '.' . $extension;
 
-            $this->eliminarArchivoLocal($slider->imagen);
-            $this->imagenNueva->storeAs('', $filename, 'slider');
+            // 2. Eliminar la imagen anterior si existe en el storage public
+            if ($slider->imagen && Storage::disk('public')->exists('imagenes/slider/' . $slider->imagen)) {
+                Storage::disk('public')->delete('imagenes/slider/' . $slider->imagen);
+            }
 
+            // 3. Guardar la nueva imagen en storage/app/public/imagenes/slider
+            $this->imagenNueva->storeAs('imagenes/slider', $filename, 'public');
+
+            // 4. Actualizar el nombre en la base de datos
             $slider->imagen = $filename;
             $slider->save();
         }
@@ -194,9 +200,10 @@ class SliderManager extends Component
             return;
         }
 
-        $path = public_path('imagenes/slider/' . basename($imagen));
-        if (is_file($path)) {
-            @unlink($path);
+        $path = 'imagenes/slider/' . basename($imagen);
+
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
         }
     }
 }
