@@ -24,13 +24,14 @@
                 <div class="hero-slide {{ $index === 0 ? 'active-slide' : 'hidden-slide' }}" data-slide="{{ $index }}">
                     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $slide->urlImagen() }}')"></div>
                     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-28 lg:py-32">
-                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
+                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] break-words wrap-anywhere line-clamp-4"
+                            title="{{ $slide->titulo }}">
                             {{ $slide->titulo }}
                         </h1>
                         <a href="{{ $slide->enlace_boton }}"
-                            class="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white font-bold text-sm shadow-lg transition">
-                            {{ $slide->texto_boton }}
-                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                            class="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full bg-[#1b5e3b] hover:bg-[#164d31] text-white font-bold text-sm shadow-lg transition max-w-full">
+                            <span class="truncate">{{ $slide->texto_boton }}</span>
+                            <i class="fa-solid fa-arrow-right text-xs shrink-0"></i>
                         </a>
                     </div>
                 </div>
@@ -39,7 +40,7 @@
                     <div class="absolute inset-0 bg-cover bg-center"
                         style="background-image: url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80')"></div>
                     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-28 lg:py-32">
-                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
+                        <h1 class="max-w-3xl text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] break-words wrap-anywhere line-clamp-4">
                             Reserva tu cancha favorita en línea y juega con pasión en La Molina
                         </h1>
                         <a href="#gridSedes"

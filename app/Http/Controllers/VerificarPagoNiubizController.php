@@ -1499,7 +1499,7 @@ class VerificarPagoNiubizController extends Controller
                     ]
                 );
 
-                app(ReservaCorreoService::class)
+                $resultadoCorreo = app(ReservaCorreoService::class)
                     ->enviarConfirmacionPago(
                         $reserva,
                         $meta,
@@ -1513,11 +1513,16 @@ class VerificarPagoNiubizController extends Controller
                         $pagoRegistrado,
                     );
 
-                Log::channel('niubiz')->info(
-                    '[Correo] Confirmación de pago enviada correctamente',
+                Log::channel('niubiz')->log(
+                    $resultadoCorreo['enviado'] ? 'info' : 'error',
+                    $resultadoCorreo['enviado']
+                        ? '[Correo] Confirmación de pago enviada correctamente'
+                        : '[Correo] NO SE PUDO ENVIAR la confirmación de pago',
                     [
                         'reserva_id' => $reserva->id,
                         'pago_id' => $pago->id,
+                        'destino' => $resultadoCorreo['destino'],
+                        'motivo' => $resultadoCorreo['motivo'],
                     ]
                 );
 
