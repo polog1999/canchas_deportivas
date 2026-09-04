@@ -48,6 +48,6 @@ class Slider extends Model
             return asset(ltrim($imagen, '/'));
         }
 
-        return asset('imagenes/slider/' . $imagen);
+        return asset('storage/imagenes/slider/' . $imagen);
     }
 }
