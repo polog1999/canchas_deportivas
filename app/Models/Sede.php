@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasSpanishTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Sede extends Model
 {
@@ -46,23 +47,28 @@ class Sede extends Model
                 ?? 'https://images.unsplash.com/photo-1459865266369-566976b10f9e?auto=format&fit=crop&w=800&q=80';
         }
 
-        if (preg_match('#^(https?:)?//#i', $imagen) || str_starts_with($imagen, 'data:')) {
+        // Si ya es una URL externa o base64
+        if (
+            preg_match('#^(https?:)?//#i', $imagen) ||
+            str_starts_with($imagen, 'data:')
+        ) {
             return $imagen;
         }
 
-        if (str_contains($imagen, '/')) {
-            return asset(ltrim($imagen, '/'));
+        // Solo guardamos el nombre de la imagen en la BD
+        $filename = basename($imagen);
+
+        // Ruta dentro de storage/app/public
+        $path = 'imagenes/sedes/' . $filename;
+
+        // Si existe, obtener URL pública mediante Storage
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->url($path);
         }
 
-        if (is_file(public_path('imagenes/sedes/' . $imagen))) {
-            return asset('imagenes/sedes/' . $imagen);
-        }
-
-        if (is_file(public_path('sedes/' . $imagen))) {
-            return asset('sedes/' . $imagen);
-        }
-
-        return asset('imagenes/sedes/' . $imagen);
+        // Si no existe, devolver fallback
+        return $fallback
+            ?? 'https://images.unsplash.com/photo-1459865266369-566976b10f9e?auto=format&fit=crop&w=800&q=80';
     }
 
     /**
@@ -80,11 +86,11 @@ class Sede extends Model
         }
 
         if (preg_match('/@(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/', $enlace, $m)) {
-            return 'https://maps.google.com/maps?q='.$m[1].','.$m[2].'&z=16&output=embed';
+            return 'https://maps.google.com/maps?q=' . $m[1] . ',' . $m[2] . '&z=16&output=embed';
         }
 
         if (preg_match('/[?&]q=([^&]+)/', $enlace, $m)) {
-            return 'https://maps.google.com/maps?q='.$m[1].'&z=15&output=embed';
+            return 'https://maps.google.com/maps?q=' . $m[1] . '&z=15&output=embed';
         }
 
         $consulta = trim((string) ($this->direccion ?: $this->nombre));
@@ -92,6 +98,6 @@ class Sede extends Model
             return null;
         }
 
-        return 'https://maps.google.com/maps?q='.rawurlencode($consulta.' La Molina Lima Perú').'&z=15&output=embed';
+        return 'https://maps.google.com/maps?q=' . rawurlencode($consulta . ' La Molina Lima Perú') . '&z=15&output=embed';
     }
 }
