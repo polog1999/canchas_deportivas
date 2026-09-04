@@ -133,18 +133,25 @@
                         <div class="bg-white px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Título <span class="text-red-500">*</span></label>
-                                <textarea wire:model="titulo" rows="3"
+                                <textarea wire:model.live="titulo" rows="3" maxlength="120"
                                     class="w-full px-3 py-2 border @error('titulo') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                                     placeholder="Texto principal del slide"></textarea>
-                                @error('titulo')
-                                    <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
-                                @enderror
+                                <div class="flex items-start justify-between gap-2 mt-1">
+                                    @error('titulo')
+                                        <span class="text-xs text-red-500">{{ $message }}</span>
+                                    @else
+                                        <span class="text-xs text-gray-400">Máximo 120 caracteres para que no se desborde el slider.</span>
+                                    @enderror
+                                    <span class="text-xs shrink-0 {{ mb_strlen($titulo) > 120 ? 'text-red-500' : 'text-gray-400' }}">
+                                        {{ mb_strlen($titulo) }}/120
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 mb-1">Texto botón <span class="text-red-500">*</span></label>
-                                    <input type="text" wire:model="texto_boton"
+                                    <input type="text" wire:model="texto_boton" maxlength="40"
                                         class="w-full px-3 py-2 border @error('texto_boton') border-red-500 @else border-gray-300 @enderror rounded-lg text-sm focus:ring-1 focus:ring-emerald-500"
                                         placeholder="Reservar cancha" />
                                     @error('texto_boton')

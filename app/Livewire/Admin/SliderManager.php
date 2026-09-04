@@ -36,8 +36,8 @@ class SliderManager extends Component
     protected function rules()
     {
         return [
-            'titulo' => 'required|string|max:255',
-            'texto_boton' => 'required|string|max:100',
+            'titulo' => 'required|string|max:120',
+            'texto_boton' => 'required|string|max:40',
             'enlace_boton' => 'required|string|max:255',
             'orden' => 'required|integer|min:0',
             'activo' => 'required|boolean',
@@ -47,7 +47,9 @@ class SliderManager extends Component
 
     protected $messages = [
         'titulo.required' => 'El título del slide es obligatorio.',
+        'titulo.max' => 'El título no debe pasar de 120 caracteres para que entre en el slider.',
         'texto_boton.required' => 'El texto del botón es obligatorio.',
+        'texto_boton.max' => 'El texto del botón no debe pasar de 40 caracteres.',
         'enlace_boton.required' => 'El enlace del botón es obligatorio.',
         'imagenNueva.required' => 'La imagen del slide es obligatoria.',
         'imagenNueva.image' => 'El archivo debe ser una imagen (jpg, png, webp, etc.).',

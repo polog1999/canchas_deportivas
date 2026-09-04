@@ -20,6 +20,7 @@ class ReservaCorreoService
 
     /**
      * @param  array<string, mixed>  $meta
+     * @return array{enviado: bool, destino: string|null, motivo: string|null}
      */
     public function enviarConfirmacionPago(
         Reserva $reserva,
@@ -28,7 +29,7 @@ class ReservaCorreoService
         ?string $usuarioLogin = null,
         ?string $clavePlana = null,
         ?Pago $pago = null,
-    ): void {
+    ): array {
         $reserva->loadMissing(['usuario.perfil', 'cancha.sede']);
 
         $usuario = $reserva->usuario;
@@ -37,9 +38,16 @@ class ReservaCorreoService
         if ($correo === '' || ! filter_var($correo, FILTER_VALIDATE_EMAIL)) {
             Log::warning('ReservaCorreo: sin correo válido para enviar confirmación', [
                 'reserva_id' => $reserva->id,
+                'correo_recibido' => $correo,
             ]);
 
-            return;
+            return [
+                'enviado' => false,
+                'destino' => $correo !== '' ? $correo : null,
+                'motivo' => $correo === ''
+                    ? 'el titular no tiene correo registrado'
+                    : 'el correo del titular no tiene un formato válido',
+            ];
         }
 
         $mailer = $this->mailConfig->mailerActivo();
@@ -81,6 +89,8 @@ class ReservaCorreoService
                 'smtp_host' => $smtpHost,
                 'pdf_adjunto' => $pdfAdjunto !== null,
             ]);
+
+            return ['enviado' => true, 'destino' => $correo, 'motivo' => null];
         } catch (\Throwable $e) {
             Log::error('ReservaCorreo: error al enviar correo', [
                 'reserva_id' => $reserva->id,
@@ -89,6 +99,8 @@ class ReservaCorreoService
                 'smtp_host' => $smtpHost,
                 'error' => $e->getMessage(),
             ]);
+
+            return ['enviado' => false, 'destino' => $correo, 'motivo' => $e->getMessage()];
         }
     }
 
