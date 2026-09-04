@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasSpanishTimestamps;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Slider extends Model
 {
@@ -30,7 +31,7 @@ class Slider extends Model
         ];
     }
 
-    /** URL: en BD solo el archivo → public/imagenes/slider/{archivo} */
+   
     public function urlImagen(?string $fallback = null): string
     {
         $imagen = trim((string) $this->imagen);
@@ -40,14 +41,22 @@ class Slider extends Model
                 ?? 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80';
         }
 
-        if (preg_match('#^(https?:)?//#i', $imagen) || str_starts_with($imagen, 'data:')) {
+        if (
+            preg_match('#^(https?:)?//#i', $imagen) ||
+            str_starts_with($imagen, 'data:')
+        ) {
             return $imagen;
         }
 
-        if (str_contains($imagen, '/')) {
-            return asset(ltrim($imagen, '/'));
+        $filename = basename($imagen);
+
+        $path = 'imagenes/slider/' . $filename;
+
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->url($path);
         }
 
-        return asset('storage/imagenes/slider/' . $imagen);
+        return $fallback
+            ?? 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80';
     }
 }
