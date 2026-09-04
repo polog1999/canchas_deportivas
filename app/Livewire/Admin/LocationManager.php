@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Sede;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -124,15 +125,25 @@ class LocationManager extends Component
         );
 
         if ($this->imagenNueva) {
-            File::ensureDirectoryExists(public_path('imagenes/sedes'));
 
-            $extension = strtolower($this->imagenNueva->getClientOriginalExtension() ?: 'jpg');
+            $extension = strtolower(
+                $this->imagenNueva->getClientOriginalExtension() ?: 'jpg'
+            );
+
             $filename = 'sede_' . $sede->id . '_' . Str::lower(Str::random(8)) . '.' . $extension;
 
+            // Eliminar imagen anterior de Storage
             $this->eliminarArchivoLocal($sede->imagen);
 
-            $this->imagenNueva->storeAs('', $filename, 'sedes');
+            // Guardar en:
+            // storage/app/public/imagenes/sedes/
+            $this->imagenNueva->storeAs(
+                'imagenes/sedes',
+                $filename,
+                'public'
+            );
 
+            // Guardamos solamente el nombre en la BD
             $sede->imagen = $filename;
             $sede->save();
         }
@@ -145,7 +156,6 @@ class LocationManager extends Component
 
         $this->closeModal();
     }
-
     public function editLocation($id)
     {
         $this->resetInputFields();
@@ -186,19 +196,13 @@ class LocationManager extends Component
     private function eliminarArchivoLocal(?string $imagen): void
     {
         $imagen = trim((string) $imagen);
+
         if ($imagen === '' || preg_match('#^(https?:)?//#i', $imagen)) {
             return;
         }
 
         $name = basename($imagen);
-        foreach ([
-            public_path('imagenes/sedes/' . $name),
-            public_path('sedes/' . $name),
-            public_path(ltrim($imagen, '/')),
-        ] as $path) {
-            if (is_file($path)) {
-                @unlink($path);
-            }
-        }
+
+        Storage::disk('public')->delete('imagenes/sedes/' . $name);
     }
 }
