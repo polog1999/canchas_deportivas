@@ -196,7 +196,7 @@
                                 </label>
                                 @if ($imagenActual && ! $imagenNueva)
                                     <div class="mb-2">
-                                        <img src="{{ asset('imagenes/slider/' . $imagenActual) }}" alt="Imagen actual"
+                                        <img src="{{ asset('storage/imagenes/slider/' . $imagenActual) }}" alt="Imagen actual"
                                             class="w-full h-36 object-cover rounded-lg border border-gray-200">
                                     </div>
                                 @endif

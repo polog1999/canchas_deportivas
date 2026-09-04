@@ -144,7 +144,7 @@
                                             <img src="{{ $imagenNueva->temporaryUrl() }}" alt="Vista previa"
                                                 class="w-full h-full object-cover">
                                         @elseif ($imagenActual)
-                                            <img src="{{ asset('imagenes/deportes/' . $imagenActual) }}" alt="Imagen actual"
+                                            <img src="{{ asset('storage/imagenes/deportes/' . $imagenActual) }}" alt="Imagen actual"
                                                 class="w-full h-full object-cover">
                                         @else
                                             <i class="fa-regular fa-image text-gray-300 text-xl"></i>
