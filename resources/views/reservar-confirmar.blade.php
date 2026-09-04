@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="es">
@@ -30,8 +31,11 @@
 
             <a :href="urlVolverHorarios"
                 class="inline-flex items-center gap-2 text-sm font-semibold text-[#1b5e3b] hover:text-emerald-800 transition">
+
                 <i class="fa-solid fa-arrow-left"></i>
+
                 Volver a horarios
+
             </a>
 
         </x-slot:back>
@@ -45,21 +49,29 @@
             class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm font-semibold">
 
             <span class="text-emerald-700">
+
                 <i class="fa-solid fa-circle-check mr-1"></i>
+
                 1. Buscar
+
             </span>
 
             <i class="fa-solid fa-chevron-right text-slate-300 text-[10px]"></i>
 
             <span class="text-emerald-700">
+
                 <i class="fa-solid fa-circle-check mr-1"></i>
+
                 2. Elegir turno
+
             </span>
 
             <i class="fa-solid fa-chevron-right text-slate-300 text-[10px]"></i>
 
             <span class="text-[#1b5e3b] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+
                 3. Confirmar
+
             </span>
 
         </div>
@@ -67,31 +79,45 @@
     </div>
 
 
+
     <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
 
         <div class="mb-8">
 
             <p class="text-xs font-bold uppercase tracking-widest text-emerald-700 mb-2">
+
                 Paso final
+
             </p>
 
             <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">
+
                 Revisa y confirma tu reserva
+
             </h1>
 
             <p class="text-sm text-slate-500 mt-2 max-w-2xl" x-show="estado !== 'sesion'">
+
                 Verifica el turno de
+
                 <span class="font-semibold text-slate-700" x-text="reserva.club"></span>
+
                 e identifica al titular con su documento.
+
             </p>
 
             <p class="text-sm text-slate-500 mt-2 max-w-2xl" x-show="estado === 'sesion'" x-cloak>
+
                 Verifica el turno de
+
                 <span class="font-semibold text-slate-700" x-text="reserva.club"></span>
+
                 y confirma con tu contraseña para continuar al pago.
+
             </p>
 
         </div>
+
 
 
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
@@ -103,21 +129,31 @@
                     <div class="flex items-center gap-2 mb-4">
 
                         <span class="w-8 h-8 rounded-lg bg-emerald-100 text-[#1b5e3b] flex items-center justify-center">
+
                             <i class="fa-solid fa-id-card"></i>
+
                         </span>
 
-                        <h2 class="font-bold text-slate-900" x-text="estado === 'sesion' ? 'Confirmar identidad' : 'Datos del titular'">
+                        <h2 class="font-bold text-slate-900"
+                            x-text="estado === 'sesion' ? 'Confirmar identidad' : 'Datos del titular'">
+
                             Datos del titular
+
                         </h2>
 
                     </div>
 
 
+
                     <div x-show="estado === 'sesion'" x-cloak
                         class="mb-4 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-800">
+
                         <i class="fa-solid fa-circle-check mr-1"></i>
+
                         Reservarás con tu cuenta activa. Ingresa tu contraseña para continuar al pago.
+
                     </div>
+
 
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -129,7 +165,9 @@
                         <div class="sm:col-span-2" x-show="estado !== 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 Tipo de documento
+
                             </label>
 
                             <div class="relative">
@@ -137,20 +175,29 @@
                                 <i
                                     class="fa-solid fa-id-card-clip absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <select x-model="form.tipo_documento_id" @change="onTipoDocumentoChange($event)"
+                                <select x-model="form.tipo_documento_id"
+                                    @change="onTipoDocumentoChange($event)"
                                     :disabled="estado === 'sesion'"
                                     class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white disabled:bg-slate-100 disabled:text-slate-500">
 
                                     <option value="">
+
                                         Selecciona tu tipo de documento
+
                                     </option>
+
                                     @php
                                         $tipoDocumentos = App\Models\TipoDocumento::get();
                                     @endphp
+
                                     @foreach ($tipoDocumentos as $tipoDocumento)
+
                                         <option value="{{ $tipoDocumento->id }}">
+
                                             {{ $tipoDocumento->abreviatura }}
+
                                         </option>
+
                                     @endforeach
 
                                 </select>
@@ -163,6 +210,7 @@
                         </div>
 
 
+
                         {{-- ================================================= --}}
                         {{-- DNI / DOCUMENTO --}}
                         {{-- ================================================= --}}
@@ -170,7 +218,9 @@
                         <div class="sm:col-span-2" x-show="estado !== 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 DNI / documento
+
                             </label>
 
                             <div class="relative">
@@ -178,25 +228,37 @@
                                 <i
                                     class="fa-regular fa-address-card absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <input type="text" x-model="form.documento" @input="onDocumentoInput()"
-                                    maxlength="15" inputmode="numeric"
+                                <input type="text"
+                                    x-model="form.documento"
+                                    @input="onDocumentoInput()"
+                                    maxlength="15"
+                                    inputmode="numeric"
+                                    :disabled="estado === 'sesion'"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
                                     placeholder="12345678">
 
                             </div>
 
-                            <p class="text-[11px] mt-1.5" :class="mensajeClase" x-text="mensaje"
-                                x-show="mensaje"></p>
+                            <p class="text-[11px] mt-1.5"
+                                :class="mensajeClase"
+                                x-text="mensaje"
+                                x-show="mensaje">
+                            </p>
 
                         </div>
 
 
-                        {{-- Nombres / apellidos --}}
 
-                        <div x-show="estado !== 'pendiente' && estado !== 'sesion'" x-cloak>
+                        {{-- ================================================= --}}
+                        {{-- NOMBRES --}}
+                        {{-- ================================================= --}}
+
+                        <div x-show="estado !== 'pendiente'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 Nombres
+
                             </label>
 
                             <div class="relative">
@@ -204,9 +266,12 @@
                                 <i
                                     class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <input type="text" x-model="form.nombres"
+                                <input type="text"
+                                    x-model="form.nombres"
                                     :disabled="estado === 'existe' || estado === 'sesion'"
-                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. Juan Carlos'"
+                                    :placeholder="estado === 'existe' || estado === 'sesion'
+                                        ? 'Se tomará de tu cuenta'
+                                        : 'Ej. Juan Carlos'"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
 
                             </div>
@@ -214,10 +279,17 @@
                         </div>
 
 
-                        <div x-show="estado !== 'pendiente' && estado !== 'sesion'" x-cloak>
+
+                        {{-- ================================================= --}}
+                        {{-- APELLIDO PATERNO --}}
+                        {{-- ================================================= --}}
+
+                        <div x-show="estado !== 'pendiente'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 Apellido paterno
+
                             </label>
 
                             <div class="relative">
@@ -225,9 +297,12 @@
                                 <i
                                     class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <input type="text" x-model="form.apellido_paterno"
+                                <input type="text"
+                                    x-model="form.apellido_paterno"
                                     :disabled="estado === 'existe' || estado === 'sesion'"
-                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. Pérez'"
+                                    :placeholder="estado === 'existe' || estado === 'sesion'
+                                        ? 'Se tomará de tu cuenta'
+                                        : 'Ej. Pérez'"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
 
                             </div>
@@ -235,10 +310,19 @@
                         </div>
 
 
-                        <div class="sm:col-span-2" x-show="estado !== 'pendiente' && estado !== 'sesion'" x-cloak>
+
+                        {{-- ================================================= --}}
+                        {{-- APELLIDO MATERNO --}}
+                        {{-- ================================================= --}}
+
+                        <div class="sm:col-span-2"
+                            x-show="estado !== 'pendiente'"
+                            x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 Apellido materno
+
                             </label>
 
                             <div class="relative">
@@ -246,9 +330,12 @@
                                 <i
                                     class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <input type="text" x-model="form.apellido_materno"
+                                <input type="text"
+                                    x-model="form.apellido_materno"
                                     :disabled="estado === 'existe' || estado === 'sesion'"
-                                    :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta' : 'Ej. García'"
+                                    :placeholder="estado === 'existe' || estado === 'sesion'
+                                        ? 'Se tomará de tu cuenta'
+                                        : 'Ej. García'"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
 
                             </div>
@@ -256,13 +343,18 @@
                         </div>
 
 
-                        {{-- Teléfono --}}
 
-                        <div x-show="estado !== 'pendiente' && estado !== 'sesion'" x-cloak
+                        {{-- ================================================= --}}
+                        {{-- TELEFONO --}}
+                        {{-- ================================================= --}}
+
+                        <div x-show="estado !== 'pendiente'" x-cloak
                             :class="estado === 'nuevo' ? '' : 'sm:col-span-2'">
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 Teléfono / WhatsApp
+
                             </label>
 
                             <div class="relative">
@@ -270,28 +362,33 @@
                                 <i
                                     class="fa-solid fa-mobile-screen absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                               <input
-                                        type="tel"
-                                        x-model="form.telefono"
-                                        maxlength="9"
-                                        inputmode="numeric"
-                                        @input="form.telefono = form.telefono.replace(/\D/g, '').slice(0, 9)"
-                                        :disabled="estado === 'existe'"
-                                        :placeholder="estado === 'existe' ? 'Se tomará de tu cuenta registrada' : '999 999 999'"
-                                        class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
-                                  >
+                                <input type="tel"
+                                    x-model="form.telefono"
+                                    maxlength="9"
+                                    inputmode="numeric"
+                                    @input="form.telefono = form.telefono.replace(/\D/g, '').slice(0, 9)"
+                                    :disabled="estado === 'existe' || estado === 'sesion'"
+                                    :placeholder="estado === 'existe' || estado === 'sesion'
+                                        ? 'Se tomará de tu cuenta registrada'
+                                        : '999 999 999'"
+                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
 
                             </div>
 
                         </div>
 
 
-                        {{-- Correo solo si el DNI NO existe --}}
 
-                        <div x-show="estado === 'nuevo'" x-cloak>
+                        {{-- ================================================= --}}
+                        {{-- CORREO --}}
+                        {{-- ================================================= --}}
+
+                        <div x-show="estado === 'nuevo' || estado === 'sesion'" x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 Correo electrónico
+
                             </label>
 
                             <div class="relative">
@@ -299,21 +396,32 @@
                                 <i
                                     class="fa-regular fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <input type="email" x-model="form.email"
-                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    placeholder="correo@ejemplo.com">
+                                <input type="email"
+                                    x-model="form.email"
+                                    :disabled="estado === 'sesion'"
+                                    class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                    :placeholder="estado === 'sesion'
+                                        ? 'Correo de tu cuenta'
+                                        : 'correo@ejemplo.com'">
 
                             </div>
 
                         </div>
 
 
-                        {{-- Distrito solo si el DNI NO existe --}}
 
-                        <div class="sm:col-span-2" x-show="estado === 'nuevo'" x-cloak>
+                        {{-- ================================================= --}}
+                        {{-- DISTRITO --}}
+                        {{-- ================================================= --}}
+
+                        <div class="sm:col-span-2"
+                            x-show="estado === 'nuevo'"
+                            x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 Distrito donde vives
+
                             </label>
 
                             <div class="relative">
@@ -325,11 +433,15 @@
                                     class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
 
                                     <option value="">
+
                                         Selecciona tu distrito
+
                                     </option>
 
                                     <template x-for="d in distritos" :key="d.id">
+
                                         <option :value="String(d.id)" x-text="d.nombre"></option>
+
                                     </template>
 
                                 </select>
@@ -342,12 +454,19 @@
                         </div>
 
 
-                        {{-- Contraseña si el DNI existe o hay sesión activa --}}
 
-                        <div class="sm:col-span-2" x-show="estado === 'existe' || estado === 'sesion'" x-cloak>
+                        {{-- ================================================= --}}
+                        {{-- CONTRASEÑA --}}
+                        {{-- ================================================= --}}
+
+                        <div class="sm:col-span-2"
+                            x-show="estado === 'existe' || estado === 'sesion'"
+                            x-cloak>
 
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+
                                 Contraseña
+
                             </label>
 
                             <div class="relative">
@@ -355,19 +474,26 @@
                                 <i
                                     class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
 
-                                <input type="password" x-model="form.clave" @input="errorConfirmacion = ''"
+                                <input type="password"
+                                    x-model="form.clave"
+                                    @input="errorConfirmacion = ''"
                                     class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                     placeholder="Ingresa tu contraseña">
 
                             </div>
 
-                            <p class="text-[11px] text-slate-400 mt-1.5" x-show="estado === 'existe'">
-                                Ya tienes cuenta. Confirma con tu contraseña; tus datos personales se tomarán de la base
-                                de datos.
+                            <p class="text-[11px] text-slate-400 mt-1.5"
+                                x-show="estado === 'existe'">
+
+                                Ya tienes cuenta. Confirma con tu contraseña; tus datos personales se tomarán de la base de datos.
+
                             </p>
 
-                            <p class="text-[11px] text-slate-400 mt-1.5" x-show="estado === 'sesion'">
+                            <p class="text-[11px] text-slate-400 mt-1.5"
+                                x-show="estado === 'sesion'">
+
                                 Por seguridad, confirma tu identidad con la contraseña de tu cuenta.
+
                             </p>
 
                         </div>
@@ -375,39 +501,60 @@
                     </div>
 
 
-                    <p class="text-[11px] text-slate-400 mt-3" x-show="estado === 'nuevo'" x-cloak>
+
+                    <p class="text-[11px] text-slate-400 mt-3"
+                        x-show="estado === 'nuevo'"
+                        x-cloak>
+
                         Te enviaremos el voucher digital al correo indicado.
+
                     </p>
 
                 </section>
+
 
 
                 <div class="flex flex-col sm:flex-row gap-3 sm:justify-end pt-2">
 
                     <a :href="urlVolverHorarios"
                         class="inline-flex justify-center px-5 py-3 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50">
+
                         Cambiar horario
+
                     </a>
 
-                    <button type="button" @click="confirmar()" :disabled="!puedeConfirmar || confirmando"
+                    <button type="button"
+                        @click="confirmar()"
+                        :disabled="!puedeConfirmar || confirmando"
                         class="inline-flex justify-center items-center gap-2 px-8 py-3 rounded-xl bg-[#1b5e3b] hover:bg-[#164d31] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold shadow-sm transition">
 
-                        <i x-show="confirmando" class="fa-solid fa-spinner animate-spin"></i>
+                        <i x-show="confirmando"
+                            class="fa-solid fa-spinner animate-spin"></i>
 
                         Confirmar reserva
 
-                        <i x-show="!confirmando" class="fa-solid fa-arrow-right text-xs"></i>
+                        <i x-show="!confirmando"
+                            class="fa-solid fa-arrow-right text-xs"></i>
 
                     </button>
 
                 </div>
 
 
-                <p class="text-xs text-red-600 text-right" x-show="errorConfirmacion" x-text="errorConfirmacion"
-                    x-cloak></p>
+
+                <p class="text-xs text-red-600 text-right"
+                    x-show="errorConfirmacion"
+                    x-text="errorConfirmacion"
+                    x-cloak>
+                </p>
 
             </div>
 
+
+
+            {{-- ========================================================= --}}
+            {{-- RESUMEN RESERVA --}}
+            {{-- ========================================================= --}}
 
             <aside class="lg:col-span-2 order-1 lg:order-2">
 
@@ -425,13 +572,17 @@
                             <div class="absolute bottom-3 left-4 right-4 text-white">
 
                                 <p class="text-[10px] uppercase tracking-wider text-emerald-200 font-semibold"
-                                    x-text="reserva.deporte"></p>
+                                    x-text="reserva.deporte">
+                                </p>
 
-                                <h3 class="font-bold text-lg leading-tight" x-text="reserva.club"></h3>
+                                <h3 class="font-bold text-lg leading-tight"
+                                    x-text="reserva.club">
+                                </h3>
 
                             </div>
 
                         </div>
+
 
 
                         <div class="bg-[#123d2a] text-white p-5 space-y-3 text-sm">
@@ -452,7 +603,9 @@
                                     Fecha
                                 </span>
 
-                                <span class="font-semibold text-right" x-text="reserva.fechaLabel"></span>
+                                <span class="font-semibold text-right"
+                                    x-text="reserva.fechaLabel">
+                                </span>
 
                             </div>
 
@@ -462,7 +615,9 @@
                                     Turno
                                 </span>
 
-                                <span class="font-semibold text-right" x-text="reserva.turno"></span>
+                                <span class="font-semibold text-right"
+                                    x-text="reserva.turno">
+                                </span>
 
                             </div>
 
@@ -472,11 +627,15 @@
                                     Cancha
                                 </span>
 
-                                <span class="font-semibold text-right" x-text="reserva.cancha"></span>
+                                <span class="font-semibold text-right"
+                                    x-text="reserva.cancha">
+                                </span>
 
                             </div>
 
-                            <p class="text-[11px] text-emerald-200/80" x-text="reserva.detalle"></p>
+                            <p class="text-[11px] text-emerald-200/80"
+                                x-text="reserva.detalle">
+                            </p>
 
                             <div class="h-px bg-white/10"></div>
 
@@ -487,13 +646,15 @@
                                 </span>
 
                                 <span class="text-2xl font-bold text-emerald-200"
-                                    x-text="'S/ ' + reserva.precio"></span>
+                                    x-text="'S/ ' + reserva.precio">
+                                </span>
 
                             </div>
 
                         </div>
 
                     </div>
+
 
 
                     <div
@@ -514,23 +675,31 @@
     </main>
 
 
+
     <footer class="mt-10 border-t border-emerald-100 bg-white py-4">
 
         <p class="text-center text-xs text-slate-400">
+
             © {{ date('Y') }} Municipalidad de La Molina
+
         </p>
 
     </footer>
 
 
+
     <style>
+
         [x-cloak] {
             display: none !important;
         }
+
     </style>
 
 
+
     <script>
+
         function confirmarMaqueta() {
 
             const params = new URLSearchParams(window.location.search);
@@ -581,9 +750,10 @@
                 volverParams.set('fecha', fecha);
             }
 
-            const urlVolverHorarios = sedeId ?
-                (@json(route('reservar.turno')) + '?' + volverParams.toString()) :
-                @json(url('/'));
+            const urlVolverHorarios = sedeId
+                ? (@json(route('reservar.turno')) + '?' + volverParams.toString())
+                : @json(url('/'));
+
 
 
             const [h, m] = hora.split(':').map(Number);
@@ -597,6 +767,7 @@
             const fm = String(
                 finMin % 60
             ).padStart(2, '0');
+
 
 
             const fechaDate = new Date(
@@ -613,9 +784,11 @@
             );
 
 
+
             let debounceTimer = null;
 
             const usuarioPortal = @json($usuarioPortal ?? null);
+
 
 
             return {
@@ -632,7 +805,7 @@
 
                     apellido_materno: usuarioPortal?.apellido_materno || '',
 
-                    telefono: '',
+                    telefono: usuarioPortal?.telefono || '',
 
                     email: usuarioPortal?.email || '',
 
@@ -643,9 +816,10 @@
                 },
 
 
-                estado: usuarioPortal ?
-                    'sesion' :
-                    'pendiente',
+
+                estado: usuarioPortal
+                    ? 'sesion'
+                    : 'pendiente',
 
                 documentoEditable: usuarioPortal?.documento_editable ?? false,
 
@@ -662,6 +836,7 @@
                 urlVolverHorarios,
 
                 distritos: @json($distritos),
+
 
 
                 reserva: {
@@ -687,6 +862,7 @@
                 },
 
 
+
                 get mensajeClase() {
 
                     if (this.mensajeTipo === 'ok') {
@@ -702,69 +878,117 @@
                 },
 
 
+
                 get puedeConfirmar() {
 
-                    if (this.estado === 'pendiente') {
-                        return false;
+                    // =====================================================
+                    // USUARIO SIN SESIÓN + DOCUMENTO NO REGISTRADO
+                    // =====================================================
+
+                    if (this.estado === 'nuevo') {
+
+                        return this.form.tipo_documento_id &&
+                            this.validarDocumento() &&
+                            this.form.nombres.trim().length > 1 &&
+                            this.form.apellido_paterno.trim().length > 1 &&
+                            this.form.apellido_materno.trim().length > 1 &&
+                            this.form.telefono.trim().length === 9 &&
+                            /^\d{9}$/.test(this.form.telefono.trim()) &&
+                            this.form.email.includes('@') &&
+                            String(this.form.distrito_id).length > 0;
+
                     }
+
+
+
+                    // =====================================================
+                    // USUARIO SIN SESIÓN + DOCUMENTO YA REGISTRADO
+                    // SOLO NECESITA CONTRASEÑA
+                    // =====================================================
+
+                    if (this.estado === 'existe') {
+
+                        return !!this.form.tipo_documento_id &&
+                            this.validarDocumento() &&
+                            this.form.clave.trim().length >= 4;
+
+                    }
+
+
+
+                    // =====================================================
+                    // USUARIO CON SESIÓN ACTIVA
+                    // SOLO NECESITA CONTRASEÑA
+                    // =====================================================
 
                     if (this.estado === 'sesion') {
+
                         return this.form.clave.trim().length >= 4;
+
                     }
 
-                    // if (this.estado === 'existe') {
 
-                    //     return this.form.tipo_documento_id &&
-                    //         this.form.documento.replace(/\D/g, '').length >= 8 &&
-                    //         this.form.clave.trim().length >= 4;
 
-                    // }
+                    // =====================================================
+                    // ESTADO INICIAL
+                    // =====================================================
 
-                    return this.form.tipo_documento_id &&
-                    this.validarDocumento() &&  
-                    this.form.nombres.trim().length > 1 &&
-                    this.form.apellido_paterno.trim().length > 1 &&
-                    this.form.apellido_materno.trim().length > 1 &&
-                    this.form.telefono.trim().length === 9 &&
-                    /^\d{9}$/.test(this.form.telefono.trim()) &&
-                    this.form.email.includes('@') &&
-                    String(this.form.distrito_id).length > 0;
+                    return false;
 
                 },
 
-                
-                    validarDocumento() {
-                        const doc = this.form.documento.replace(/\D/g, '');
-                        const tipo = (window.tipoDocumentoSeleccionado || '').toLowerCase();
 
-                        switch (tipo) {
-                            case 'dni':
-                                return doc.length === 8;
 
-                            case 'ce': // Carné de extranjería
-                                return doc.length >= 10 && doc.length <= 11;
+                validarDocumento() {
 
-                            case 'pasaporte':
-                                return this.form.documento.trim().length >= 6 &&
-                                    this.form.documento.trim().length <= 11;
+                    const doc = this.form.documento.replace(/\D/g, '');
 
-                            default:
-                                // Fallback si no hay tipo seleccionado o es desconocido
-                                return doc.length >= 8;
-                        }
-                    },
-                
+                    const tipo =
+                        (window.tipoDocumentoSeleccionado || '').toLowerCase();
+
+                    switch (tipo) {
+
+                        case 'dni':
+
+                            return doc.length === 8;
+
+                        case 'ce':
+
+                            return doc.length >= 10 &&
+                                doc.length <= 11;
+
+                        case 'pasaporte':
+
+                            return this.form.documento.trim().length >= 6 &&
+                                this.form.documento.trim().length <= 11;
+
+                        default:
+
+                            return doc.length >= 8;
+
+                    }
+
+                },
+
+
+
 
 
                 onTipoDocumentoChange(event) {
 
                     if (this.estado === 'sesion') {
+
                         return;
+
                     }
-                    
+
                     const select = event.target;
-                    const texto = select.options[select.selectedIndex]?.text || '';
-                    window.tipoDocumentoSeleccionado = texto.trim().toLowerCase();
+
+                    const texto =
+                        select.options[select.selectedIndex]?.text || '';
+
+                    window.tipoDocumentoSeleccionado =
+                        texto.trim().toLowerCase();
 
                     this.estado = 'pendiente';
 
@@ -793,59 +1017,104 @@
                 },
 
 
-              onDocumentoInput() {
 
-    if (this.estado === 'sesion') {
-        return;
-    }
+                onDocumentoInput() {
+
+                    if (this.estado === 'sesion') {
+
+                        return;
+
+                    }
 
                     // 🔒 Truncar según tipo de documento
-                    const tipo = (window.tipoDocumentoSeleccionado || '').toLowerCase();
+
+                    const tipo =
+                        (window.tipoDocumentoSeleccionado || '').toLowerCase();
+
                     let valor = this.form.documento;
 
                     if (tipo === 'dni') {
-                        valor = valor.replace(/\D/g, '').slice(0, 8);
+
+                        valor = valor
+                            .replace(/\D/g, '')
+                            .slice(0, 8);
+
                     } else if (tipo === 'ce') {
-                        valor = valor.replace(/\D/g, '').slice(0, 12);
-                    } else if (tipo === 'pasaporte') {
-                        valor = valor.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
+
+                        valor = valor
+                            .replace(/\D/g, '')
+                            .slice(0, 11);
+
+                    } else if (tipo === 'pas') {
+
+                        valor = valor
+                            .replace(/[^a-zA-Z0-9]/g, '')
+                            .slice(0, 11);
+
                     } else {
-                        valor = valor.replace(/\D/g, '').slice(0, 15);
+
+                        valor = valor
+                            .replace(/\D/g, '')
+                            .slice(0, 15);
+
                     }
 
                     this.form.documento = valor;
 
                     this.estado = 'pendiente';
+
                     this.mensaje = '';
+
                     this.form.nombres = '';
+
                     this.form.apellido_paterno = '';
+
                     this.form.apellido_materno = '';
+
                     this.form.telefono = '';
+
                     this.form.email = '';
+
                     this.form.clave = '';
+
                     this.form.distrito_id = '';
+
                     this.errorConfirmacion = '';
 
                     clearTimeout(debounceTimer);
 
-                    const digits = this.form.documento.replace(/\D/g, '');
+                    const digits =
+                        this.form.documento.replace(/\D/g, '');
 
-                    // Ajusta el mínimo de dígitos requerido para disparar la búsqueda según tipo
+                    // Ajusta el mínimo de dígitos requerido para disparar
+                    // la búsqueda según tipo
+
                     let minParaBuscar = 8;
-                    if (tipo === 'ce') minParaBuscar = 9;
-                    if (tipo === 'pasaporte') minParaBuscar = 6;
+
+                    if (tipo === 'ce') {
+                        minParaBuscar = 9;
+                    }
+
+                    if (tipo === 'pasaporte') {
+                        minParaBuscar = 6;
+                    }
 
                     if (
                         this.form.tipo_documento_id &&
-                        this.form.documento.replace(/[^a-zA-Z0-9]/g, '').length >= minParaBuscar
+                        this.form.documento
+                            .replace(/[^a-zA-Z0-9]/g, '')
+                            .length >= minParaBuscar
                     ) {
+
                         debounceTimer = setTimeout(
                             () => this.buscarDocumento(),
                             450
                         );
+
                     }
 
                 },
+
 
 
                 async buscarDocumento() {
@@ -853,15 +1122,15 @@
                     const documento =
                         this.form.documento.replace(/\D/g, '');
 
-
                     if (
                         !this.form.tipo_documento_id ||
                         documento.length < 8 ||
                         this.buscando
                     ) {
-                        return;
-                    }
 
+                        return;
+
+                    }
 
                     this.buscando = true;
 
@@ -869,6 +1138,7 @@
                         'Consultando documento...';
 
                     this.mensajeTipo = 'info';
+
 
 
                     try {
@@ -881,16 +1151,21 @@
                             encodeURIComponent(documento);
 
 
+
                         const res = await fetch(url, {
 
                             headers: {
+
                                 'Accept': 'application/json',
+
                             },
 
                         });
 
 
+
                         const data = await res.json();
+
 
 
                         if (!data.valido) {
@@ -906,6 +1181,7 @@
                             return;
 
                         }
+
 
 
                         // No listar datos de BD:
@@ -926,6 +1202,7 @@
                         this.form.distrito_id = '';
 
 
+
                         if (data.existe) {
 
                             this.estado = 'existe';
@@ -941,7 +1218,9 @@
                         }
 
 
+
                         this.mensaje = data.mensaje;
+
 
 
                     } catch (e) {
@@ -962,19 +1241,24 @@
                 },
 
 
+
                 async confirmar() {
 
                     if (
                         !this.puedeConfirmar ||
                         this.confirmando
                     ) {
+
                         return;
+
                     }
+
 
 
                     this.confirmando = true;
 
                     this.errorConfirmacion = '';
+
 
 
                     const guardarYIrAPago = () => {
@@ -983,6 +1267,7 @@
                             new URLSearchParams(
                                 window.location.search || ''
                             );
+
 
 
                         const payload = {
@@ -1024,29 +1309,39 @@
 
                             tusne_id: params.get('tusne_id') || '',
 
-                            estado_titular: this.estado === 'sesion' ?
-                                'existe' :
-                                this.estado,
+                            estado_titular:
+                                this.estado === 'sesion'
+                                    ? 'existe'
+                                    : this.estado,
 
-                            tipo_documento_id: this.form.tipo_documento_id,
+                            tipo_documento_id:
+                                this.form.tipo_documento_id,
 
-                            documento: this.form.documento.replace(/\D/g, ''),
+                            documento:
+                                this.form.documento.replace(/\D/g, ''),
 
-                            nombres: this.form.nombres.trim(),
+                            nombres:
+                                this.form.nombres.trim(),
 
-                            apellido_paterno: this.form.apellido_paterno.trim(),
+                            apellido_paterno:
+                                this.form.apellido_paterno.trim(),
 
-                            apellido_materno: this.form.apellido_materno.trim(),
+                            apellido_materno:
+                                this.form.apellido_materno.trim(),
 
-                            telefono: this.form.telefono.trim(),
+                            telefono:
+                                this.form.telefono.trim(),
 
-                            email: this.form.email.trim(),
+                            email:
+                                this.form.email.trim(),
 
-                            distrito_id: String(
-                                this.form.distrito_id || ''
-                            ),
+                            distrito_id:
+                                String(
+                                    this.form.distrito_id || ''
+                                ),
 
                         };
+
 
 
                         try {
@@ -1057,12 +1352,16 @@
                             );
 
                         } catch (e) {
+
                             /* ignore */
+
                         }
+
 
 
                         const qs =
                             window.location.search || '';
+
 
 
                         window.location.href =
@@ -1072,37 +1371,49 @@
                     };
 
 
+
                     try {
+
+                        // =================================================
+                        // DOCUMENTO EXISTENTE
+                        // =================================================
 
                         if (this.estado === 'existe') {
 
                             const res = await fetch(
-                                @json(route('reservar.verificar-acceso')), {
+                                @json(route('reservar.verificar-acceso')),
+                                {
 
                                     method: 'POST',
 
                                     headers: {
 
-                                        'Content-Type': 'application/json',
+                                        'Content-Type':
+                                            'application/json',
 
-                                        'Accept': 'application/json',
+                                        'Accept':
+                                            'application/json',
 
-                                        'X-CSRF-TOKEN': document.querySelector(
-                                            'meta[name="csrf-token"]'
-                                        ).content,
+                                        'X-CSRF-TOKEN':
+                                            document.querySelector(
+                                                'meta[name="csrf-token"]'
+                                            ).content,
 
                                     },
 
                                     body: JSON.stringify({
 
-                                        tipo_documento_id: this.form.tipo_documento_id,
+                                        tipo_documento_id:
+                                            this.form.tipo_documento_id,
 
-                                        documento: this.form.documento.replace(
-                                            /\D/g,
-                                            ''
-                                        ),
+                                        documento:
+                                            this.form.documento.replace(
+                                                /\D/g,
+                                                ''
+                                            ),
 
-                                        clave: this.form.clave,
+                                        clave:
+                                            this.form.clave,
 
                                     }),
 
@@ -1110,8 +1421,10 @@
                             );
 
 
+
                             const data =
                                 await res.json();
+
 
 
                             if (
@@ -1129,28 +1442,39 @@
 
                         }
 
+
+
+                        // =================================================
+                        // USUARIO CON SESIÓN
+                        // =================================================
+
                         if (this.estado === 'sesion') {
 
                             const res = await fetch(
-                                @json(route('reservar.verificar-clave-sesion')), {
+                                @json(route('reservar.verificar-clave-sesion')),
+                                {
 
                                     method: 'POST',
 
                                     headers: {
 
-                                        'Content-Type': 'application/json',
+                                        'Content-Type':
+                                            'application/json',
 
-                                        'Accept': 'application/json',
+                                        'Accept':
+                                            'application/json',
 
-                                        'X-CSRF-TOKEN': document.querySelector(
-                                            'meta[name="csrf-token"]'
-                                        ).content,
+                                        'X-CSRF-TOKEN':
+                                            document.querySelector(
+                                                'meta[name="csrf-token"]'
+                                            ).content,
 
                                     },
 
                                     body: JSON.stringify({
 
-                                        clave: this.form.clave,
+                                        clave:
+                                            this.form.clave,
 
                                     }),
 
@@ -1158,8 +1482,10 @@
                             );
 
 
+
                             const data =
                                 await res.json();
+
 
 
                             if (
@@ -1178,7 +1504,9 @@
                         }
 
 
+
                         guardarYIrAPago();
+
 
 
                     } catch (e) {
@@ -1197,6 +1525,7 @@
             };
 
         }
+
     </script>
 
 </body>
