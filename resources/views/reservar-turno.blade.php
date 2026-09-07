@@ -62,7 +62,7 @@
             <div class="overflow-x-auto relative" x-show="canchas.length">
                 <div class="min-w-[900px] relative" id="grillaTurnos">
                     <div class="grid border-b border-slate-100"
-                        :style="'grid-template-columns: 220px repeat(' + horas.length + ', minmax(48px, 1fr))'">
+                        :style="'grid-template-columns: 120px repeat(' + horas.length + ', minmax(48px, 1fr))'">
                         <div class="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 bg-slate-50 sticky left-0 z-10">
                             CANCHA | HORAS
                         </div>
@@ -74,7 +74,7 @@
 
                     <template x-for="cancha in canchas" :key="cancha.id">
                         <div class="grid border-b border-slate-100"
-                            :style="'grid-template-columns: 220px repeat(' + horas.length + ', minmax(48px, 1fr))'">
+                            :style="'grid-template-columns: 120px repeat(' + horas.length + ', minmax(48px, 1fr))'">
                             <div class="px-4 py-3 sticky left-0 z-10 bg-white border-r border-slate-100">
                                 <p class="text-sm font-bold text-slate-800 leading-tight" x-text="cancha.nombre"></p>
                                 <p class="text-[10px] text-slate-400 mt-0.5 leading-snug" x-text="cancha.detalle"></p>
