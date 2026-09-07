@@ -133,7 +133,7 @@
                     club: params.get('club') || '',
                     cancha: params.get('cancha') || '',
                     fechaLabel: fechaDate.toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }),
-                    turno: `${hora} a ${fh}:${fm} hs`,
+                    turno: `${hora} a ${fh}:${fm} h`,
                     precio: params.get('precio') || '0',
                     detalle: params.get('detalle') || '',
                     direccion: params.get('direccion') || '',

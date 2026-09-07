@@ -847,7 +847,7 @@
 
                     fechaLabel,
 
-                    turno: `${hora} a ${fh}:${fm} hs`,
+                    turno: `${hora} a ${fh}:${fm} h`,
 
                     precio,
 

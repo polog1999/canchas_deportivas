@@ -127,7 +127,7 @@ class ConstanciaPagoPdfService
                 ? $this->formatearHoraTurno($horaInicio, 'H:i')
                     .' a '
                     .$this->formatearHoraTurno($horaFin, 'H:i')
-                    .' hs'
+                    .' h'
                 : '—',
             'concepto' => $concepto,
             'medio_pago' => $medioPago,
@@ -187,13 +187,13 @@ class ConstanciaPagoPdfService
             'cancha' => $canchaNueva?->nombre ?? '—',
             'deporte' => $deporte,
             'fecha_turno' => $inicio->format('d/m/Y'),
-            'horario' => $inicio->format('H:i').' a '.$fin->format('H:i').' hs',
+            'horario' => $inicio->format('H:i').' a '.$fin->format('H:i').' h',
             'concepto' => $concepto,
             'monto' => round((float) $reprogramacion->monto_validado, 2),
             'motivo' => $reprogramacion->motivo,
             'cancha_anterior' => $reprogramacion->canchaAnterior?->nombre ?? '—',
             'turno_anterior' => $reprogramacion->hora_inicio_anterior->format('d/m/Y H:i')
-                .' a '.$reprogramacion->hora_fin_anterior->format('H:i').' hs',
+                .' a '.$reprogramacion->hora_fin_anterior->format('H:i').' h',
         ]);
     }
 

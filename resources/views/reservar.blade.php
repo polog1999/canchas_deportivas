@@ -42,7 +42,7 @@
                     <select x-model="filtros.hora" class="bg-transparent w-full text-sm font-medium focus:outline-none">
                         <option value="">Cualquier hora</option>
                         <template x-for="h in horasOpciones" :key="h">
-                            <option :value="h" x-text="h + 'hs'"></option>
+                            <option :value="h" x-text="h + 'h'"></option>
                         </template>
                     </select>
                 </div>

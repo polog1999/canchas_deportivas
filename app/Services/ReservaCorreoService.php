@@ -140,7 +140,7 @@ class ReservaCorreoService
             'hora_fin' => $reprogramacion->hora_fin_nueva->format('H:i'),
             'cancha_anterior' => $reprogramacion->canchaAnterior?->nombre ?? '—',
             'turno_anterior' => $reprogramacion->hora_inicio_anterior->format('d/m/Y H:i')
-                .' a '.$reprogramacion->hora_fin_anterior->format('H:i').' hs',
+                .' a '.$reprogramacion->hora_fin_anterior->format('H:i').' h',
             'motivo' => $reprogramacion->motivo,
             'monto' => (float) $reprogramacion->monto_validado,
         ];

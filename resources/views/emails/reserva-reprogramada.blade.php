@@ -119,7 +119,7 @@
 
                                         <strong>Fecha:</strong> {{ $detalle['fecha'] }}<br>
 
-                                        <strong>Horario:</strong> {{ $detalle['hora_inicio'] }} a {{ $detalle['hora_fin'] }} hs
+                                        <strong>Horario:</strong> {{ $detalle['hora_inicio'] }} a {{ $detalle['hora_fin'] }} h
 
                                     </td>
 

@@ -203,7 +203,7 @@
 
                                         @if (!empty($detalle['hora_inicio']) && !empty($detalle['hora_fin']))
                                             <strong>Horario:</strong>
-                                            {{ $detalle['hora_inicio'] }} a {{ $detalle['hora_fin'] }} hs
+                                            {{ $detalle['hora_inicio'] }} a {{ $detalle['hora_fin'] }} h
                                             <br>
                                         @endif
 
