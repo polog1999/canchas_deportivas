@@ -17,7 +17,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-[#f3f6f4] text-slate-800 antialiased">
-        <x-public-navbar :sticky="true" :show-social="false" />
+        <x-public-navbar :sticky="true" :show-social="true" />
         <main class="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
             @include('reservar-resultado.contenido')
         </main>
