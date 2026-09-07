@@ -26,7 +26,6 @@
         $errorCode = (int) trim($__env->yieldContent('code', '500'));
 
         $errorImage = match ($errorCode) {
-
             403 => 'errors/403.png',
 
             404 => 'errors/404.svg',
@@ -390,12 +389,8 @@
 
                 <div class="logo-image-container">
 
-                    <img
-                        src="{{ asset('logo_municipal_negro.png') }}"
-                        alt="Municipalidad de La Molina"
-                        class="logo-image"
-                        onerror="this.style.display='none'"
-                    >
+                    <img src="{{ asset('logo_municipal_negro.png') }}" alt="Municipalidad de La Molina"
+                        class="logo-image" onerror="this.style.display='none'">
 
                 </div>
 
@@ -415,17 +410,11 @@
             ====================================== --}}
 
             @if ($errorImage)
-
                 <div class="error-image-container">
 
-                    <img
-                        src="{{ asset($errorImage) }}"
-                        alt="Error {{ $errorCode }}"
-                        class="error-image"
-                    >
+                    <img src="{{ asset($errorImage) }}" alt="Error {{ $errorCode }}" class="error-image">
 
                 </div>
-
             @endif
 
 
@@ -459,10 +448,7 @@
             ====================================== --}}
 
             <p class="description">
-                @yield(
-                    'description',
-                    'Lo sentimos, ocurrió un problema inesperado. Intenta nuevamente en unos momentos.'
-                )
+                @yield('description', 'Lo sentimos, ocurrió un problema inesperado. Intenta nuevamente en unos momentos.')
             </p>
 
 
@@ -473,12 +459,22 @@
             <div class="actions">
 
                 <a href="{{ url('/') }}" class="button button-primary">
-                    <span>🏠</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024">
+                        <path d="M0 0h1024v1024H0z" fill="none" />
+                        <path fill="currentColor"
+                            d="M946.5 505L560.1 118.8l-25.9-25.9a31.5 31.5 0 0 0-44.4 0L77.5 505a63.9 63.9 0 0 0-18.8 46c.4 35.2 29.7 63.3 64.9 63.3h42.5V940h691.8V614.3h43.4c17.1 0 33.2-6.7 45.3-18.8a63.6 63.6 0 0 0 18.7-45.3c0-17-6.7-33.1-18.8-45.2M568 868H456V664h112zm217.9-325.7V868H632V640c0-22.1-17.9-40-40-40H432c-22.1 0-40 17.9-40 40v228H238.1V542.3h-96l370-369.7l23.1 23.1L882 542.3z" />
+                    </svg>
+
                     Volver al inicio
                 </a>
 
                 <a href="javascript:history.back()" class="button button-secondary">
-                    <span>←</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                            stroke-width="2" d="m11 5l-7 7l7 7m-7-7h16" />
+                    </svg>
+
                     Regresar
                 </a>
 
