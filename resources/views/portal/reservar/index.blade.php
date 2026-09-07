@@ -1,15 +1,37 @@
 <x-portal-reserva-shell title="Reservar más">
-    <div class="mb-6">
-        <p class="text-xs font-bold uppercase tracking-widest text-emerald-700 mb-1">Nueva reserva</p>
-        <h2 class="text-2xl font-bold text-gray-800">Reservar más</h2>
-        <p class="text-sm text-gray-600 mt-1">
-            Elige una sede y completa la reserva con tu cuenta activa.
-        </p>
+    <div class="mb-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-widest text-emerald-700 mb-1">Nueva reserva</p>
+            <h2 class="text-2xl font-bold text-gray-800">Reservar más</h2>
+            <p class="text-sm text-gray-600 mt-1">
+                Elige una sede y completa la reserva con tu cuenta activa.
+            </p>
+        </div>
+        @if ($deportes->isNotEmpty())
+            <div class="relative shrink-0">
+                <select id="filtroDeportePortal"
+                    class="appearance-none pl-4 pr-9 py-2 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold border border-sky-200 focus:outline-none focus:ring-2 focus:ring-sky-300 cursor-pointer">
+                    <option value="">Deportes</option>
+                    @foreach ($deportes as $deporte)
+                        <option value="{{ $deporte->id }}">{{ $deporte->nombre }}</option>
+                    @endforeach
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-sky-700 text-[10px] pointer-events-none"></i>
+            </div>
+        @endif
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5" id="gridSedesPortal">
         @forelse ($sedes as $sede)
-            <article class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition">
+            @php
+                $deporteIds = $sede->canchas
+                    ->flatMap(fn ($c) => $c->deportes->pluck('id'))
+                    ->unique()
+                    ->values()
+                    ->implode(',');
+            @endphp
+            <article class="sede-card-portal bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition"
+                data-deportes="{{ $deporteIds }}">
                 <div class="aspect-[16/10] bg-slate-200 overflow-hidden">
                     @if (method_exists($sede, 'urlImagen') && $sede->urlImagen())
                         <img src="{{ $sede->urlImagen() }}" alt="{{ $sede->nombre }}"
@@ -52,4 +74,34 @@
             </div>
         @endforelse
     </div>
+
+    <p id="sinSedesPortal" class="hidden bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-500">
+        No hay sedes para el deporte seleccionado.
+    </p>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const filtro = document.getElementById('filtroDeportePortal');
+                const vacio = document.getElementById('sinSedesPortal');
+
+                if (!filtro) return;
+
+                filtro.addEventListener('change', () => {
+                    const deporteId = filtro.value;
+                    let visibles = 0;
+
+                    document.querySelectorAll('.sede-card-portal').forEach((card) => {
+                        const deportes = (card.dataset.deportes || '').split(',').filter(Boolean);
+                        const ok = !deporteId || deportes.includes(deporteId);
+
+                        card.classList.toggle('hidden', !ok);
+                        if (ok) visibles++;
+                    });
+
+                    vacio?.classList.toggle('hidden', visibles > 0);
+                });
+            });
+        </script>
+    @endpush
 </x-portal-reserva-shell>

@@ -28,7 +28,15 @@ class PortalReservarController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view('portal.reservar.index', compact('sedes'));
+        // Solo los deportes que alguna sede activa ofrece, para que el filtro
+        // no muestre opciones que dejarían la grilla vacía.
+        $deportes = $sedes
+            ->flatMap(fn (Sede $sede) => $sede->canchas->flatMap->deportes)
+            ->unique('id')
+            ->sortBy('nombre')
+            ->values();
+
+        return view('portal.reservar.index', compact('sedes', 'deportes'));
     }
 
     public function deporte(Request $request): View|RedirectResponse
