@@ -62,7 +62,7 @@
             {{-- Separador + nombre --}}
             <div class="desktop-system-name flex items-center gap-4 min-w-0">
 
-                <div class="desktop-separator h-12 w-[2px] bg-white/70"></div>
+                <div class="h-12 w-[2px] bg-white/70"></div>
 
                 <div class="leading-tight">
                     <p class="text-base sm:text-lg font-bold tracking-tight text-white whitespace-nowrap">
@@ -405,9 +405,7 @@
          * Ocultamos únicamente la información secundaria
          * del header.
          */
-.desktop-separator {
-        display: none !important;
-    }
+
         .desktop-system-name,
         .desktop-right {
             display: none !important;
@@ -625,7 +623,6 @@
         }
 
     }
-  
 
 </style>
 
