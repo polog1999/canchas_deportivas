@@ -174,7 +174,7 @@ class ResultadoPagoController extends Controller
             $inicio = $reserva->hora_inicio->timezone('America/Lima');
             $partes[] = 'Turno '.$inicio->format('d/m/Y H:i');
             if ($reserva->hora_fin) {
-                $partes[] = 'a '.$reserva->hora_fin->timezone('America/Lima')->format('H:i').' hs';
+                $partes[] = 'a '.$reserva->hora_fin->timezone('America/Lima')->format('H:i').' h';
             }
         }
 
