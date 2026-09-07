@@ -209,7 +209,7 @@ class ReprogramacionReservaService
             );
         }
 
-        if (! $this->checkout->turnoDisponible($cancha->id, $horaInicio, $horaFin, null, $reserva->id)) {
+        if (! $this->checkout->turnoDisponible($cancha->id, $horaInicio, $horaFin, $reserva->id)) {
             return $resultado('bloqueado', $rango.' · se cruza con otra reserva', $precio);
         }
 
@@ -293,7 +293,7 @@ class ReprogramacionReservaService
                 ->lockForUpdate()
                 ->findOrFail($reserva->id);
 
-            if (! $this->checkout->turnoDisponible($cancha->id, $horaInicio, $horaFin, null, $fresca->id)) {
+            if (! $this->checkout->turnoDisponible($cancha->id, $horaInicio, $horaFin, $fresca->id)) {
                 throw ValidationException::withMessages([
                     'hora' => 'Ese horario acaba de ser tomado. Elige otro turno.',
                 ]);

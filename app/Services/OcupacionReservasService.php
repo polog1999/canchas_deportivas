@@ -8,14 +8,9 @@ use Illuminate\Support\Collection;
 
 class OcupacionReservasService
 {
-    public function __construct(
-        private readonly ReservaCheckoutService $checkout,
-    ) {}
-
     /**
-     * Horas ocupadas por cancha: reservas confirmadas (en su turno vigente,
-     * que puede venir de una reprogramación) y turnos retenidos por un
-     * checkout en curso (alguien pagando en este momento).
+     * Horas ocupadas por cancha según las reservas confirmadas, tomando el
+     * turno vigente de cada una (que puede venir de una reprogramación).
      *
      * @param  Collection<int, int>|array<int>  $canchaIds
      * @return array<int, list<int>>
@@ -48,14 +43,6 @@ class OcupacionReservasService
                     $ocupados[$turno->cancha_id][] = $h;
                 }
             }
-        }
-
-        foreach ($this->checkout->horasRetenidasPorCancha($canchaIds, $fecha) as $canchaId => $horas) {
-            if (! isset($ocupados[$canchaId])) {
-                continue;
-            }
-
-            $ocupados[$canchaId] = array_merge($ocupados[$canchaId], $horas);
         }
 
         foreach ($ocupados as $id => $horas) {
