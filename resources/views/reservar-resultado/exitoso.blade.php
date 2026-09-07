@@ -14,7 +14,7 @@
                 <dd class="sm:col-span-2 font-semibold text-slate-900">{{ $comprobante['numero_pedido'] ?? '—' }}</dd>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 px-4 py-3">
-                <dt class="text-slate-500 font-medium">Nombre y apellido del tarjetahabiente</dt>
+                <dt class="text-slate-500 font-medium">Nombres y apellidos</dt>
                 <dd class="sm:col-span-2 font-semibold text-slate-900">{{ $comprobante['titular'] ?? '—' }}</dd>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 px-4 py-3">

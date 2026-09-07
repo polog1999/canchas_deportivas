@@ -114,7 +114,10 @@
                     <label class="block text-xs font-semibold text-sky-200 mb-1.5">Busca tu espacio deportivo</label>
                     <div class="relative">
                         <select id="filtroSede"
-                            class="w-full appearance-none bg-white rounded-lg px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                            class="w-full appearance-none bg-white rounded-lg px-4 py-3 text-sm text-slate-700 border-2 border-[#1b5e3b]/30 shadow-sm
+           hover:border-[#1b5e3b]/60
+           focus:outline-none focus:border-[#1b5e3b] focus:ring-4 focus:ring-[#1b5e3b]/20
+           transition-all duration-200">
                             <option value="">Todas las sedes</option>
                             @foreach ($sedes as $sede)
                                 <option value="{{ $sede->id }}">{{ $sede->nombre }}</option>
@@ -128,7 +131,13 @@
                     <label class="block text-xs font-semibold text-sky-200 mb-1.5">Fecha</label>
                     <div class="relative">
                         <input type="date" id="filtroFecha" value="{{ now()->format('Y-m-d') }}"
-                            class="w-full bg-white rounded-lg px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-lime-400">
+                            class="w-full bg-white rounded-lg px-4 py-3 text-sm text-slate-700
+           border-2 border-slate-200 shadow-sm
+           hover:border-[#1b5e3b]/50
+           focus:outline-none focus:border-[#1b5e3b]
+           focus:ring-4 focus:ring-[#1b5e3b]/15
+           focus:shadow-[0_0_0_1px_#1b5e3b]
+           transition-all duration-200">
                         <i
                             class="fa-regular fa-calendar absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
                     </div>
@@ -147,7 +156,7 @@
             <div class="relative">
                 <select id="filtroDeporte"
                     class="appearance-none pl-4 pr-9 py-2 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold border border-sky-200 focus:outline-none focus:ring-2 focus:ring-sky-300 cursor-pointer">
-                    <option value="">Deportes</option>
+                    <option value="">--Seleccione un deporte--</option>
                     @foreach ($deportes as $deporte)
                         <option value="{{ $deporte->id }}">{{ $deporte->nombre }}</option>
                     @endforeach
@@ -215,7 +224,7 @@
 
     {{-- Footer --}}
     <footer class="mt-8">
-        <div class="h-1.5 bg-lime-400"></div>
+        {{-- <div class="h-1.5 bg-lime-400"></div> --}}
         <div class="bg-[#1b5e3b] text-white py-6">
             <p class="text-center text-sm px-4">
                 © {{ date('Y') }} Municipalidad de La Molina - Todos los derechos reservados
