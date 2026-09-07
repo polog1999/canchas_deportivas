@@ -20,8 +20,6 @@
                 <path fill="#1b5e3b"
                     d="M61.9 32c0-.7.2-10.9-5.8-17.5c-.3-.6-1.5-3-5.6-5.9C47.8 6.5 45 5 44.7 4.8S39.4 2 33.4 2c-.5 0-.9 0-1.4.1c-4.6-.1-8.8 1.1-11.9 2.5c-3.2 1.4-5.3 2.8-5.5 3c-3.4 1.9-9.9 9.5-10.4 13.6c-2.1 2.6-3.8 14.5 0 21.7c2.7 10 12.7 15 13.5 15.4c.5.3 5.9 3.7 12.6 3.7h.9c.6.1 1.1.1 1.7.1c7.2 0 18-5.1 20.2-9.1c6.2-4.6 9.4-16.2 8.8-21M17.8 47.1c-2.9-4.6-4.5-10.7-4.9-12.1c.9-1.4 5.4-8 7.9-10c1.4.3 7.5 1.4 13.2 2.4c.7 1.9 3.9 10 4.8 13.2c-1 1.2-4.9 5.7-8.7 9.2c-4.1.1-11-2.3-12.3-2.7m36-32.5c0 .4-.1 2-.9 3.9c-1.5-.8-5.3-2.4-10.6-2.7c-.8-1.2-3.8-5.3-8.5-8.1c.6-1.3 1.5-2.8 2.1-3.3c.2 0 .4-.1.8-.1c2.5 0 6.9 1.7 7.3 1.8c.4.2 8.3 4.4 9.8 8.5M11.8 34c-3.4-.6-5.5-1.6-6.1-2c-1.3-4.6-.2-9.6-.1-10.3c1.3-2.2 4.8-8 7.2-9.1c2.4-.5 5.5.1 6.7.4c-.1 1.6-.3 6.1.3 10.9c-2.6 2.2-6.9 8.5-8 10.1M31.7 3.5c.8.1 1.9.2 2.7.5c-.8 1-1.6 2.5-1.9 3.3c-1.6.3-7.5 1.4-12.2 4.4c-.9-.2-3.8-.9-6.5-.7c.7-1.3 1.7-2.2 1.8-2.3c.3-.3 7.4-5.3 16.1-5.2m19.1 38.1c-1.2 0-5.7-.3-10.6-1.5c-.9-3.3-4.1-11.4-4.8-13.3c3.1-4.4 6.1-8.5 6.9-9.7c5.7.4 9.7 2.5 10.5 2.9c3.3 5.3 4 10.7 4.1 11.6c-1.8 5.5-5.2 9.2-6.1 10M3.7 28.5c.1 1.3.3 2.6.7 3.9c-.3.9-.6 1.8-.7 2.7c-.3-2.3-.3-4.6 0-6.6M18.5 57l-.4.6zc-2.5-1.2-4.4-4-5.2-5.1c1.5-1.5 3.4-2.9 4.1-3.4c1.6.6 8.3 2.8 12.6 2.8c.7 1 3.1 4 6 6.4c-1.8 1.8-4.4 2.6-4.9 2.8c-6.8.2-12.6-3.5-12.6-3.5m16.3 3.4c.9-.5 1.9-1.2 2.7-2.1c1.3-.2 6.9-1.1 11.9-4.8c.3 0 .9.1 1.5.1c-3.1 2.9-10.5 6.2-16.1 6.8M50.2 52c1.8-4.7 1.7-8.3 1.6-9.4c1-1 4.4-4.6 6.3-10.1c1 .2 1.7.4 2 .6c.1.4.3 1.3.2 2.7c-.8 5-3.4 12.6-8.1 15.9c-.5.3-1.3.4-2 .3" />
             </svg>
-
-
         </div>
 
         {{-- Nombre --}}
@@ -42,22 +40,29 @@
     </div>
 </div>
 
+
 <header {{ $attributes->class(['bg-[#1b5e3b] text-white shadow-md z-40', 'sticky top-0' => $sticky]) }}>
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
 
-        {{-- LOGO + NOMBRE DEL SISTEMA --}}
+        {{-- =====================================================
+             LOGO
+        ====================================================== --}}
+
         <a href="{{ url('/') }}" class="flex items-center gap-4 min-w-0">
 
             {{-- Logo --}}
             <div class="flex items-center justify-center shrink-0">
-                <img src="{{ asset('logo_municipal_negro2.png') }}" alt="Municipalidad de La Molina"
-                    class="h-[60px] w-auto rounded-lg object-contain" onerror="this.style.display='none'">
+                <img src="{{ asset('logo_municipal_negro2.png') }}"
+                    alt="Municipalidad de La Molina"
+                    class="h-[60px] w-auto rounded-lg object-contain"
+                    onerror="this.style.display='none'">
             </div>
 
             {{-- Separador + nombre --}}
-            <div class="flex items-center gap-4 min-w-0">
+            <div class="desktop-system-name flex items-center gap-4 min-w-0">
 
-                <div class="h-12 w-[2px] bg-white/70"></div>
+                <div class="desktop-separator h-12 w-[2px] bg-white/70"></div>
 
                 <div class="leading-tight">
                     <p class="text-base sm:text-lg font-bold tracking-tight text-white whitespace-nowrap">
@@ -66,41 +71,65 @@
                 </div>
 
             </div>
+
         </a>
 
 
-        {{-- PARTE DERECHA --}}
-        <div class="flex items-center gap-4 sm:gap-6">
+        {{-- =====================================================
+             PARTE DERECHA DESKTOP
+        ====================================================== --}}
+
+        <div class="desktop-right flex items-center gap-4 sm:gap-6">
 
             @if ($showSocial)
+
                 <div class="hidden md:flex items-center gap-3 text-white/90">
 
-                    <a href="https://www.tiktok.com/@munilamolina" class="hover:text-white transition" target="_blank"
+                    <a href="https://www.tiktok.com/@munilamolina"
+                        class="hover:text-white transition"
+                        target="_blank"
                         aria-label="TikTok">
+
                         <i class="fa-brands fa-tiktok"></i>
+
                     </a>
 
-                    <a href="https://www.facebook.com/MunicipalidadDeLaMolina/" class="hover:text-white transition"
-                        target="_blank" aria-label="Facebook">
+                    <a href="https://www.facebook.com/MunicipalidadDeLaMolina/"
+                        class="hover:text-white transition"
+                        target="_blank"
+                        aria-label="Facebook">
+
                         <i class="fa-brands fa-facebook-f"></i>
+
                     </a>
 
-                    <a href="https://www.instagram.com/munilamolina/" class="hover:text-white transition"
-                        target="_blank" aria-label="Instagram">
+                    <a href="https://www.instagram.com/munilamolina/"
+                        class="hover:text-white transition"
+                        target="_blank"
+                        aria-label="Instagram">
+
                         <i class="fa-brands fa-instagram"></i>
+
                     </a>
 
-                    <a href="https://www.youtube.com/@munidelamolina" class="hover:text-white transition"
-                        target="_blank" aria-label="YouTube">
+                    <a href="https://www.youtube.com/@munidelamolina"
+                        class="hover:text-white transition"
+                        target="_blank"
+                        aria-label="YouTube">
+
                         <i class="fa-brands fa-youtube"></i>
+
                     </a>
 
                 </div>
+
             @endif
 
 
             {{-- USUARIO AUTENTICADO --}}
+
             @auth
+
                 @php
                     $nombreMostrar = auth()->user()->loadMissing('perfil')->nombreParaMostrar();
                 @endphp
@@ -122,6 +151,7 @@
 
 
                     {{-- DROPDOWN --}}
+
                     <div
                         class="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white text-slate-800 shadow-xl border border-slate-200/80 py-1 z-50">
 
@@ -135,6 +165,7 @@
 
 
                         {{-- Ir al portal --}}
+
                         <a href="{{ route('dashboard') }}"
                             class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 transition">
 
@@ -146,6 +177,7 @@
 
 
                         {{-- Cerrar sesión --}}
+
                         <form action="{{ route('logout') }}" method="POST">
 
                             @csrf
@@ -164,8 +196,11 @@
                     </div>
 
                 </details>
+
             @else
+
                 {{-- USUARIO NO AUTENTICADO --}}
+
                 <a href="{{ route('login') }}"
                     class="inline-flex items-center gap-2 text-sm font-semibold hover:text-emerald-200 transition whitespace-nowrap">
 
@@ -181,8 +216,473 @@
 
         </div>
 
+
+        {{-- =====================================================
+             HAMBURGUESA MOBILE
+        ====================================================== --}}
+
+        <button
+            type="button"
+            id="mobileMenuButton"
+            class="mobile-menu-button"
+            aria-label="Abrir menú"
+            aria-expanded="false">
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+        </button>
+
     </div>
+
+
+    {{-- =====================================================
+         MENÚ MOBILE
+    ====================================================== --}}
+
+    <div id="mobileMenu" class="mobile-menu">
+
+        <div class="mobile-menu-inner">
+
+            {{-- Nombre del sistema --}}
+
+            <div class="mobile-system-name">
+
+                <div class="mobile-separator"></div>
+
+                <p>
+                    Canchas Deportivas
+                </p>
+
+            </div>
+
+
+            {{-- Redes sociales --}}
+
+            @if ($showSocial)
+
+                <div class="mobile-social">
+
+                    <a href="https://www.tiktok.com/@munilamolina"
+                        target="_blank"
+                        aria-label="TikTok">
+
+                        <i class="fa-brands fa-tiktok"></i>
+                        <span>TikTok</span>
+
+                    </a>
+
+                    <a href="https://www.facebook.com/MunicipalidadDeLaMolina/"
+                        target="_blank"
+                        aria-label="Facebook">
+
+                        <i class="fa-brands fa-facebook-f"></i>
+                        <span>Facebook</span>
+
+                    </a>
+
+                    <a href="https://www.instagram.com/munilamolina/"
+                        target="_blank"
+                        aria-label="Instagram">
+
+                        <i class="fa-brands fa-instagram"></i>
+                        <span>Instagram</span>
+
+                    </a>
+
+                    <a href="https://www.youtube.com/@munidelamolina"
+                        target="_blank"
+                        aria-label="YouTube">
+
+                        <i class="fa-brands fa-youtube"></i>
+                        <span>YouTube</span>
+
+                    </a>
+
+                </div>
+
+            @endif
+
+
+            {{-- Login mobile --}}
+
+            <div class="mobile-login">
+
+                @auth
+
+                    <a href="{{ route('dashboard') }}">
+                        <i class="fa-solid fa-gauge-high"></i>
+                        Ir al portal
+                    </a>
+
+                    <form action="{{ route('logout') }}" method="POST">
+
+                        @csrf
+
+                        <button type="submit">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            Cerrar sesión
+                        </button>
+
+                    </form>
+
+                @else
+
+                    <a href="{{ route('login') }}">
+                        <i class="fa-regular fa-user"></i>
+                        Iniciar sesión / Cuenta
+                    </a>
+
+                @endauth
+
+            </div>
+
+        </div>
+
+    </div>
+
 </header>
+
+
+{{-- =====================================================
+     CSS MOBILE
+===================================================== --}}
+
+<style>
+
+    /* -----------------------------------------------------
+       BOTÓN HAMBURGUESA
+    ----------------------------------------------------- */
+
+    .mobile-menu-button {
+        display: none;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+
+        flex-shrink: 0;
+    }
+
+    .mobile-menu-button span {
+        display: block;
+        width: 25px;
+        height: 2px;
+        border-radius: 999px;
+        background: #ffffff;
+
+        transition:
+            transform 0.3s ease,
+            opacity 0.2s ease,
+            width 0.3s ease;
+    }
+
+
+    /* -----------------------------------------------------
+       MENÚ MOBILE
+    ----------------------------------------------------- */
+
+    .mobile-menu {
+        display: none;
+    }
+
+
+    /* -----------------------------------------------------
+       RESPONSIVE
+    ----------------------------------------------------- */
+
+    @media (max-width: 767px) {
+
+        /*
+         * Ocultamos únicamente la información secundaria
+         * del header.
+         */
+.desktop-separator {
+        display: none !important;
+    }
+        .desktop-system-name,
+        .desktop-right {
+            display: none !important;
+        }
+
+        /*
+         * Header móvil
+         */
+
+        header > div:first-child {
+            height: 72px;
+        }
+
+        /*
+         * Logo
+         */
+
+        header > div:first-child > a {
+            gap: 0;
+        }
+
+        header > div:first-child .logo-image {
+            height: 52px !important;
+        }
+
+        /*
+         * Hamburguesa
+         */
+
+        .mobile-menu-button {
+            display: flex;
+        }
+
+        /*
+         * Estado abierto
+         */
+
+        .mobile-menu-button.active span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .mobile-menu-button.active span:nth-child(2) {
+            opacity: 0;
+            width: 0;
+        }
+
+        .mobile-menu-button.active span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+
+        /* -------------------------------------------------
+           PANEL MOBILE
+        ------------------------------------------------- */
+
+        .mobile-menu {
+            display: block;
+
+            max-height: 0;
+            overflow: hidden;
+
+            opacity: 0;
+
+            background: #1b5e3b;
+
+            transition:
+                max-height 0.45s ease,
+                opacity 0.3s ease;
+        }
+
+        .mobile-menu.open {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+
+        /* -------------------------------------------------
+           CONTENIDO DEL MENÚ
+        ------------------------------------------------- */
+
+        .mobile-menu-inner {
+            padding: 0 20px 24px;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        /* -------------------------------------------------
+           NOMBRE
+        ------------------------------------------------- */
+
+        .mobile-system-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            padding: 18px 0;
+
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-separator {
+            width: 3px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 999px;
+        }
+
+        .mobile-system-name p {
+            margin: 0;
+
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+
+        /* -------------------------------------------------
+           REDES SOCIALES
+        ------------------------------------------------- */
+
+        .mobile-social {
+            display: flex;
+            flex-direction: column;
+
+            padding: 10px 0;
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .mobile-social a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+
+            padding: 11px 4px;
+
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            border-radius: 8px;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease,
+                padding-left 0.2s ease;
+        }
+
+        .mobile-social a:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            padding-left: 10px;
+        }
+
+        .mobile-social i {
+            width: 20px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+
+        /* -------------------------------------------------
+           LOGIN
+        ------------------------------------------------- */
+
+        .mobile-login {
+            padding-top: 16px;
+        }
+
+        .mobile-login a,
+        .mobile-login button {
+            width: 100%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+
+            padding: 12px 16px;
+
+            border-radius: 9px;
+
+            border: 1px solid rgba(255, 255, 255, 0.35);
+
+            background: rgba(255, 255, 255, 0.10);
+
+            color: #ffffff;
+
+            text-decoration: none;
+
+            font-size: 14px;
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .mobile-login a:hover,
+        .mobile-login button:hover {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .mobile-login form {
+            width: 100%;
+        }
+
+    }
+  
+
+</style>
+
+
+{{-- =====================================================
+     CERRAR MENÚ AL HACER CLICK EN UN ENLACE
+===================================================== --}}
+
+@once
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const button = document.getElementById('mobileMenuButton');
+            const menu = document.getElementById('mobileMenu');
+
+            if (!button || !menu) return;
+
+            button.addEventListener('click', function () {
+
+                const isOpen = menu.classList.toggle('open');
+
+                button.classList.toggle('active', isOpen);
+
+                button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+                button.setAttribute(
+                    'aria-label',
+                    isOpen ? 'Cerrar menú' : 'Abrir menú'
+                );
+
+            });
+
+
+            /*
+             * Si se pulsa un enlace del menú móvil,
+             * cerramos el menú.
+             */
+
+            menu.querySelectorAll('a').forEach(function (link) {
+
+                link.addEventListener('click', function () {
+
+                    menu.classList.remove('open');
+
+                    button.classList.remove('active');
+
+                    button.setAttribute('aria-expanded', 'false');
+
+                    button.setAttribute('aria-label', 'Abrir menú');
+
+                });
+
+            });
+
+        });
+    </script>
+@endonce
 
 
 @once
@@ -202,6 +702,8 @@
         });
     </script>
 @endonce
+
+
 @once
     <script>
         window.addEventListener('load', function() {
@@ -220,15 +722,23 @@
     </script>
 @endonce
 
-{{-- BARRA DE RETORNO --}}
+
+{{-- =====================================================
+     BARRA DE RETORNO
+===================================================== --}}
+
 @if ($backHref || isset($back))
+
     <div class="bg-white border-b border-emerald-100">
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
 
             @isset($back)
+
                 {{ $back }}
+
             @else
+
                 <a href="{{ $backHref }}"
                     class="inline-flex items-center gap-2 text-sm font-semibold text-[#1b5e3b] hover:text-emerald-800 transition">
 
@@ -237,9 +747,11 @@
                     {{ $backLabel ?? 'Volver' }}
 
                 </a>
+
             @endisset
 
         </div>
 
     </div>
+
 @endif
