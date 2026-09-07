@@ -471,7 +471,7 @@
             <tr>
 
                 <td class="label">
-                    DNI
+                    {{ $pagoSeleccionado['tipo_documento'] }}
                 </td>
 
                 <td class="value">

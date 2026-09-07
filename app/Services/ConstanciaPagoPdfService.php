@@ -118,6 +118,7 @@ class ConstanciaPagoPdfService
             'fecha_pago' => $this->formatearFechaPago($pago),
             'titular' => $titular?->nombreCompleto() ?? '—',
             'dni' => $perfil?->numero_documento ?? '—',
+            'tipo_documento' => $perfil?->tipoDocumento->abreviatura ?? 'OTRO',
             'sede' => $sede?->nombre ?? '—',
             'cancha' => $cancha?->nombre ?? '—',
             'deporte' => $deporte ?? '—',
